@@ -1,0 +1,1321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>My Home OS - Local First Property Manager</title>
+    <!-- Vue 3 -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- LocalForage (IndexedDB 本地引擎) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
+    <!-- Leaflet Map CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; -webkit-tap-highlight-color: transparent; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .bottom-sheet-enter-active, .bottom-sheet-leave-active { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .bottom-sheet-enter-from, .bottom-sheet-leave-to { transform: translateY(100%); opacity: 0; }
+        .fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
+        .fade-enter-from, .fade-leave-to { opacity: 0; }
+        .slide-right-enter-active, .slide-right-leave-active { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease; }
+        .slide-right-enter-from { transform: translateX(100%); opacity: 0; }
+        .slide-right-leave-to { transform: translateX(-100%); opacity: 0; }
+        
+        /* Leaflet Dark Theme Overrides */
+        .leaflet-container { background-color: #0f172a !important; font-family: inherit; }
+        .leaflet-tile-pane { filter: brightness(0.7) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3); }
+        .leaflet-popup-content-wrapper, .leaflet-popup-tip { background: #1e293b !important; color: #f8fafc !important; border: 1px solid #334155; border-radius: 1rem; }
+        .leaflet-popup-content { margin: 12px 16px; }
+        
+        /* Pulse Animation for map markers with active tasks */
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); opacity: 0.8; }
+            50% { transform: scale(1.35); opacity: 0.2; }
+            100% { transform: scale(0.95); opacity: 0.8; }
+        }
+        .marker-pulse-ring {
+            animation: pulse-ring 2s infinite ease-in-out;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: { extend: { colors: { brand: { 400: '#38bdf8', 500: '#0ea5e9', 600: '#0284c7' } } } }
+        }
+        localforage.config({ name: 'MyHomeOS', storeName: 'home_data_store' });
+    </script>
+</head>
+<body class="antialiased h-screen w-screen overflow-hidden flex justify-center bg-slate-950">
+
+    <div id="app" class="w-full max-w-md h-full bg-slate-900 shadow-2xl relative flex flex-col overflow-hidden">
+        
+        <!-- Header -->
+        <header class="pt-12 pb-4 px-6 bg-slate-900/80 backdrop-blur-md border-b border-slate-800 z-20 flex-shrink-0 flex justify-between items-center relative">
+            <div>
+                <h1 class="text-2xl font-black text-white tracking-tight">My Home <span class="text-brand-500">OS</span></h1>
+            </div>
+            <div class="flex gap-3">
+                <button @click="toggleLanguage" class="text-[11px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700 active:scale-95 transition-transform">
+                    {{ currentLang === 'en' ? '中文' : 'English' }}
+                </button>
+                <button @click="exportData" class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-800 text-brand-400 active:scale-95 transition-transform"><i class="fa-solid fa-cloud-arrow-down"></i></button>
+            </div>
+        </header>
+
+        <!-- Main Scrollable Area -->
+        <main class="flex-1 overflow-y-auto no-scrollbar pb-28 px-4 pt-4 relative flex flex-col">
+            
+            <!-- ====== TAB 1: DASHBOARD (PROPERTIES) ====== -->
+            <div v-show="currentTab === 'dashboard'" class="fade-enter-active flex-1 flex flex-col">
+                
+                <!-- View Mode Switcher (List vs Map) -->
+                <div v-if="!viewingPropertyId" class="flex justify-between items-center mb-3 bg-slate-800/80 p-1 rounded-2xl border border-slate-700/50">
+                    <button @click="switchDashboardView('list')" class="flex-1 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-2" :class="dashboardViewMode === 'list' ? 'bg-brand-500 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'">
+                        <i class="fa-solid fa-list-ul"></i> {{ t('viewModeList') }} ({{ properties.length }})
+                    </button>
+                    <button @click="switchDashboardView('map')" class="flex-1 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-2" :class="dashboardViewMode === 'map' ? 'bg-brand-500 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'">
+                        <i class="fa-solid fa-map-location-dot"></i> {{ t('viewModeMap') }}
+                    </button>
+                </div>
+
+                <!-- Ultra-Clean Property List View -->
+                <div v-if="!viewingPropertyId && dashboardViewMode === 'list'" class="space-y-2">
+                    <div v-for="prop in properties" :key="prop.id" @click="viewProperty(prop.id)" 
+                         class="bg-slate-800/90 hover:bg-slate-800 rounded-2xl py-2.5 px-3.5 border border-slate-700/60 relative overflow-hidden active:scale-[0.98] transition-all cursor-pointer shadow-sm flex items-center justify-between gap-3">
+                        
+                        <div class="flex items-center gap-2.5 min-w-0 flex-1">
+                            <h3 class="text-base font-black text-white tracking-tight flex-shrink-0">{{ prop.name }}</h3>
+                            <span class="text-[10px] px-2 py-0.5 rounded-md font-bold uppercase tracking-wider flex-shrink-0" :class="prop.type === 'rental' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-brand-500/20 text-brand-400 border border-brand-500/30'">
+                                {{ prop.type === 'rental' ? t('rentalProperty') : t('primaryHome') }}
+                            </span>
+                        </div>
+                        
+                        <div class="flex items-center gap-2 flex-shrink-0">
+                            <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-900/80 border border-slate-700/60 text-[11px]">
+                                <i class="fa-solid fa-clipboard-check text-brand-400 text-xs"></i>
+                                <span class="font-black" :class="tasks.filter(t => t.propertyId === prop.id && !t.completed).length > 0 ? 'text-brand-400' : 'text-slate-500'">
+                                    {{ tasks.filter(t => t.propertyId === prop.id && !t.completed).length }}
+                                </span>
+                            </div>
+                            <button @click.stop="editProperty(prop)" class="w-7 h-7 rounded-full bg-slate-700/50 text-slate-300 hover:text-white flex items-center justify-center active:bg-slate-600 transition-colors">
+                                <i class="fa-solid fa-pen text-[10px]"></i>
+                            </button>
+                            <i class="fa-solid fa-chevron-right text-slate-600 text-xs pl-0.5"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Property Map View Mode (100% Properties Rendering) -->
+                <div v-show="!viewingPropertyId && dashboardViewMode === 'map'" class="flex-1 min-h-[460px] bg-slate-800 rounded-3xl border border-slate-700/50 overflow-hidden relative shadow-lg flex flex-col">
+                    <div id="property-map" class="w-full h-full min-h-[460px] z-10 flex-1"></div>
+                    
+                    <!-- Floating Map Action Overlay -->
+                    <div class="absolute top-3 right-3 z-20 flex flex-col gap-2">
+                        <button @click="fitMapBounds" class="bg-slate-900/90 text-brand-400 border border-slate-700 p-2.5 rounded-xl shadow-lg active:scale-90 transition-transform flex items-center justify-center text-xs font-bold gap-1.5 backdrop-blur-md">
+                            <i class="fa-solid fa-crosshairs"></i> {{ t('recenterMap') }}
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Property Detail View -->
+                <div v-if="viewingPropertyId && !viewingZone" class="space-y-6 fade-enter-active">
+                    <button @click="viewingPropertyId = null" class="text-brand-400 text-sm font-bold flex items-center gap-2 mb-1 active:opacity-70"><i class="fa-solid fa-arrow-left"></i> {{ t('backToProperties') }}</button>
+                    
+                    <!-- Detail Hero Card -->
+                    <div class="bg-gradient-to-br from-slate-800 to-slate-800/80 rounded-3xl p-6 border border-slate-700/50 relative overflow-hidden shadow-lg shadow-black/20">
+                        <div class="absolute -bottom-10 -right-10 w-40 h-40 bg-brand-500/20 rounded-full blur-3xl pointer-events-none"></div>
+                        
+                        <div class="flex justify-between items-start mb-6 relative z-10">
+                            <div class="flex-1 pr-3">
+                                <div class="flex flex-wrap items-center gap-2 mb-3">
+                                    <span class="text-[11px] px-2.5 py-1 rounded-md font-bold uppercase tracking-wide inline-block" :class="properties.find(p => p.id === viewingPropertyId)?.type === 'rental' ? 'bg-amber-500/20 text-amber-400' : 'bg-brand-500/20 text-brand-400'">
+                                        {{ properties.find(p => p.id === viewingPropertyId)?.type === 'rental' ? t('rentalProperty') : t('primaryHome') }}
+                                    </span>
+                                    <span v-if="properties.find(p => p.id === viewingPropertyId)?.buildingType" class="text-[11px] px-2.5 py-1 rounded-md font-bold bg-slate-700/50 text-slate-300 inline-block">
+                                        {{ getBuildingTypeName(properties.find(p => p.id === viewingPropertyId)?.buildingType) }}
+                                    </span>
+                                </div>
+                                <h2 class="text-3xl font-black text-white mb-1 leading-tight">{{ properties.find(p => p.id === viewingPropertyId)?.name }}</h2>
+                                <p class="text-[13px] text-slate-400"><i class="fa-solid fa-location-dot mr-1.5"></i>{{ properties.find(p => p.id === viewingPropertyId)?.address || t('noAddress') }}</p>
+                            </div>
+                            
+                            <div class="w-16 h-16 rounded-2xl bg-slate-900/60 border border-slate-700/50 flex items-center justify-center flex-shrink-0 shadow-inner backdrop-blur-md">
+                                <svg v-if="properties.find(p => p.id === viewingPropertyId)?.buildingType === 'detached'" viewBox="0 0 64 64" class="w-10 h-10" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M32 8L8 28H14V56H26V40H38V56H50V28H56L32 8Z" fill="#0ea5e9" fill-opacity="0.25" stroke="#38bdf8" stroke-width="3" stroke-linejoin="round"/>
+                                    <rect x="22" y="24" width="6" height="6" rx="1" fill="#38bdf8" />
+                                    <rect x="36" y="24" width="6" height="6" rx="1" fill="#38bdf8" />
+                                </svg>
+                                <svg v-else-if="properties.find(p => p.id === viewingPropertyId)?.buildingType === 'townhouse'" viewBox="0 0 64 64" class="w-10 h-10" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M10 26L24 16V56H10V26Z" fill="#8b5cf6" fill-opacity="0.2" stroke="#a78bfa" stroke-width="2.5" stroke-linejoin="round"/>
+                                    <path d="M24 16L38 26V56H24V16Z" fill="#0ea5e9" fill-opacity="0.25" stroke="#38bdf8" stroke-width="2.5" stroke-linejoin="round"/>
+                                    <path d="M38 26L52 18V56H38V26Z" fill="#10b981" fill-opacity="0.2" stroke="#34d399" stroke-width="2.5" stroke-linejoin="round"/>
+                                    <rect x="28" y="32" width="4" height="4" rx="0.5" fill="#38bdf8" />
+                                </svg>
+                                <svg v-else-if="properties.find(p => p.id === viewingPropertyId)?.buildingType === 'condo'" viewBox="0 0 64 64" class="w-10 h-10" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <rect x="18" y="10" width="28" height="46" rx="2" fill="#f59e0b" fill-opacity="0.25" stroke="#fbbf24" stroke-width="3" stroke-linejoin="round"/>
+                                    <rect x="25" y="18" width="5" height="5" rx="1" fill="#fbbf24" />
+                                    <rect x="34" y="18" width="5" height="5" rx="1" fill="#fbbf24" />
+                                    <rect x="25" y="28" width="5" height="5" rx="1" fill="#fbbf24" />
+                                    <rect x="34" y="28" width="5" height="5" rx="1" fill="#fbbf24" />
+                                    <rect x="25" y="38" width="5" height="5" rx="1" fill="#fbbf24" />
+                                    <rect x="34" y="38" width="5" height="5" rx="1" fill="#fbbf24" />
+                                    <path d="M10 56H54" stroke="#fbbf24" stroke-width="3" stroke-linecap="round"/>
+                                </svg>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-slate-900/50 rounded-2xl p-4 flex items-center justify-between border border-slate-700/50 relative z-10">
+                            <div>
+                                <div class="flex items-center gap-2 mb-1">
+                                    <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{{ t('dashboardTotalCost') }}</p>
+                                    <div class="relative">
+                                        <select v-model="selectedExpenseYear" class="appearance-none bg-brand-500/20 text-brand-400 text-[12px] font-bold rounded-lg pl-3 pr-7 py-1 outline-none border border-brand-500/30 cursor-pointer active:bg-brand-500/30 transition-colors">
+                                            <option value="ALL">{{ t('allTime') }}</option>
+                                            <option v-for="year in availableYears" :key="year" :value="year">{{ year }}</option>
+                                        </select>
+                                        <i class="fa-solid fa-chevron-down text-[10px] text-brand-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                                    </div>
+                                </div>
+                                <p class="text-3xl font-black text-white">${{ getPropertyTotalCost(viewingPropertyId) }}</p>
+                            </div>
+                            <div class="w-12 h-12 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xl">
+                                <i class="fa-solid fa-sack-dollar"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Zone Blueprint Layout Card -->
+                    <div>
+                        <div class="flex justify-between items-end mb-3 px-1">
+                            <h3 class="text-lg font-bold text-white">{{ t('zoneLayout') }}</h3>
+                        </div>
+                        <div class="bg-slate-800 rounded-3xl p-5 border border-slate-700/50 shadow-sm relative overflow-hidden">
+                            <div class="absolute inset-0 opacity-[0.02] pointer-events-none" style="background-image: linear-gradient(#38bdf8 1px, transparent 1px), linear-gradient(90deg, #38bdf8 1px, transparent 1px); background-size: 20px 20px;"></div>
+                            
+                            <div class="space-y-5 relative z-10">
+                                <div v-for="(layer, index) in blueprintLayers" :key="index" class="relative">
+                                    <div class="flex items-center gap-3 mb-3">
+                                        <div class="h-px bg-slate-700 flex-1"></div>
+                                        <span class="text-[10px] text-slate-400 uppercase font-bold tracking-widest"><i class="fa-solid mr-1.5" :class="layer.icon"></i>{{ layer.title }}</span>
+                                        <div class="h-px bg-slate-700 flex-1"></div>
+                                    </div>
+                                    <div class="grid grid-cols-3 gap-2">
+                                        <div v-for="zone in layer.zones" :key="zone"
+                                             @click="viewZone(zone)"
+                                             class="rounded-xl p-2 border flex flex-col items-center justify-center text-center min-h-[56px] relative transition-all duration-200 cursor-pointer active:scale-95"
+                                             :class="getZoneTaskCount(viewingPropertyId, zone) > 0 ? 'bg-brand-500/10 border-brand-500/50 shadow-[0_0_15px_rgba(14,165,233,0.15)]' : 'bg-slate-900 border-slate-700/50 hover:bg-slate-800'">
+                                            <span class="text-[11px] font-medium leading-tight" :class="getZoneTaskCount(viewingPropertyId, zone) > 0 ? 'text-brand-400 font-bold' : 'text-slate-300'">{{ zone }}</span>
+                                            <span v-if="getZoneTaskCount(viewingPropertyId, zone) > 0" class="absolute -top-1 -right-1 w-3 h-3 bg-brand-500 border-2 border-slate-800 rounded-full animate-pulse"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Tasks -->
+                    <div>
+                        <div class="flex justify-between items-end mb-3 px-1">
+                            <h3 class="text-lg font-bold text-white">{{ t('navTasks') }}</h3>
+                            <button @click="currentTab = 'tasks'" class="text-brand-400 text-[13px] font-bold">{{ t('viewAll') }}</button>
+                        </div>
+                        <div class="space-y-3">
+                            <div v-for="task in tasks.filter(t => t.propertyId === viewingPropertyId && !t.completed).slice(0, 3)" :key="task.id" class="bg-slate-800 rounded-2xl p-4 border border-slate-700/50">
+                                <div class="flex gap-3">
+                                    <button @click="toggleTask(task.id)" class="w-6 h-6 mt-0.5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors border-slate-500 text-transparent active:scale-90"><i class="fa-solid fa-check text-[10px]"></i></button>
+                                    <div class="flex-1">
+                                        <p class="text-[15px] font-bold text-slate-200 mb-1.5 leading-tight">{{ task.title }}</p>
+                                        <div class="flex flex-wrap gap-1.5">
+                                            <span v-if="task.zone" class="text-[10px] px-2 py-0.5 rounded-md bg-slate-700 text-slate-300"><i class="fa-solid fa-location-dot mr-1"></i>{{ task.zone }}</span>
+                                            <span v-if="task.category" class="text-[10px] px-2 py-0.5 rounded-md bg-brand-500/20 text-brand-400">{{ task.category }}</span>
+                                            <span v-if="task.beforeBase64" @click.stop="openImageViewer(task.beforeBase64)" class="text-[10px] bg-slate-700/50 text-brand-400 px-2 py-0.5 rounded flex items-center gap-1 border border-slate-600 active:bg-slate-600 cursor-pointer"><i class="fa-solid fa-camera"></i> {{ t('viewBefore') }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <p v-if="tasks.filter(t => t.propertyId === viewingPropertyId && !t.completed).length === 0" class="text-[13px] text-slate-500 text-center py-4">{{ t('noTasks') }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Recent Logs -->
+                    <div>
+                        <div class="flex justify-between items-end mb-3 px-1">
+                            <h3 class="text-lg font-bold text-white">{{ t('navRepairs') }}</h3>
+                            <button @click="currentTab = 'repairs'" class="text-brand-400 text-[13px] font-bold">{{ t('viewAll') }}</button>
+                        </div>
+                        <div class="space-y-3">
+                            <div v-for="repair in repairs.filter(r => r.propertyId === viewingPropertyId).slice(0, 3)" :key="repair.id" class="bg-slate-800 rounded-2xl p-4 border border-slate-700/50">
+                                <div class="flex justify-between items-start mb-2">
+                                    <p class="text-[15px] font-bold text-white leading-tight pr-4">{{ repair.title }}</p>
+                                    <span v-if="repair.cost" class="text-brand-400 font-bold text-sm bg-brand-500/10 px-2 py-1 rounded-lg">${{ repair.cost }}</span>
+                                </div>
+                                <div class="flex flex-wrap items-center gap-2 mb-2">
+                                    <span v-if="repair.category" class="text-[10px] px-2 py-0.5 rounded-md bg-brand-500/20 text-brand-400">{{ repair.category }}</span>
+                                    <span v-if="repair.beforeBase64" @click.stop="openImageViewer(repair.beforeBase64)" class="text-[10px] bg-slate-700/50 text-brand-400 px-2 py-0.5 rounded flex items-center gap-1 border border-slate-600 active:bg-slate-600 cursor-pointer"><i class="fa-solid fa-camera"></i> {{ t('viewBefore') }}</span>
+                                    <span v-if="repair.afterBase64" @click.stop="openImageViewer(repair.afterBase64)" class="text-[10px] bg-slate-700/50 text-emerald-400 px-2 py-0.5 rounded flex items-center gap-1 border border-slate-600 active:bg-slate-600 cursor-pointer"><i class="fa-solid fa-image"></i> {{ t('viewAfter') }}</span>
+                                    <span v-if="repair.receiptBase64" @click.stop="openImageViewer(repair.receiptBase64)" class="text-[10px] bg-slate-700/50 text-amber-400 px-2 py-0.5 rounded flex items-center gap-1 border border-slate-600 active:bg-slate-600 cursor-pointer"><i class="fa-solid fa-receipt"></i> {{ t('viewReceipt') }}</span>
+                                </div>
+                                <div class="flex items-center gap-2 text-[12px] text-slate-400">
+                                    <span><i class="fa-regular fa-calendar mr-1"></i>{{ repair.date }}</span>
+                                </div>
+                            </div>
+                            <p v-if="repairs.filter(r => r.propertyId === viewingPropertyId).length === 0" class="text-[13px] text-slate-500 text-center py-4">{{ t('noLogs') }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ====== Zone Detail View ====== -->
+                <div v-else-if="viewingPropertyId && viewingZone" class="space-y-6 slide-right-enter-active">
+                    <button @click="viewingZone = null" class="text-brand-400 text-sm font-bold flex items-center gap-2 mb-2 active:opacity-70"><i class="fa-solid fa-arrow-left"></i> {{ t('back') }}</button>
+                    
+                    <div class="flex items-center gap-4 mb-6 bg-slate-900/50 p-4 rounded-2xl border border-slate-700/50">
+                        <div class="w-14 h-14 rounded-2xl bg-brand-500/20 text-brand-400 flex items-center justify-center text-2xl border border-brand-500/30 shadow-inner flex-shrink-0">
+                            <i class="fa-solid fa-map-location-dot"></i>
+                        </div>
+                        <div>
+                            <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{{ properties.find(p => p.id === viewingPropertyId)?.name }}</p>
+                            <h2 class="text-2xl font-black text-white leading-tight">{{ viewingZone }}</h2>
+                        </div>
+                    </div>
+
+                    <!-- Zone Tasks -->
+                    <div>
+                        <h3 class="text-lg font-bold text-white mb-3 px-1">{{ t('navTasks') }}</h3>
+                        <div class="space-y-3">
+                            <div v-for="task in tasks.filter(t => t.propertyId === viewingPropertyId && t.zone === viewingZone)" :key="task.id" class="bg-slate-800 rounded-2xl p-4 border border-slate-700/50" :class="task.completed ? 'opacity-50' : ''">
+                                <div class="flex gap-3">
+                                    <button @click="toggleTask(task.id)" class="w-6 h-6 mt-0.5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors active:scale-90" :class="task.completed ? 'bg-brand-500 border-brand-500 text-white' : 'border-slate-500 text-transparent'">
+                                        <i class="fa-solid fa-check text-[10px]"></i>
+                                    </button>
+                                    <div class="flex-1">
+                                        <p class="text-[15px] font-bold mb-1.5 leading-tight" :class="task.completed ? 'text-slate-400 line-through' : 'text-slate-200'">{{ task.title }}</p>
+                                        <div class="flex flex-wrap gap-1.5 mb-2">
+                                            <span v-if="task.category" class="text-[10px] px-2 py-0.5 rounded-md bg-brand-500/20 text-brand-400">{{ task.category }}</span>
+                                            <span v-if="task.beforeBase64" @click.stop="openImageViewer(task.beforeBase64)" class="text-[10px] bg-slate-700/50 text-brand-400 px-2 py-0.5 rounded flex items-center gap-1 border border-slate-600 active:bg-slate-600 cursor-pointer"><i class="fa-solid fa-camera"></i> {{ t('viewBefore') }}</span>
+                                        </div>
+                                        <div class="flex justify-end gap-3 mt-3 pt-3 border-t border-slate-700/50">
+                                            <button v-if="!task.completed" @click="convertTaskToRepair(task)" class="text-[12px] font-bold text-brand-400 active:opacity-70 bg-slate-700/50 px-3 py-1.5 rounded-lg"><i class="fa-solid fa-file-pen mr-1"></i> {{ t('btnLogAsRepair') }}</button>
+                                            <button @click="deleteTask(task.id)" class="text-slate-500 active:text-red-400 transition-colors px-2"><i class="fa-solid fa-trash-can"></i></button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <p v-if="tasks.filter(t => t.propertyId === viewingPropertyId && t.zone === viewingZone).length === 0" class="text-[13px] text-slate-500 text-center py-4">{{ t('noTasks') }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Zone Logs -->
+                    <div class="mt-8">
+                        <h3 class="text-lg font-bold text-white mb-3 px-1">{{ t('navRepairs') }}</h3>
+                        <div class="space-y-3">
+                            <div v-for="repair in repairs.filter(r => r.propertyId === viewingPropertyId && r.zone === viewingZone)" :key="repair.id" class="bg-slate-800 rounded-2xl p-4 border border-slate-700/50">
+                                <div class="flex justify-between items-start mb-2">
+                                    <p class="text-[16px] font-bold text-white leading-tight pr-4">{{ repair.title }}</p>
+                                    <span v-if="repair.cost" class="text-brand-400 font-bold text-[15px] bg-brand-500/10 px-2.5 py-1 rounded-lg">${{ repair.cost }}</span>
+                                </div>
+                                <div class="flex flex-wrap items-center gap-2 mb-3">
+                                    <span v-if="repair.category" class="text-[10px] px-2 py-0.5 rounded-md bg-brand-500/20 text-brand-400">{{ repair.category }}</span>
+                                    <span v-if="repair.beforeBase64" @click.stop="openImageViewer(repair.beforeBase64)" class="text-[10px] bg-slate-700/50 text-brand-400 px-2 py-0.5 rounded flex items-center gap-1 border border-slate-600 active:bg-slate-600 cursor-pointer"><i class="fa-solid fa-camera"></i> {{ t('viewBefore') }}</span>
+                                    <span v-if="repair.afterBase64" @click.stop="openImageViewer(repair.afterBase64)" class="text-[10px] bg-slate-700/50 text-emerald-400 px-2 py-0.5 rounded flex items-center gap-1 border border-slate-600 active:bg-slate-600 cursor-pointer"><i class="fa-solid fa-image"></i> {{ t('viewAfter') }}</span>
+                                    <span v-if="repair.receiptBase64" @click.stop="openImageViewer(repair.receiptBase64)" class="text-[10px] bg-slate-700/50 text-amber-400 px-2 py-0.5 rounded flex items-center gap-1 border border-slate-600 active:bg-slate-600 cursor-pointer"><i class="fa-solid fa-receipt"></i> {{ t('viewReceipt') }}</span>
+                                </div>
+                                <div class="grid grid-cols-2 gap-2 text-[12px] text-slate-400 bg-slate-900/50 p-3 rounded-xl">
+                                    <div><i class="fa-regular fa-calendar mr-1.5"></i>{{ repair.date }}</div>
+                                    <div class="truncate"><i class="fa-solid fa-helmet-safety mr-1.5"></i>{{ getContractorName(repair.contractorId) }}</div>
+                                </div>
+                            </div>
+                            <p v-if="repairs.filter(r => r.propertyId === viewingPropertyId && r.zone === viewingZone).length === 0" class="text-[13px] text-slate-500 text-center py-4">{{ t('noLogs') }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ====== TAB 2: TASKS ====== -->
+            <div v-show="currentTab === 'tasks'" class="fade-enter-active">
+                <div class="flex gap-2 mb-4 overflow-x-auto no-scrollbar pb-1">
+                    <select v-model="selectedPropertyId" class="bg-slate-800 text-slate-300 text-[13px] font-bold rounded-xl px-3 py-2 border border-slate-700 outline-none">
+                        <option value="ALL">{{ t('allProperties') }}</option>
+                        <option v-for="p in properties" :key="p.id" :value="p.id">{{ p.name }}</option>
+                    </select>
+                </div>
+
+                <div class="space-y-3">
+                    <div v-for="task in filteredTasks" :key="task.id" class="bg-slate-800 rounded-2xl p-4 border border-slate-700/50 transition-all" :class="task.completed ? 'opacity-50' : ''">
+                        <div class="flex gap-3">
+                            <button @click="toggleTask(task.id)" class="w-6 h-6 mt-0.5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors active:scale-90" :class="task.completed ? 'bg-brand-500 border-brand-500 text-white' : 'border-slate-500 text-transparent'">
+                                <i class="fa-solid fa-check text-[10px]"></i>
+                            </button>
+                            <div class="flex-1">
+                                <p class="text-[15px] font-bold mb-1.5 leading-tight" :class="task.completed ? 'text-slate-400 line-through' : 'text-slate-200'">{{ task.title }}</p>
+                                <div class="flex flex-wrap gap-1.5 mb-2">
+                                    <span class="text-[10px] px-2 py-0.5 rounded-md bg-slate-900 border border-slate-700 text-slate-400 font-medium">{{ getPropertyName(task.propertyId) }}</span>
+                                    <span v-if="task.zone" class="text-[10px] px-2 py-0.5 rounded-md bg-slate-700 text-slate-300"><i class="fa-solid fa-location-dot mr-1"></i>{{ task.zone }}</span>
+                                    <span v-if="task.category" class="text-[10px] px-2 py-0.5 rounded-md bg-brand-500/20 text-brand-400">{{ task.category }}</span>
+                                    <span v-if="task.beforeBase64" @click.stop="openImageViewer(task.beforeBase64)" class="text-[10px] bg-slate-700/50 text-brand-400 px-2 py-0.5 rounded flex items-center gap-1 border border-slate-600 active:bg-slate-600 cursor-pointer"><i class="fa-solid fa-camera"></i> {{ t('viewBefore') }}</span>
+                                </div>
+                                
+                                <div class="flex justify-end gap-3 mt-3 pt-3 border-t border-slate-700/50">
+                                    <button v-if="!task.completed" @click="convertTaskToRepair(task)" class="text-[12px] font-bold text-brand-400 active:opacity-70 bg-slate-700/50 px-3 py-1.5 rounded-lg flex items-center gap-1.5"><i class="fa-solid fa-file-invoice"></i> {{ t('btnLogAsRepair') }}</button>
+                                    <button @click="deleteTask(task.id)" class="text-slate-500 active:text-red-400 transition-colors px-2"><i class="fa-solid fa-trash-can"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div v-if="filteredTasks.length === 0" class="text-center py-12 text-slate-500">
+                        <p>{{ t('noTasks') }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ====== TAB 3: REPAIRS & EVENTS ====== -->
+            <div v-show="currentTab === 'repairs'" class="fade-enter-active">
+                <div class="flex gap-2 mb-4 overflow-x-auto no-scrollbar pb-1">
+                    <select v-model="selectedPropertyId" class="bg-slate-800 text-slate-300 text-[13px] font-bold rounded-xl px-3 py-2 border border-slate-700 outline-none">
+                        <option value="ALL">{{ t('allProperties') }}</option>
+                        <option v-for="p in properties" :key="p.id" :value="p.id">{{ p.name }}</option>
+                    </select>
+                </div>
+
+                <div class="space-y-3">
+                    <div v-for="repair in filteredRepairs" :key="repair.id" class="bg-slate-800 rounded-2xl p-4 border border-slate-700/50">
+                        <div class="flex justify-between items-start mb-2">
+                            <p class="text-[16px] font-bold text-white leading-tight pr-4">{{ repair.title }}</p>
+                            <span v-if="repair.cost" class="text-brand-400 font-bold text-[15px] bg-brand-500/10 px-2.5 py-1 rounded-lg">${{ repair.cost }}</span>
+                        </div>
+                        
+                        <div class="flex flex-wrap items-center gap-1.5 mb-3">
+                            <span class="text-[10px] px-2 py-0.5 rounded-md bg-slate-900 border border-slate-700 text-slate-400 font-medium">{{ getPropertyName(repair.propertyId) }}</span>
+                            <span v-if="repair.zone" class="text-[10px] px-2 py-0.5 rounded-md bg-slate-700 text-slate-300"><i class="fa-solid fa-location-dot mr-1"></i>{{ repair.zone }}</span>
+                            <span v-if="repair.category" class="text-[10px] px-2 py-0.5 rounded-md bg-brand-500/20 text-brand-400">{{ repair.category }}</span>
+                            <span v-if="repair.beforeBase64" @click.stop="openImageViewer(repair.beforeBase64)" class="text-[10px] bg-slate-700/50 text-brand-400 px-2 py-0.5 rounded flex items-center gap-1 border border-slate-600 active:bg-slate-600 cursor-pointer ml-1"><i class="fa-solid fa-camera"></i> {{ t('viewBefore') }}</span>
+                            <span v-if="repair.afterBase64" @click.stop="openImageViewer(repair.afterBase64)" class="text-[10px] bg-slate-700/50 text-emerald-400 px-2 py-0.5 rounded flex items-center gap-1 border border-slate-600 active:bg-slate-600 cursor-pointer ml-1"><i class="fa-solid fa-image"></i> {{ t('viewAfter') }}</span>
+                            <span v-if="repair.receiptBase64" @click.stop="openImageViewer(repair.receiptBase64)" class="text-[10px] bg-slate-700/50 text-amber-400 px-2 py-0.5 rounded flex items-center gap-1 border border-slate-600 active:bg-slate-600 cursor-pointer ml-1"><i class="fa-solid fa-receipt"></i> {{ t('viewReceipt') }}</span>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2 text-[12px] text-slate-400 bg-slate-900/50 p-3 rounded-xl">
+                            <div><i class="fa-regular fa-calendar mr-1.5"></i>{{ repair.date }}</div>
+                            <div class="truncate"><i class="fa-solid fa-helmet-safety mr-1.5"></i>{{ getContractorName(repair.contractorId) }}</div>
+                        </div>
+
+                        <div v-if="repair.warrantyEndDate" class="mt-3 text-[12px] font-bold flex items-center gap-1.5" :class="isWarrantyActive(repair.warrantyEndDate) ? 'text-emerald-400' : 'text-slate-500'">
+                            <i class="fa-solid fa-shield-halved"></i>
+                            {{ t('warrantyUntil') }} {{ repair.warrantyEndDate }} {{ isWarrantyActive(repair.warrantyEndDate) ? '(Active)' : '(Expired)' }}
+                        </div>
+                    </div>
+                    <div v-if="filteredRepairs.length === 0" class="text-center py-12 text-slate-500">
+                        <p>{{ t('noLogs') }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ====== TAB 4: CONTRACTORS ====== -->
+            <div v-show="currentTab === 'contractors'" class="fade-enter-active">
+                <div class="space-y-4">
+                    <div v-for="contractor in contractors" :key="contractor.id" class="bg-slate-800 rounded-2xl p-5 border border-slate-700/50">
+                        <div class="flex justify-between items-start mb-3">
+                            <div>
+                                <h3 class="text-[18px] font-black text-white mb-1">{{ contractor.name }}</h3>
+                                <span class="text-[10px] px-2 py-0.5 rounded-md bg-brand-500/20 text-brand-400 font-bold uppercase tracking-wider">{{ contractor.trade }}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-2 mb-4">
+                            <a v-if="contractor.phone" :href="'tel:' + contractor.phone" class="flex items-center text-[14px] text-slate-300 bg-slate-900/50 p-2.5 rounded-xl border border-slate-700 active:bg-slate-700 transition-colors">
+                                <i class="fa-solid fa-phone text-brand-400 w-6 text-center"></i> {{ contractor.phone }}
+                            </a>
+                            <div v-if="contractor.wechat" class="flex items-center justify-between text-[14px] text-slate-300 bg-slate-900/50 p-2.5 rounded-xl border border-slate-700">
+                                <span class="flex items-center"><i class="fa-brands fa-weixin text-emerald-400 w-6 text-center"></i> {{ contractor.wechat }}</span>
+                                <button @click="copyText(contractor.wechat)" class="text-[11px] bg-slate-700 px-2 py-1 rounded text-slate-300 active:bg-slate-600">Copy</button>
+                            </div>
+                        </div>
+
+                        <div v-if="contractor.notes" class="text-[13px] text-slate-400 bg-slate-900 p-3 rounded-xl border-l-2 border-slate-600">
+                            "{{ contractor.notes }}"
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- Global FAB -->
+        <button @click="handleFabClick" class="absolute bottom-24 right-5 w-14 h-14 bg-brand-500 text-white rounded-full shadow-lg shadow-brand-500/30 flex items-center justify-center text-2xl active:scale-90 transition-transform z-30">
+            <i class="fa-solid fa-plus"></i>
+        </button>
+
+        <!-- Bottom Navigation -->
+        <nav class="h-20 bg-slate-900 border-t border-slate-800 flex justify-around items-center px-2 flex-shrink-0 relative z-20 pb-safe">
+            <button @click="navToDashboard" class="flex flex-col items-center p-2 w-16 transition-colors" :class="currentTab === 'dashboard' ? 'text-brand-400' : 'text-slate-500'">
+                <i class="text-xl mb-1 fa-solid fa-house-chimney"></i>
+                <span class="text-[10px] font-bold">{{ t('navDashboard') }}</span>
+            </button>
+            <button @click="currentTab = 'tasks'" class="flex flex-col items-center p-2 w-16 transition-colors" :class="currentTab === 'tasks' ? 'text-brand-400' : 'text-slate-500'">
+                <i class="text-xl mb-1 fa-solid fa-clipboard-check"></i>
+                <span class="text-[10px] font-bold">{{ t('navTasks') }}</span>
+            </button>
+            <button @click="currentTab = 'repairs'" class="flex flex-col items-center p-2 w-16 transition-colors" :class="currentTab === 'repairs' ? 'text-brand-400' : 'text-slate-500'">
+                <i class="text-xl mb-1 fa-solid fa-screwdriver-wrench"></i>
+                <span class="text-[10px] font-bold">{{ t('navRepairs') }}</span>
+            </button>
+            <button @click="currentTab = 'contractors'" class="flex flex-col items-center p-2 w-16 transition-colors" :class="currentTab === 'contractors' ? 'text-brand-400' : 'text-slate-500'">
+                <i class="text-xl mb-1 fa-solid fa-address-book"></i>
+                <span class="text-[10px] font-bold">{{ t('navPros') }}</span>
+            </button>
+        </nav>
+
+        <!-- Modals / Bottom Sheets Overlay -->
+        <div v-if="activeModal" class="absolute inset-0 z-50 flex flex-col justify-end">
+            <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" @click="closeModal"></div>
+            
+            <transition name="bottom-sheet" appear>
+                <div class="bg-slate-900 w-full rounded-t-3xl border-t border-slate-700 relative z-10 flex flex-col max-h-[85vh]">
+                    <div class="w-full flex justify-center py-3" @click="closeModal">
+                        <div class="w-12 h-1.5 bg-slate-700 rounded-full"></div>
+                    </div>
+                    
+                    <div class="overflow-y-auto no-scrollbar px-6 pb-8 pt-2">
+                        
+                        <!-- Property Modal -->
+                        <div v-if="activeModal === 'property'" class="space-y-5">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-2xl font-black text-white">{{ editingPropertyId ? t('modalEditProperty') : t('modalAddProperty') }}</h3>
+                                <button v-if="editingPropertyId" @click="deleteProperty" class="text-red-400 text-sm font-bold bg-red-500/10 px-3 py-1.5 rounded-lg">{{ t('deleteProperty') }}</button>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-[12px] font-bold text-slate-400 uppercase tracking-wider mb-2 pl-1">{{ t('modalPropName') }}</label>
+                                <input v-model="formProperty.name" type="text" class="w-full bg-slate-800 rounded-2xl p-4 text-[15px] text-white outline-none border border-transparent focus:border-brand-500">
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-[12px] font-bold text-slate-400 uppercase tracking-wider mb-2 pl-1">{{ t('modalPropType') }}</label>
+                                    <select v-model="formProperty.type" class="w-full bg-slate-800 rounded-2xl p-4 text-[15px] text-white outline-none">
+                                        <option value="primary">{{ t('primaryHome') }}</option>
+                                        <option value="rental">{{ t('rentalProperty') }}</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-[12px] font-bold text-slate-400 uppercase tracking-wider mb-2 pl-1">{{ t('modalBuildingType') }}</label>
+                                    <select v-model="formProperty.buildingType" class="w-full bg-slate-800 rounded-2xl p-4 text-[15px] text-white outline-none">
+                                        <option value="detached">{{ t('typeDetached') }}</option>
+                                        <option value="townhouse">{{ t('typeTownhouse') }}</option>
+                                        <option value="condo">{{ t('typeCondo') }}</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-[12px] font-bold text-slate-400 uppercase tracking-wider mb-2 pl-1">{{ t('modalPropAddress') }}</label>
+                                <input v-model="formProperty.address" type="text" class="w-full bg-slate-800 rounded-2xl p-4 text-[15px] text-white outline-none border border-transparent focus:border-brand-500">
+                            </div>
+
+                            <!-- Map Coordinates Config -->
+                            <div>
+                                <div class="flex justify-between items-center mb-2 pl-1">
+                                    <label class="text-[12px] font-bold text-slate-400 uppercase tracking-wider">{{ t('mapCoordinates') }}</label>
+                                    <button @click="setCurrentGPSLocation" type="button" class="text-[11px] font-bold text-brand-400 bg-brand-500/10 px-2.5 py-1 rounded-lg border border-brand-500/20 active:scale-95 transition-transform flex items-center gap-1">
+                                        <i class="fa-solid fa-location-crosshairs"></i> {{ t('useCurrentGPS') }}
+                                    </button>
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <input v-model.number="formProperty.lat" type="number" step="any" placeholder="Latitude (45.4215)" class="w-full bg-slate-800 rounded-2xl p-4 text-[15px] text-white outline-none border border-transparent focus:border-brand-500">
+                                    </div>
+                                    <div>
+                                        <input v-model.number="formProperty.lng" type="number" step="any" placeholder="Longitude (-75.6972)" class="w-full bg-slate-800 rounded-2xl p-4 text-[15px] text-white outline-none border border-transparent focus:border-brand-500">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button @click="saveProperty" class="w-full py-4 mt-4 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-2xl shadow-lg active:scale-95 transition-all text-lg">{{ t('btnSave') }}</button>
+                        </div>
+
+                        <!-- Task Modal -->
+                        <div v-if="activeModal === 'task'" class="space-y-5">
+                            <h3 class="text-2xl font-black text-white mb-4">{{ t('addTask') }}</h3>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-[12px] font-bold text-slate-400 uppercase tracking-wider mb-2 pl-1">{{ t('modalProperty') }}</label>
+                                    <select v-model="formTask.propertyId" class="w-full bg-slate-800 rounded-2xl p-4 text-[15px] text-white outline-none">
+                                        <option v-for="p in properties" :key="p.id" :value="p.id">{{ p.name }}</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-[12px] font-bold text-slate-400 uppercase tracking-wider mb-2 pl-1">{{ t('modalZone') }}</label>
+                                    <select v-model="formTask.zone" class="w-full bg-slate-800 rounded-2xl p-4 text-[15px] text-white outline-none">
+                                        <option value="">--</option>
+                                        <optgroup v-for="(zones, group) in houseZones[currentLang]" :key="group" :label="group">
+                                            <option v-for="z in zones" :key="z" :value="z">{{ z }}</option>
+                                        </optgroup>
+                                    </select>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-[12px] font-bold text-slate-400 uppercase tracking-wider mb-2 pl-1">{{ t('modalTaskTitle') }}</label>
+                                <select v-model="formTask.titleSelect" @change="handleTaskTitleChange" class="w-full bg-slate-800 rounded-2xl p-4 text-[15px] text-white outline-none mb-3">
+                                    <option value="">{{ t('selectCommonTask') }}</option>
+                                    <option v-for="t in commonTaskTitles[currentLang]" :key="t.name" :value="t.name">{{ t.name }}</option>
+                                    <option value="OTHER">✍️ {{ t('otherManual') }}</option>
+                                </select>
+                                <input v-if="formTask.titleSelect === 'OTHER'" v-model="formTask.title" type="text" :placeholder="t('enterTaskManually')" class="w-full bg-slate-800 rounded-2xl p-4 text-[15px] text-white outline-none border border-transparent focus:border-brand-500 mb-3">
+                                
+                                <select v-if="formTask.titleSelect === 'OTHER'" v-model="formTask.category" class="w-full bg-slate-800 rounded-2xl p-4 text-[15px] text-white outline-none">
+                                    <option value="">-- Category --</option>
+                                    <option v-for="cat in taskCategories[currentLang]" :key="cat" :value="cat">{{ cat }}</option>
+                                </select>
+                            </div>
+
+                            <!-- Before Photo for Task -->
+                            <div class="mt-4 border-t border-slate-700/50 pt-4">
+                                <label class="block text-[12px] font-bold text-slate-400 uppercase tracking-wider mb-2 pl-1">{{ t('uploadBefore') }}</label>
+                                <div v-if="!formTask.beforeBase64" @click="triggerFileInput('before')" class="w-full bg-slate-800/50 border-2 border-dashed border-slate-600 rounded-2xl p-6 flex flex-col items-center justify-center text-slate-400 cursor-pointer active:bg-slate-800 transition-colors">
+                                    <i class="fa-solid fa-camera text-2xl mb-2"></i>
+                                    <span class="text-[13px] font-bold mt-1">{{ t('uploadBefore') }}</span>
+                                </div>
+                                <div v-else class="relative w-full bg-slate-800 rounded-2xl p-2 border border-slate-700 flex items-center justify-center h-40">
+                                    <img :src="formTask.beforeBase64" class="max-h-full max-w-full rounded-xl object-contain">
+                                    <button @click="removePhoto('before')" class="absolute -top-3 -right-3 w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg active:scale-90"><i class="fa-solid fa-xmark"></i></button>
+                                </div>
+                            </div>
+
+                            <button @click="saveTask" class="w-full py-4 mt-4 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-2xl shadow-lg active:scale-95 transition-all text-lg">{{ t('btnSave') }}</button>
+                        </div>
+
+                        <!-- Repair / Event Modal -->
+                        <div v-if="activeModal === 'repair'" class="space-y-5">
+                            <h3 class="text-2xl font-black text-white mb-4">{{ convertingTaskId ? t('btnLogAsRepair') : t('logEvent') }}</h3>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-[12px] font-bold text-slate-400 uppercase tracking-wider mb-2 pl-1">{{ t('modalProperty') }}</label>
+                                    <select v-model="formRepair.propertyId" class="w-full bg-slate-800 rounded-2xl p-4 text-[15px] text-white outline-none">
+                                        <option v-for="p in properties" :key="p.id" :value="p.id">{{ p.name }}</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-[12px] font-bold text-slate-400 uppercase tracking-wider mb-2 pl-1">{{ t('modalZone') }}</label>
+                                    <select v-model="formRepair.zone" class="w-full bg-slate-800 rounded-2xl p-4 text-[15px] text-white outline-none">
+                                        <option value="">--</option>
+                                        <optgroup v-for="(zones, group) in houseZones[currentLang]" :key="group" :label="group">
+                                            <option v-for="z in zones" :key="z" :value="z">{{ z }}</option>
+                                        </optgroup>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-[12px] font-bold text-slate-400 uppercase tracking-wider mb-2 pl-1">{{ t('modalRepairTitle') }}</label>
+                                <select v-model="formRepair.titleSelect" @change="handleRepairTitleChange" class="w-full bg-slate-800 rounded-2xl p-4 text-[15px] text-white outline-none mb-3">
+                                    <option value="">{{ t('selectCommonRepair') }}</option>
+                                    <option v-for="r in commonRepairTitles[currentLang]" :key="r.name" :value="r.name">{{ r.name }}</option>
+                                    <option value="OTHER">✍️ {{ t('otherManual') }}</option>
+                                </select>
+                                <input v-if="formRepair.titleSelect === 'OTHER'" v-model="formRepair.title" type="text" :placeholder="t('enterRepairManually')" class="w-full bg-slate-800 rounded-2xl p-4 text-[15px] text-white outline-none border border-transparent focus:border-brand-500 mb-3">
+                                
+                                <select v-if="formRepair.titleSelect === 'OTHER'" v-model="formRepair.category" class="w-full bg-slate-800 rounded-2xl p-4 text-[15px] text-white outline-none">
+                                    <option value="">-- Category --</option>
+                                    <option v-for="cat in taskCategories[currentLang]" :key="cat" :value="cat">{{ cat }}</option>
+                                </select>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-[12px] font-bold text-slate-400 uppercase tracking-wider mb-2 pl-1">{{ t('modalCost') }}</label>
+                                    <div class="relative">
+                                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">$</span>
+                                        <input v-model="formRepair.cost" type="number" class="w-full bg-slate-800 rounded-2xl py-4 pr-4 pl-8 text-[15px] text-white outline-none border border-transparent focus:border-brand-500">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-[12px] font-bold text-slate-400 uppercase tracking-wider mb-2 pl-1">{{ t('modalDate') }}</label>
+                                    <input v-model="formRepair.date" type="date" class="w-full bg-slate-800 rounded-2xl p-4 text-[15px] text-white outline-none">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-[12px] font-bold text-slate-400 uppercase tracking-wider mb-2 pl-1">{{ t('modalContractor') }}</label>
+                                    <select v-model="formRepair.contractorId" class="w-full bg-slate-800 rounded-2xl p-4 text-[15px] text-white outline-none">
+                                        <option value="">-- {{ t('noneSelf') }} --</option>
+                                        <option v-for="c in contractors" :key="c.id" :value="c.id">{{ c.name }}</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-[12px] font-bold text-slate-400 uppercase tracking-wider mb-2 pl-1">{{ t('modalWarranty') }}</label>
+                                    <input v-model="formRepair.warrantyEndDate" type="date" class="w-full bg-slate-800 rounded-2xl p-4 text-[15px] text-white outline-none">
+                                </div>
+                            </div>
+
+                            <!-- Images Upload Grid (Before / After / Receipt) -->
+                            <div class="mt-4 border-t border-slate-700/50 pt-4">
+                                <label class="block text-[12px] font-bold text-slate-400 uppercase tracking-wider mb-3 pl-1">Photos & Receipts</label>
+                                <div class="grid grid-cols-3 gap-3">
+                                    <div>
+                                        <div v-if="!formRepair.beforeBase64" @click="triggerFileInput('before')" class="w-full aspect-square bg-slate-800/50 border-2 border-dashed border-slate-600 rounded-2xl flex flex-col items-center justify-center text-slate-400 cursor-pointer active:bg-slate-800 transition-colors text-center p-1">
+                                            <i class="fa-solid fa-camera text-lg mb-1"></i><span class="text-[10px] font-bold leading-tight">{{ t('viewBefore') }}</span>
+                                        </div>
+                                        <div v-else class="relative w-full aspect-square bg-slate-800 rounded-2xl p-1 border border-slate-700 flex items-center justify-center">
+                                            <img :src="formRepair.beforeBase64" class="max-h-full max-w-full rounded-xl object-contain">
+                                            <button @click="removePhoto('before')" class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg active:scale-90 text-[10px]"><i class="fa-solid fa-xmark"></i></button>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div v-if="!formRepair.afterBase64" @click="triggerFileInput('after')" class="w-full aspect-square bg-slate-800/50 border-2 border-dashed border-slate-600 rounded-2xl flex flex-col items-center justify-center text-slate-400 cursor-pointer active:bg-slate-800 transition-colors text-center p-1">
+                                            <i class="fa-solid fa-camera text-lg mb-1"></i><span class="text-[10px] font-bold leading-tight">{{ t('viewAfter') }}</span>
+                                        </div>
+                                        <div v-else class="relative w-full aspect-square bg-slate-800 rounded-2xl p-1 border border-slate-700 flex items-center justify-center">
+                                            <img :src="formRepair.afterBase64" class="max-h-full max-w-full rounded-xl object-contain">
+                                            <button @click="removePhoto('after')" class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg active:scale-90 text-[10px]"><i class="fa-solid fa-xmark"></i></button>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div v-if="!formRepair.receiptBase64" @click="triggerFileInput('receipt')" class="w-full aspect-square bg-slate-800/50 border-2 border-dashed border-slate-600 rounded-2xl flex flex-col items-center justify-center text-slate-400 cursor-pointer active:bg-slate-800 transition-colors text-center p-1">
+                                            <i class="fa-solid fa-receipt text-lg mb-1"></i><span class="text-[10px] font-bold leading-tight">{{ t('viewReceipt') }}</span>
+                                        </div>
+                                        <div v-else class="relative w-full aspect-square bg-slate-800 rounded-2xl p-1 border border-slate-700 flex items-center justify-center">
+                                            <img :src="formRepair.receiptBase64" class="max-h-full max-w-full rounded-xl object-contain">
+                                            <button @click="removePhoto('receipt')" class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg active:scale-90 text-[10px]"><i class="fa-solid fa-xmark"></i></button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button @click="saveRepair" class="w-full py-4 mt-4 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-2xl shadow-lg active:scale-95 transition-all text-lg">{{ t('btnSave') }}</button>
+                        </div>
+                        
+                        <!-- Global File Input -->
+                        <input type="file" ref="fileInput" accept="image/*" capture="environment" class="hidden" @change="handleFileUpload">
+
+                        <!-- Contractor Modal -->
+                        <div v-if="activeModal === 'contractor'" class="space-y-5">
+                            <h3 class="text-2xl font-black text-white mb-4">{{ t('addContractor') }}</h3>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-[12px] font-bold text-slate-400 uppercase tracking-wider mb-2 pl-1">Name</label>
+                                    <input v-model="formContractor.name" type="text" class="w-full bg-slate-800 rounded-2xl p-4 text-[15px] text-white outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-[12px] font-bold text-slate-400 uppercase tracking-wider mb-2 pl-1">Trade/Type</label>
+                                    <input v-model="formContractor.trade" type="text" class="w-full bg-slate-800 rounded-2xl p-4 text-[15px] text-white outline-none">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-[12px] font-bold text-slate-400 uppercase tracking-wider mb-2 pl-1">Phone</label>
+                                    <input v-model="formContractor.phone" type="text" class="w-full bg-slate-800 rounded-2xl p-4 text-[15px] text-white outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-[12px] font-bold text-slate-400 uppercase tracking-wider mb-2 pl-1">WeChat ID</label>
+                                    <input v-model="formContractor.wechat" type="text" class="w-full bg-slate-800 rounded-2xl p-4 text-[15px] text-white outline-none">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-[12px] font-bold text-slate-400 uppercase tracking-wider mb-2 pl-1">Private Notes</label>
+                                <textarea v-model="formContractor.notes" class="w-full bg-slate-800 rounded-2xl p-4 text-[15px] text-white outline-none min-h-[100px]"></textarea>
+                            </div>
+                            <button @click="saveContractor" class="w-full py-4 mt-4 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-2xl shadow-lg active:scale-95 transition-all text-lg">{{ t('btnSave') }}</button>
+                        </div>
+                    </div>
+                </div>
+            </transition>
+        </div>
+
+        <!-- Fullscreen Image Viewer Overlay -->
+        <transition name="fade">
+            <div v-if="viewingImageBase64" class="fixed inset-0 z-[60] bg-black flex flex-col">
+                <div class="h-16 flex items-center justify-end px-4 bg-gradient-to-b from-black/80 to-transparent">
+                    <button @click="closeImageViewer" class="w-10 h-10 rounded-full bg-white/10 text-white flex items-center justify-center active:scale-90"><i class="fa-solid fa-xmark text-xl"></i></button>
+                </div>
+                <div class="flex-1 flex items-center justify-center p-4 overflow-auto">
+                    <img :src="viewingImageBase64" class="max-w-full max-h-full object-contain rounded-lg">
+                </div>
+            </div>
+        </transition>
+
+        <!-- Toast Notification -->
+        <transition name="fade">
+            <div v-if="toastMessage" class="absolute top-20 left-1/2 -translate-x-1/2 bg-emerald-500 text-white px-5 py-2.5 rounded-full shadow-lg font-bold text-[13px] z-50 flex items-center gap-2">
+                <i class="fa-solid fa-circle-check"></i> {{ toastMessage }}
+            </div>
+        </transition>
+
+    </div>
+
+    <script>
+        const { createApp, nextTick } = Vue;
+
+        const DEFAULT_CENTER = [45.4215, -75.6972]; // Ottawa Base Lat/Lng
+
+        const locales = {
+            en: {
+                navDashboard: 'Home', navTasks: 'Tasks', navRepairs: 'Logs', navPros: 'Pros',
+                primaryHome: 'Primary', rentalProperty: 'Rental',
+                typeDetached: 'Detached', typeTownhouse: 'Townhouse', typeCondo: 'Condo',
+                dashboardTasks: 'Pending Tasks', dashboardLogs: 'Logs & Events', dashboardTotalCost: 'Total Expenses',
+                noAddress: 'No Address Set', noProperties: 'No properties added yet.', viewAll: 'View All',
+                allProperties: 'All Properties', noTasks: 'No tasks found.', btnLogAsRepair: 'Log as Repair',
+                noLogs: 'No logs found.', warrantyUntil: 'Warranty until', noneSelf: 'Self / None',
+                noContractors: 'No contractors added.', btnCopy: 'Copy',
+                addProperty: 'Add Property', addTask: 'Add Task', logEvent: 'Log Repair/Event', addContractor: 'Add Pro',
+                modalEditProperty: 'Edit Property Details', modalAddProperty: 'Add Property', deleteProperty: 'Delete Property',
+                modalPropName: 'Property Name (e.g. Primary Residence / Rental A)', modalPropType: 'Usage Type', modalBuildingType: 'Building Type', modalPropAddress: 'Address',
+                modalProperty: 'Belongs to', modalZone: 'Zone/Area', modalTaskTitle: 'Task Title', selectCommonTask: 'Select Common Task...', otherManual: 'Other (Manual Entry)', enterTaskManually: 'Enter task manually',
+                modalRepairTitle: 'Event/Repair Title', selectCommonRepair: 'Select Common Issue...', enterRepairManually: 'Enter event manually',
+                modalCost: 'Cost', modalDate: 'Date', modalContractor: 'Contractor', modalWarranty: 'Warranty Ends',
+                btnSave: 'Save', back: 'Back', backToProperties: 'Back to Properties', allTime: 'All Time', zoneLayout: 'Space Blueprint',
+                toastPropSaved: 'Property saved', toastPropUpdated: 'Property updated', toastTaskSaved: 'Task saved', toastRepairLogged: 'Repair logged', toastProSaved: 'Pro saved', toastCopied: 'Copied!',
+                uploadReceipt: 'Upload Receipt', viewReceipt: 'Receipt', remove: 'Remove',
+                uploadBefore: 'Before Photo', uploadAfter: 'After Photo', viewBefore: 'Before', viewAfter: 'After',
+                viewModeList: 'Cards', viewModeMap: 'Map View', openPropertyDetails: 'Open Blueprint',
+                mapCoordinates: 'GPS Coordinates', useCurrentGPS: 'Get Current GPS', recenterMap: 'Fit All Pins'
+            },
+            zh: {
+                navDashboard: '资产', navTasks: '待办', navRepairs: '病历本', navPros: '师傅',
+                primaryHome: '自住', rentalProperty: '出租',
+                typeDetached: '独立屋', typeTownhouse: '联排别墅', typeCondo: '公寓',
+                dashboardTasks: '待处理任务', dashboardLogs: '维修与事件', dashboardTotalCost: '累计开销',
+                noAddress: '未填写地址', noProperties: '暂无房屋资产。', viewAll: '查看全部',
+                allProperties: '所有房屋', noTasks: '暂无待办任务。', btnLogAsRepair: '转为维修记录',
+                noLogs: '暂无记录。', warrantyUntil: '保修至', noneSelf: '自己动手 / 无',
+                noContractors: '暂无师傅通讯录。', btnCopy: '复制',
+                addProperty: '添加房屋', addTask: '添加待办', logEvent: '记录维修/事件', addContractor: '添加师傅',
+                modalEditProperty: '编辑房屋信息', modalAddProperty: '添加房屋', deleteProperty: '删除房屋',
+                modalPropName: '房屋名称 (例如: 自住主屋 / 出租房 A)', modalPropType: '产权用途', modalBuildingType: '建筑类型', modalPropAddress: '详细地址',
+                modalProperty: '所属房屋', modalZone: '具体区域', modalTaskTitle: '任务名称', selectCommonTask: '选择常见待办...', otherManual: '其他 (手动输入)', enterTaskManually: '输入具体待办内容',
+                modalRepairTitle: '维修/事件名称', selectCommonRepair: '选择常见维修项目...', enterRepairManually: '输入具体维修/事件',
+                modalCost: '花费', modalDate: '日期', modalContractor: '施工师傅', modalWarranty: '保修到期日',
+                btnSave: '保存', back: '返回', backToProperties: '返回房屋列表', allTime: '全部历年', zoneLayout: '房屋空间剖面图',
+                toastPropSaved: '房屋已保存', toastPropUpdated: '房屋信息已更新', toastTaskSaved: '待办已保存', toastRepairLogged: '记录已保存', toastProSaved: '师傅已保存', toastCopied: '已复制!',
+                uploadReceipt: '票据照片', viewReceipt: '票据', remove: '移除',
+                uploadBefore: '修前照片 (Before)', uploadAfter: '修后照片 (After)', viewBefore: '修前', viewAfter: '修后',
+                viewModeList: '卡片', viewModeMap: '地图模式', openPropertyDetails: '进入剖面图',
+                mapCoordinates: '地图定位坐标', useCurrentGPS: '定位当前位置', recenterMap: '全览所有房屋'
+            }
+        };
+
+        const houseZones = {
+            en: {
+                'Structure & Exterior': ['Roof', 'Gutters & Downspouts', 'Exterior Walls / Siding', 'Foundation', 'Windows & Doors'],
+                'Indoor Living Area': ['Foyer / Entryway', 'Living Room', 'Dining Room', 'Kitchen', 'Primary Bedroom', 'Guest Bedrooms', 'Bathrooms', 'Office / Den'],
+                'Utility & Service': ['Furnace Room', 'Laundry Room', 'Basement', 'Garage', 'Attic'],
+                'Outdoor Grounds': ['Front Yard / Lawn', 'Backyard', 'Deck / Patio', 'Driveway']
+            },
+            zh: {
+                '建筑主体与外壳': ['屋顶', '排水沟/落水管', '外墙/挂板', '地基', '门窗'],
+                '室内居住区': ['玄关', '客厅', '餐厅', '厨房', '主卧', '次卧/客房', '卫生间', '书房/起居室'],
+                '机房与功能区': ['暖炉房/机房', '洗衣房', '地下室', '车库', '阁楼'],
+                '户外庭院': ['前院/草坪', '后院', '露台/Deck', '车道']
+            }
+        };
+
+        const taskCategories = {
+            en: ['Plumbing', 'HVAC', 'Electrical', 'Roofing', 'Exterior/Siding', 'Landscaping', 'Cleaning', 'Appliances', 'Renovation', 'General/Other'],
+            zh: ['水电卫浴', '暖通空调', '电路灯具', '屋顶维修', '室外建筑/外墙', '园林庭院', '家政清洁', '家电维修', '装修翻新', '杂项/其他']
+        };
+
+        const commonTaskTitles = {
+            en: [
+                { name: 'Replace Furnace Filter', category: 'HVAC' },
+                { name: 'Clean Gutters & Downspouts', category: 'Roofing' },
+                { name: 'Test Smoke/CO Detectors', category: 'Electrical' },
+                { name: 'Winterize Outdoor Faucets', category: 'Plumbing' },
+                { name: 'Lawn Fertilization', category: 'Landscaping' }
+            ],
+            zh: [
+                { name: '更换暖炉滤网 (Furnace Filter)', category: '暖通空调' },
+                { name: '清理屋顶排水沟落叶', category: '屋顶维修' },
+                { name: '测试烟雾与一氧化碳报警器', category: '电路灯具' },
+                { name: '入冬前关闭户外水龙头', category: '水电卫浴' },
+                { name: '草坪施肥与除草', category: '园林庭院' }
+            ]
+        };
+
+        const commonRepairTitles = {
+            en: [
+                { name: 'Fix Leaking Pipe/Faucet', category: 'Plumbing' },
+                { name: 'Replace Water Heater', category: 'Plumbing' },
+                { name: 'Furnace / AC Repair', category: 'HVAC' },
+                { name: 'Roof Shingle Patching', category: 'Roofing' },
+                { name: 'Appliance Repair', category: 'Appliances' }
+            ],
+            zh: [
+                { name: '水管/水龙头漏水维修', category: '水电卫浴' },
+                { name: '更换热水器 (Water Heater)', category: '水电卫浴' },
+                { name: '暖炉/空调故障维修', category: '暖通空调' },
+                { name: '屋顶沥青瓦片修补', category: '屋顶维修' },
+                { name: '大型家电维修', category: '家电维修' }
+            ]
+        };
+
+        createApp({
+            data() {
+                return {
+                    currentLang: localStorage.getItem('my_home_os_lang') || 'en',
+                    currentTab: 'dashboard', 
+                    dashboardViewMode: 'list', // 'list' | 'map'
+                    mapInstance: null,
+                    mapMarkers: [],
+                    selectedPropertyId: 'ALL', 
+                    activeModal: null, editingPropertyId: null, convertingTaskId: null, toastMessage: '', viewingPropertyId: null, viewingZone: null,
+                    viewingImageBase64: null, currentUploadType: null,
+                    selectedExpenseYear: new Date().getFullYear().toString(),
+                    houseZones, taskCategories, commonTaskTitles, commonRepairTitles,
+                    properties: [], tasks: [], repairs: [], contractors: [],
+                    formProperty: { name: '', type: 'primary', buildingType: 'detached', address: '', lat: null, lng: null },
+                    formTask: { propertyId: '', titleSelect: '', title: '', zone: '', category: '', beforeBase64: '' },
+                    formRepair: { propertyId: '', titleSelect: '', title: '', zone: '', category: '', cost: '', date: '', warrantyEndDate: '', contractorId: '', receiptBase64: '', beforeBase64: '', afterBase64: '' },
+                    formContractor: { name: '', trade: '', phone: '', wechat: '', notes: '' }
+                }
+            },
+            computed: {
+                filteredTasks() { return this.selectedPropertyId === 'ALL' ? this.tasks : this.tasks.filter(t => t.propertyId === this.selectedPropertyId); },
+                filteredRepairs() { return this.selectedPropertyId === 'ALL' ? this.repairs : this.repairs.filter(r => r.propertyId === this.selectedPropertyId); },
+                availableYears() {
+                    if (!this.viewingPropertyId) return [];
+                    const years = new Set(this.repairs.filter(r => r.propertyId === this.viewingPropertyId && r.date).map(r => r.date.substring(0,4)));
+                    years.add(new Date().getFullYear().toString()); 
+                    return Array.from(years).sort((a,b) => b - a);
+                },
+                blueprintLayers() {
+                    const lang = this.currentLang;
+                    const keys = Object.keys(this.houseZones[lang]);
+                    return [
+                        { icon: 'fa-cubes', title: keys[0], zones: this.houseZones[lang][keys[0]] },
+                        { icon: 'fa-couch', title: keys[1], zones: this.houseZones[lang][keys[1]] },
+                        { icon: 'fa-screwdriver-wrench', title: keys[2], zones: this.houseZones[lang][keys[2]] },
+                        { icon: 'fa-tree', title: keys[3], zones: this.houseZones[lang][keys[3]] }
+                    ];
+                }
+            },
+            methods: {
+                t(key) { return locales[this.currentLang][key] || key; },
+                toggleLanguage() { this.currentLang = this.currentLang === 'en' ? 'zh' : 'en'; localStorage.setItem('my_home_os_lang', this.currentLang); if(this.mapInstance) this.renderMapMarkers(); },
+                navToDashboard() { this.viewingPropertyId = null; this.viewingZone = null; this.currentTab = 'dashboard'; },
+                viewProperty(id) { 
+                    this.viewingPropertyId = id; 
+                    this.viewingZone = null; 
+                    this.selectedExpenseYear = new Date().getFullYear().toString(); 
+                },
+                viewZone(zone) { this.viewingZone = zone; },
+                
+                switchDashboardView(mode) {
+                    this.dashboardViewMode = mode;
+                    if (mode === 'map') {
+                        nextTick(() => {
+                            setTimeout(() => {
+                                this.initOrRefreshMap();
+                            }, 100);
+                        });
+                    }
+                },
+
+                // Get coordinates with guaranteed non-null fallback to render 100% of properties
+                getValidCoordinates(prop, index) {
+                    let lat = parseFloat(prop.lat);
+                    let lng = parseFloat(prop.lng);
+                    
+                    if (!isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
+                        return { lat, lng, isDerived: false };
+                    }
+                    
+                    // Generate deterministic offsets around base Ottawa coordinates if lat/lng are unassigned
+                    const hash = (prop.id || prop.name || 'home').split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+                    const offsetX = (((hash * 13 + index * 17) % 30) - 15) * 0.008;
+                    const offsetY = (((hash * 7 + index * 23) % 30) - 15) * 0.008;
+                    
+                    return {
+                        lat: DEFAULT_CENTER[0] + offsetX,
+                        lng: DEFAULT_CENTER[1] + offsetY,
+                        isDerived: true
+                    };
+                },
+
+                initOrRefreshMap() {
+                    const mapContainer = document.getElementById('property-map');
+                    if (!mapContainer) return;
+
+                    if (!this.mapInstance) {
+                        this.mapInstance = L.map('property-map', {
+                            zoomControl: false,
+                            attributionControl: false
+                        }).setView(DEFAULT_CENTER, 12);
+
+                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                            maxZoom: 19
+                        }).addTo(this.mapInstance);
+
+                        // Attach global callback for popup actions
+                        window.__myHomeOS_viewProperty = (id) => this.viewProperty(id);
+                    }
+
+                    this.mapInstance.invalidateSize();
+                    this.renderMapMarkers();
+                },
+
+                fitMapBounds() {
+                    if (!this.mapInstance || this.mapMarkers.length === 0) return;
+                    const group = L.featureGroup(this.mapMarkers);
+                    this.mapInstance.fitBounds(group.getBounds(), { padding: [50, 50], maxZoom: 14 });
+                },
+
+                renderMapMarkers() {
+                    if (!this.mapInstance) return;
+
+                    // Clear previous markers
+                    this.mapMarkers.forEach(m => this.mapInstance.removeLayer(m));
+                    this.mapMarkers = [];
+
+                    if (this.properties.length === 0) return;
+
+                    // Ensure ALL properties (100%) get mapped pins
+                    this.properties.forEach((prop, index) => {
+                        const coords = this.getValidCoordinates(prop, index);
+                        const pendingTasks = this.tasks.filter(t => t.propertyId === prop.id && !t.completed);
+                        const pendingCount = pendingTasks.length;
+                        const isRental = prop.type === 'rental';
+                        
+                        const badgeColor = isRental ? '#f59e0b' : '#0ea5e9';
+                        const displayName = prop.name || 'Home';
+
+                        const customIcon = L.divIcon({
+                            className: 'custom-map-pin',
+                            html: `
+                                <div style="position: relative; display: flex; align-items: center; justify-content: center;">
+                                    ${pendingCount > 0 ? `<div class="marker-pulse-ring" style="position: absolute; width: 48px; height: 48px; border-radius: 50%; background-color: ${badgeColor};"></div>` : ''}
+                                    <div style="background-color: ${badgeColor}; min-width: 38px; height: 38px; border-radius: 19px; padding: 0 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 900; font-size: 13px; border: 3px solid #0f172a; box-shadow: 0 4px 14px rgba(0,0,0,0.6); position: relative; z-index: 2; white-space: nowrap;">
+                                        ${displayName.length > 5 ? displayName.substring(0, 4) + '..' : displayName}
+                                        ${pendingCount > 0 ? `<span style="position: absolute; top: -5px; right: -5px; background: #ef4444; color: white; width: 18px; height: 18px; border-radius: 50%; border: 2px solid #0f172a; font-size: 10px; display: flex; align-items: center; justify-content: center; font-weight: 900;">${pendingCount}</span>` : ''}
+                                    </div>
+                                </div>
+                            `,
+                            iconSize: [42, 42],
+                            iconAnchor: [21, 21]
+                        });
+
+                        const marker = L.marker([coords.lat, coords.lng], { icon: customIcon }).addTo(this.mapInstance);
+                        
+                        const popupHtml = `
+                            <div style="min-width: 170px; text-align: center;">
+                                <div style="font-size: 10px; font-weight: 800; color: ${badgeColor}; text-transform: uppercase; margin-bottom: 2px;">
+                                    ${isRental ? this.t('rentalProperty') : this.t('primaryHome')}
+                                </div>
+                                <div style="font-size: 16px; font-weight: 900; color: #ffffff; margin-bottom: 2px;">${prop.name}</div>
+                                <div style="font-size: 11px; color: #94a3b8; margin-bottom: 8px;">${prop.address || this.t('noAddress')}</div>
+                                ${pendingCount > 0 ? `<div style="font-size: 11px; font-weight: 700; color: #f87171; margin-bottom: 8px;"><i class="fa-solid fa-triangle-exclamation"></i> ${pendingCount} ${this.t('dashboardTasks')}</div>` : ''}
+                                <button onclick="window.__myHomeOS_viewProperty('${prop.id}')" style="width: 100%; background: #0ea5e9; color: white; border: none; padding: 7px 12px; border-radius: 10px; font-weight: 800; font-size: 12px; cursor: pointer; box-shadow: 0 2px 8px rgba(14,165,233,0.4);">
+                                    ${this.t('openPropertyDetails')} <i class="fa-solid fa-arrow-right" style="margin-left: 4px;"></i>
+                                </button>
+                            </div>
+                        `;
+
+                        marker.bindPopup(popupHtml);
+                        this.mapMarkers.push(marker);
+                    });
+
+                    this.fitMapBounds();
+                },
+
+                setCurrentGPSLocation() {
+                    if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition(
+                            (position) => {
+                                this.formProperty.lat = parseFloat(position.coords.latitude.toFixed(6));
+                                this.formProperty.lng = parseFloat(position.coords.longitude.toFixed(6));
+                                this.showToast("GPS Location Loaded");
+                            },
+                            (error) => {
+                                this.showToast("GPS Access Denied");
+                            }
+                        );
+                    } else {
+                        this.showToast("Geolocation Unsupported");
+                    }
+                },
+
+                handleFabClick() {
+                    if (this.currentTab === 'dashboard') this.openModal(this.viewingPropertyId ? 'task' : 'property');
+                    else if (this.currentTab === 'tasks') this.openModal('task');
+                    else if (this.currentTab === 'repairs') this.openModal('repair');
+                    else if (this.currentTab === 'contractors') this.openModal('contractor');
+                },
+
+                openModal(type, item = null) {
+                    this.activeModal = type;
+                    const defaultProp = this.viewingPropertyId || (this.properties.length > 0 ? this.properties[0].id : '');
+                    if (type === 'property') {
+                        if (item) { this.editingPropertyId = item.id; this.formProperty = { ...item }; }
+                        else { this.editingPropertyId = null; this.formProperty = { name: '', type: 'primary', buildingType: 'detached', address: '', lat: 45.4215, lng: -75.6972 }; }
+                    }
+                    if (type === 'task') this.formTask = { propertyId: defaultProp, titleSelect: '', title: '', zone: this.viewingZone || '', category: '' };
+                    if (type === 'repair') {
+                        this.formRepair = { 
+                            propertyId: defaultProp, titleSelect: '', title: '', zone: this.viewingZone || '', category: '', 
+                            cost: '', date: new Date().toISOString().split('T')[0], warrantyEndDate: '', contractorId: '', receiptBase64: '' 
+                        };
+                    }
+                    if (type === 'contractor') this.formContractor = { name: '', trade: '', phone: '', wechat: '', notes: '' };
+                },
+                closeModal() { this.activeModal = null; this.editingPropertyId = null; this.convertingTaskId = null; },
+
+                handleTaskTitleChange() {
+                    const found = this.commonTaskTitles[this.currentLang].find(t => t.name === this.formTask.titleSelect);
+                    if(found) { this.formTask.title = found.name; this.formTask.category = found.category; }
+                    else { this.formTask.title = ''; this.formTask.category = ''; }
+                },
+                handleRepairTitleChange() {
+                    const found = this.commonRepairTitles[this.currentLang].find(r => r.name === this.formRepair.titleSelect);
+                    if(found) { this.formRepair.title = found.name; this.formRepair.category = found.category; }
+                    else { this.formRepair.title = ''; this.formRepair.category = ''; }
+                },
+
+                triggerFileInput(type) { 
+                    this.currentUploadType = type;
+                    this.$refs.fileInput.click(); 
+                },
+                removePhoto(type) { 
+                    if (this.activeModal === 'task') this.formTask[type + 'Base64'] = '';
+                    if (this.activeModal === 'repair') this.formRepair[type + 'Base64'] = '';
+                },
+                openImageViewer(base64) { this.viewingImageBase64 = base64; },
+                closeImageViewer() { this.viewingImageBase64 = null; },
+                handleFileUpload(event) {
+                    const file = event.target.files[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            const canvas = document.createElement('canvas');
+                            const MAX_WIDTH = 2048; 
+                            const MAX_HEIGHT = 2048;
+                            let width = img.width;
+                            let height = img.height;
+                            if (width > height) {
+                                if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+                            } else {
+                                if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
+                            }
+                            canvas.width = width; canvas.height = height;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0, width, height);
+                            const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+                            
+                            if (this.activeModal === 'task') this.formTask[this.currentUploadType + 'Base64'] = dataUrl;
+                            else if (this.activeModal === 'repair') this.formRepair[this.currentUploadType + 'Base64'] = dataUrl;
+                        };
+                        img.src = e.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                },
+
+                async saveProperty() {
+                    if (!this.formProperty.name) return;
+                    if (this.editingPropertyId) {
+                        const index = this.properties.findIndex(p => p.id === this.editingPropertyId);
+                        if (index !== -1) this.properties[index] = { ...this.properties[index], ...this.formProperty };
+                        this.showToast(this.t('toastPropUpdated'));
+                    } else {
+                        this.properties.push({ id: 'p_' + Date.now(), ...this.formProperty });
+                        this.showToast(this.t('toastPropSaved'));
+                    }
+                    await this.saveToStorage(); 
+                    this.closeModal();
+                    if (this.dashboardViewMode === 'map') this.renderMapMarkers();
+                },
+                async editProperty(prop) { this.openModal('property', prop); },
+                async deleteProperty() {
+                    if (this.editingPropertyId) {
+                        this.properties = this.properties.filter(p => p.id !== this.editingPropertyId);
+                        this.tasks = this.tasks.filter(t => t.propertyId !== this.editingPropertyId);
+                        this.repairs = this.repairs.filter(r => r.propertyId !== this.editingPropertyId);
+                        if(this.viewingPropertyId === this.editingPropertyId) this.viewingPropertyId = null;
+                        await this.saveToStorage(); 
+                        this.closeModal();
+                        if (this.dashboardViewMode === 'map') this.renderMapMarkers();
+                    }
+                },
+
+                async saveTask() {
+                    if (!this.formTask.title && !this.formTask.titleSelect) return;
+                    this.tasks.unshift({ id: 't_' + Date.now(), ...this.formTask, completed: false });
+                    await this.saveToStorage(); this.closeModal(); this.showToast(this.t('toastTaskSaved'));
+                    if (this.dashboardViewMode === 'map') this.renderMapMarkers();
+                },
+                async toggleTask(id) { const t = this.tasks.find(x => x.id === id); if(t) t.completed = !t.completed; await this.saveToStorage(); if (this.dashboardViewMode === 'map') this.renderMapMarkers(); },
+                async deleteTask(id) { this.tasks = this.tasks.filter(t => t.id !== id); await this.saveToStorage(); if (this.dashboardViewMode === 'map') this.renderMapMarkers(); },
+
+                convertTaskToRepair(task) {
+                    this.convertingTaskId = task.id;
+                    this.activeModal = 'repair';
+                    this.formRepair = {
+                        propertyId: task.propertyId, titleSelect: 'OTHER', title: task.title, zone: task.zone, category: task.category,
+                        cost: '', date: new Date().toISOString().split('T')[0], warrantyEndDate: '', contractorId: '', 
+                        receiptBase64: '', beforeBase64: task.beforeBase64 || '', afterBase64: ''
+                    };
+                },
+
+                async saveRepair() {
+                    if (!this.formRepair.title && !this.formRepair.titleSelect) return;
+                    this.repairs.unshift({ id: 'r_' + Date.now(), ...this.formRepair });
+                    if (this.convertingTaskId) {
+                        const t = this.tasks.find(x => x.id === this.convertingTaskId);
+                        if(t) t.completed = true;
+                    }
+                    await this.saveToStorage(); this.closeModal(); this.showToast(this.t('toastRepairLogged'));
+                },
+
+                async saveContractor() {
+                    if (!this.formContractor.name) return;
+                    this.contractors.push({ id: 'c_' + Date.now(), ...this.formContractor });
+                    await this.saveToStorage(); this.closeModal(); this.showToast(this.t('toastProSaved'));
+                },
+
+                getPropertyName(id) { const p = this.properties.find(i => i.id === id); return p ? p.name : ''; },
+                getBuildingTypeName(val) {
+                    if (val === 'detached') return this.t('typeDetached');
+                    if (val === 'townhouse') return this.t('typeTownhouse');
+                    if (val === 'condo') return this.t('typeCondo');
+                    return '';
+                },
+                getContractorName(id) { const c = this.contractors.find(i => i.id === id); return c ? c.name : this.t('noneSelf'); },
+                getZoneTaskCount(propertyId, zoneName) { return this.tasks.filter(t => t.propertyId === propertyId && t.zone === zoneName && !t.completed).length; },
+                getPropertyTotalCost(id) {
+                    let items = this.repairs.filter(r => r.propertyId === id);
+                    if (this.selectedExpenseYear !== 'ALL') items = items.filter(r => r.date && r.date.startsWith(this.selectedExpenseYear));
+                    return items.reduce((sum, r) => sum + (parseFloat(r.cost) || 0), 0).toLocaleString();
+                },
+                isWarrantyActive(dateStr) { if(!dateStr) return false; return new Date(dateStr) >= new Date(); },
+
+                showToast(msg) { this.toastMessage = msg; setTimeout(() => this.toastMessage = '', 3000); },
+                async copyText(txt) {
+                    try { await navigator.clipboard.writeText(txt); this.showToast(this.t('toastCopied')); }
+                    catch (err) { this.showToast('Copy failed'); }
+                },
+
+                async saveToStorage() {
+                    const plainData = JSON.parse(JSON.stringify({ 
+                        version: 'v_hd_indexeddb_v2', 
+                        properties: this.properties, 
+                        tasks: this.tasks, 
+                        repairs: this.repairs, 
+                        contractors: this.contractors 
+                    }));
+                    
+                    try {
+                        await localforage.setItem('my_home_os_data', plainData);
+                    } catch (err) {
+                        console.error("Storage Error:", err);
+                        this.showToast("Database Error");
+                    }
+                },
+                
+                async loadFromStorage() {
+                    try {
+                        let d = await localforage.getItem('my_home_os_data');
+                        
+                        if (!d) {
+                            const oldRaw = localStorage.getItem('my_home_os_data');
+                            if (oldRaw) {
+                                d = JSON.parse(oldRaw);
+                                await localforage.setItem('my_home_os_data', d);
+                            }
+                        }
+
+                        if (d && d.properties && d.properties.length > 0) {
+                            this.properties = d.properties || []; 
+                            this.tasks = d.tasks || []; 
+                            this.repairs = d.repairs || []; 
+                            this.contractors = d.contractors || [];
+                            return;
+                        }
+                        this.loadMassiveSampleData();
+                    } catch (err) {
+                        console.error("Loading Error:", err);
+                        this.loadMassiveSampleData();
+                    }
+                },
+                
+                async exportData() {
+                    try {
+                        const d = await localforage.getItem('my_home_os_data');
+                        if(!d) return;
+                        const dataStr = JSON.stringify(d);
+                        const blob = new Blob([dataStr], { type: "application/json" });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a'); a.href = url; a.download = `MyHomeOS_HD_Backup_${new Date().toISOString().split('T')[0]}.json`;
+                        a.click(); URL.revokeObjectURL(url);
+                    } catch (err) {
+                        this.showToast("Export failed");
+                    }
+                },
+
+                async loadMassiveSampleData() {
+                    this.properties = [
+                        { id: 'p710', name: '710', type: 'primary', buildingType: 'detached', address: '710 St Laurent Blvd, Ottawa', lat: 45.4292, lng: -75.6415 },
+                        { id: 'p283', name: '283', type: 'rental', buildingType: 'townhouse', address: '283 Bank St, Ottawa', lat: 45.4158, lng: -75.6912 },
+                        { id: 'p2648', name: '2648', type: 'rental', buildingType: 'detached', address: '2648 Innes Rd, Ottawa', lat: 45.4385, lng: -75.5682 },
+                        { id: 'p117', name: '117', type: 'rental', buildingType: 'condo', address: '117 Rideau St, Ottawa', lat: 45.4262, lng: -75.6885 }
+                    ];
+                    this.contractors = [
+                        { id: 'c1', name: 'Master Wang HVAC', trade: 'HVAC', phone: '613-555-0101', wechat: 'wang_hvac', notes: 'Reliable for furnace issues. A bit pricey but fast.' },
+                        { id: 'c2', name: 'Li Plumbing & Drain', trade: 'Plumbing', phone: '613-555-0202', wechat: 'li_plumber_ott', notes: 'Great for rental emergencies.' }
+                    ];
+                    
+                    this.tasks = [];
+                    this.repairs = [];
+                    
+                    const pids = ['p710', 'p283', 'p2648', 'p117'];
+                    const enZones = this.houseZones['en'];
+                    
+                    const zoneTasks = [
+                        { z: enZones['Indoor Living Area'][3], c: 'Appliances', t: 'Clean range hood filter' },
+                        { z: enZones['Indoor Living Area'][6], c: 'Plumbing', t: 'Check toilet for leaks' },
+                        { z: enZones['Utility & Service'][0], c: 'HVAC', t: 'Replace furnace filter' },
+                        { z: enZones['Structure & Exterior'][0], c: 'Roofing', t: 'Inspect shingles' },
+                        { z: enZones['Indoor Living Area'][1], c: 'Electrical', t: 'Test smoke detector' }
+                    ];
+                    const zoneLogs = [
+                        { z: enZones['Indoor Living Area'][3], c: 'Plumbing', t: 'Fixed leaky sink faucet', cost: 150 },
+                        { z: enZones['Indoor Living Area'][6], c: 'Plumbing', t: 'Replaced shower cartridge', cost: 200 },
+                        { z: enZones['Utility & Service'][0], c: 'HVAC', t: 'Annual furnace tune-up', cost: 120 },
+                        { z: enZones['Structure & Exterior'][0], c: 'Roofing', t: 'Patched minor leak', cost: 350 },
+                        { z: enZones['Indoor Living Area'][1], c: 'Electrical', t: 'Replaced light switch', cost: 80 },
+                        { z: enZones['Utility & Service'][2], c: 'Plumbing', t: 'Serviced sump pump', cost: 180 },
+                        { z: enZones['Outdoor Grounds'][1], c: 'Exterior/Siding', t: 'Repaired deck board', cost: 90 },
+                        { z: enZones['Utility & Service'][3], c: 'Exterior/Siding', t: 'Fixed garage door sensor', cost: 110 },
+                        { z: enZones['Indoor Living Area'][5], c: 'Electrical', t: 'Installed ceiling fan', cost: 250 },
+                        { z: enZones['Structure & Exterior'][4], c: 'Exterior/Siding', t: 'Replaced weather stripping', cost: 60 }
+                    ];
+
+                    pids.forEach((pid, index) => {
+                        for(let i=0; i<3; i++) {
+                            const taskData = zoneTasks[(index + i) % zoneTasks.length];
+                            this.tasks.push({ id: `t_${pid}_${i}`, propertyId: pid, title: taskData.t, zone: taskData.z, category: taskData.c, completed: false });
+                        }
+                        for(let i=0; i<10; i++) {
+                            const logData = zoneLogs[(index + i) % zoneLogs.length];
+                            
+                            const sampleReceipt = (pid === 'p710' && i === 0) 
+                                ? 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iNjAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjYwMCIgZmlsbD0iI2Y4ZmFmYyIvPjx0ZXh0IHg9IjQwIiB5PSI4MCIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMzIiIGZvbnQtd2VpZ2h0PSJib2xkIiBmaWxsPSIjMGYxNzJhIj5IT01FIERFUE9UPC90ZXh0Pjx0ZXh0IHg9IjQwIiB5PSIxDAOiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNDc1NTY5Ij4xMjMgTWFpbiBTdHJlZXQ8L3RleHQ+PHBhdGggZD0iTTQwIDE3MEgzNjAiIHN0cm9rZT0iI2NiZDVlMSIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtZGFzaGFycmF5PSI1LDUiLz48dGV4dCB4PSI0MCIgeT0iMjIwIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIyMCIgZmlsbD0iIzBmMTcyYSI+UGx1bWJpbmcgUGFydHM8L3RleHQ+PHRleHQgeD0iMzAwIiB5PSIyMjAiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjIwIiBmaWxsPSIjMGYxNzJhIj4kMTUwLjAwPC90ZXh0PjxwYXRoIGQ9Ik00MCAyNjBIMzYwIiBzdHJva2U9IiNjYmQ1ZTEiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWRhc2hhcnJheT0iNSw1Ii8+PHRleHQgeD0iNDAiIHk9IjMxMCIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMjgiIGZvbnQtd2VpZ2h0PSJib2xkIiBmaWxsPSIjMGYxNzJhIj5UT1RBTDwvdGV4dD48dGV4dCB4PSIyNjAiIHk9IjMxMCIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMjgiIGZvbnQtd2VpZ2h0PSJib2xkIiBmaWxsPSIjMGYxNzJhIj4kMTUwLjAwPC90ZXh0Pjwvc3ZnPg=='
+                                : '';
+
+                            this.repairs.push({ 
+                                id: `r_${pid}_${i}`, propertyId: pid, title: logData.t, zone: logData.z, category: logData.c, 
+                                cost: logData.cost.toString(), date: `202${5 - (i%2)}-0${(i%8)+1}-15`, 
+                                warrantyEndDate: i%3===0 ? '2028-01-01' : '', contractorId: i%2===0 ? 'c1' : 'c2',
+                                receiptBase64: sampleReceipt 
+                            });
+                        }
+                    });
+                    await this.saveToStorage();
+                }
+            },
+            async mounted() { await this.loadFromStorage(); }
+        }).mount('#app');
+    </script>
+</body>
+</html>
