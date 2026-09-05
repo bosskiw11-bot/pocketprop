@@ -1566,7 +1566,7 @@
                     </div>
                     <div>
                         <h4 class="text-lg font-black text-white mb-1">
-                            {{ itemToDelete.type === 'task' ? t('confirmDeleteTitle') : (itemToDelete.type === 'contact' ? t('confirmDeleteContactTitle') : (itemToDelete.type === 'role' ? t('confirmDeleteRoleTitle') : (itemToDelete.type === 'mediaFile' ? t('confirmDeleteMediaTitle') : t('confirmDeleteLogTitle')))) }}
+                            {{ t(deleteConfirmTitleKey) }}
                         </h4>
                     </div>
                     <div class="grid grid-cols-2 gap-3 pt-2">
@@ -1845,7 +1845,7 @@
                     category: taskFilter ? taskFilter.category : z('HVAC', '暖通空调'),
                     issueDate: '2026-08-28',
                     beforePhotos: [createMockPhotoSvg(z('Dirty filter', '脏滤网'), '#1e293b', '#38bdf8', '🌀')],
-                    completed: false}
+                    completed: false
                 },
                 {
                     id: 't_demo_gutters',
@@ -1856,7 +1856,7 @@
                     category: taskGutter ? taskGutter.category : z('Roofing', '屋顶维修'),
                     issueDate: '2026-09-02',
                     beforePhotos: [createMockPhotoSvg(z('Leaf blockage', '落叶堵塞'), '#1e293b', '#fbbf24', '🍂')],
-                    completed: false}
+                    completed: false
                 },
                 {
                     id: 't_demo_drip',
@@ -1867,7 +1867,7 @@
                     category: z('Plumbing', '水电卫浴'),
                     issueDate: '2026-09-04',
                     beforePhotos: [createMockPhotoSvg(z('Faucet drip', '龙头滴水'), '#1e293b', '#22d3ee', '💧')],
-                    completed: false}
+                    completed: false
                 },
                 {
                     id: 't_demo_smoke',
@@ -1946,7 +1946,7 @@
             return { properties, tasks, repairs, contacts, customRoles: [], userZones: zones };
         }
 
-        const APP_VERSION = '2026.09.05-a';
+        const APP_VERSION = '2026.09.05-b';
 
         const app = createApp({
             data() {
@@ -2056,6 +2056,16 @@
                 },
                 contractorContacts() { return this.contacts.filter(c => c.role === 'contractor' || !c.role); },
                 availableUsageTypes() { return { purchased: { label: this.t('usagePurchased'), color: 'bg-blue-500/20 text-blue-400 border-blue-500/30', icon: 'fa-cart-shopping' }, primary: { label: this.t('usagePrimary'), color: 'bg-brand-500/20 text-brand-400 border-brand-500/30', icon: 'fa-house-user' }, rental: { label: this.t('usageRental'), color: 'bg-amber-500/20 text-amber-400 border-amber-500/30', icon: 'fa-key' }, short_term: { label: this.t('usageShortTerm'), color: 'bg-purple-500/20 text-purple-400 border-purple-500/30', icon: 'fa-bed' }, vacant: { label: this.t('usageVacant'), color: 'bg-slate-700/50 text-slate-400 border-slate-600', icon: 'fa-door-closed' }, commercial: { label: this.t('usageCommercial'), color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30', icon: 'fa-building-user' }, sold: { label: this.t('usageSold'), color: 'bg-rose-500/20 text-rose-400 border-rose-500/30', icon: 'fa-handshake' } }; },
+                deleteConfirmTitleKey() {
+                    const map = {
+                        task: 'confirmDeleteTitle',
+                        contact: 'confirmDeleteContactTitle',
+                        role: 'confirmDeleteRoleTitle',
+                        mediaFile: 'confirmDeleteMediaTitle',
+                        repair: 'confirmDeleteLogTitle'
+                    };
+                    return (this.itemToDelete && map[this.itemToDelete.type]) || 'confirmDeleteLogTitle';
+                },
                 filteredTasks() {
                     return this.tasks
                         .filter(t => !t.completed && (this.selectedPropertyId === 'ALL' || t.propertyId === this.selectedPropertyId))
