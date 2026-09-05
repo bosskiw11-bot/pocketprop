@@ -551,8 +551,11 @@
                     <template v-if="workSubTab === 'tasks'">
                         <div v-for="task in filteredTasks" :key="task.id" class="bg-slate-800 rounded-2xl p-3 border border-slate-700/50 transition-all" :class="task.completed ? 'opacity-50' : ''">
                                 <div class="flex flex-col gap-1.5">
-                                    <div class="flex items-start justify-between gap-2">
-                                        <p class="text-[14px] font-bold leading-tight pr-2 flex-1 truncate min-w-0" :class="task.completed ? 'text-slate-400 line-through' : 'text-slate-200'">{{ task.title }}</p>
+                                    <div class="flex items-center justify-between gap-2">
+                                        <p class="text-[11px] font-bold text-brand-400 flex items-center gap-1.5 min-w-0">
+                                            <i class="fa-regular fa-calendar text-[10px]"></i>
+                                            <span>{{ task.issueDate || t('noIssueDate') }}</span>
+                                        </p>
                                         <div class="flex items-center gap-1 flex-shrink-0">
                                             <button @click="editTask(task)" class="w-7 h-7 text-slate-400 hover:text-white active:text-brand-400 flex items-center justify-center transition-colors rounded-lg">
                                                 <i class="fa-solid fa-pen text-[11px]"></i>
@@ -562,6 +565,7 @@
                                             </button>
                                         </div>
                                     </div>
+                                    <p class="text-[14px] font-bold leading-tight truncate min-w-0" :class="task.completed ? 'text-slate-400 line-through' : 'text-slate-200'">{{ task.title }}</p>
                                     <div class="flex items-end justify-between gap-2">
                                         <div class="flex flex-wrap items-center gap-1.5 min-w-0 flex-1">
                                             <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-900 border border-slate-700 text-slate-400 font-medium">{{ getPropertyName(task.propertyId) }}</span>
@@ -910,6 +914,10 @@
                         <!-- Task Modal -->
                         <div v-if="activeModal === 'task'" class="space-y-5">
                             <h3 class="text-2xl font-black text-white mb-4">{{ editingTaskId ? t('editTask') : t('addTask') }}</h3>
+                            <div>
+                                <label class="block text-[12px] font-bold text-slate-400 uppercase tracking-wider mb-2 pl-1">{{ t('issueDate') }}</label>
+                                <input v-model="formTask.issueDate" type="date" class="w-full bg-slate-800 rounded-2xl p-4 text-[15px] text-white outline-none border border-transparent focus:border-brand-500">
+                            </div>
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
                                     <label class="block text-[12px] font-bold text-slate-400 uppercase tracking-wider mb-2 pl-1">{{ t('modalProperty') }}</label>
@@ -1622,7 +1630,7 @@
                 modalPropName: 'Property Name (e.g. Primary Residence)', modalPropType: 'Property Usage', modalBuildingType: 'Building Type', modalPropAddress: 'Address (Optional)',
                 modalProperty: 'Belongs to', modalZone: 'Zone/Area', modalTaskTitle: 'Task Title', selectCommonTask: 'Select Common Task...', otherManual: 'Other (Manual Entry)', enterTaskManually: 'Enter task manually',
                 modalRepairTitle: 'Event/Repair Title', selectCommonRepair: 'Select Common Issue...', enterRepairManually: 'Enter event manually',
-                modalCost: 'Cost', modalDate: 'Date', modalStartDate: 'Start Date', modalEndDate: 'End Date', modalContractor: 'Contractor / Pro', modalWarranty: 'Warranty Ends',
+                modalCost: 'Cost', modalDate: 'Date', issueDate: 'Issue Date', noIssueDate: 'No issue date', modalStartDate: 'Start Date', modalEndDate: 'End Date', modalContractor: 'Contractor / Pro', modalWarranty: 'Warranty Ends',
                 btnSave: 'Save', back: 'Back', backToProperties: 'Back to Properties', allTime: 'All Time', zoneLayout: 'Space Blueprint',
                 toastPropSaved: 'Property saved', toastPropUpdated: 'Property updated', toastTaskSaved: 'Task saved', toastTaskDeleted: 'Task deleted', toastRepairLogged: 'Repair logged', toastRepairDeleted: 'History record deleted', toastContactSaved: 'Contact saved', toastContactDeleted: 'Contact deleted', toastCopied: 'Copied!',
                 uploadReceipt: 'Receipts (Max 3)', viewReceipt: 'Receipts', remove: 'Remove',
@@ -1664,7 +1672,7 @@
                 modalPropName: '房屋名称 (例如: 自住主屋)', modalPropType: '房屋用途/节点类型', modalBuildingType: '建筑类型', modalPropAddress: '详细地址 (可选)',
                 modalProperty: '所属房屋', modalZone: '具体区域', modalTaskTitle: '任务名称', selectCommonTask: '选择常见待办...', otherManual: '其他 (手动输入)', enterTaskManually: '输入具体待办内容',
                 modalRepairTitle: '维修/事件名称', selectCommonRepair: '选择常见维修项目...', enterRepairManually: '输入具体维修/事件',
-                modalCost: '花费', modalDate: '日期', modalStartDate: '开始日期', modalEndDate: '结束日期', modalContractor: '施工师傅/服务商', modalWarranty: '保修到期日',
+                modalCost: '花费', modalDate: '日期', issueDate: '发现日期', noIssueDate: '未填发现日期', modalStartDate: '开始日期', modalEndDate: '结束日期', modalContractor: '施工师傅/服务商', modalWarranty: '保修到期日',
                 btnSave: '保存', back: '返回', backToProperties: '返回房屋列表', allTime: '全部历年', zoneLayout: '房屋空间剖面图',
                 toastPropSaved: '房屋已保存', toastPropUpdated: '房屋信息已更新', toastTaskSaved: '待办已保存', toastTaskDeleted: '待办任务已删除', toastRepairLogged: '记录已保存', toastRepairDeleted: '历史记录已删除', toastContactSaved: '联系人已保存', toastContactDeleted: '联系人已删除', toastCopied: '已复制!',
                 uploadReceipt: '票据照片 (最多3张)', viewReceipt: '票据', remove: '移除',
@@ -1835,8 +1843,9 @@
                     title: taskFilter ? taskFilter.name : z('Replace Furnace Filter', '更换暖炉滤网'),
                     zone: zoneFurnace,
                     category: taskFilter ? taskFilter.category : z('HVAC', '暖通空调'),
+                    issueDate: '2026-08-28',
                     beforePhotos: [createMockPhotoSvg(z('Dirty filter', '脏滤网'), '#1e293b', '#38bdf8', '🌀')],
-                    completed: false
+                    completed: false}
                 },
                 {
                     id: 't_demo_gutters',
@@ -1845,8 +1854,9 @@
                     title: taskGutter ? taskGutter.name : z('Clean Gutters & Downspouts', '清理屋顶排水沟落叶'),
                     zone: zoneGutters,
                     category: taskGutter ? taskGutter.category : z('Roofing', '屋顶维修'),
+                    issueDate: '2026-09-02',
                     beforePhotos: [createMockPhotoSvg(z('Leaf blockage', '落叶堵塞'), '#1e293b', '#fbbf24', '🍂')],
-                    completed: false
+                    completed: false}
                 },
                 {
                     id: 't_demo_drip',
@@ -1855,8 +1865,9 @@
                     title: z('Kitchen faucet drip', '厨房龙头滴水'),
                     zone: zoneKitchen,
                     category: z('Plumbing', '水电卫浴'),
+                    issueDate: '2026-09-04',
                     beforePhotos: [createMockPhotoSvg(z('Faucet drip', '龙头滴水'), '#1e293b', '#22d3ee', '💧')],
-                    completed: false
+                    completed: false}
                 },
                 {
                     id: 't_demo_smoke',
@@ -1865,6 +1876,7 @@
                     title: taskSmoke ? taskSmoke.name : z('Test Smoke/CO Detectors', '测试烟雾与一氧化碳报警器'),
                     zone: zoneBath,
                     category: taskSmoke ? taskSmoke.category : z('Electrical', '电路灯具'),
+                    issueDate: '2026-07-15',
                     beforePhotos: [],
                     completed: false
                 },
@@ -1934,7 +1946,7 @@
             return { properties, tasks, repairs, contacts, customRoles: [], userZones: zones };
         }
 
-        const APP_VERSION = '2026.09.04-b';
+        const APP_VERSION = '2026.09.05-a';
 
         const app = createApp({
             data() {
@@ -1987,7 +1999,7 @@
                     formProperty: { name: '', buildingType: 'detached', address: '', lat: null, lng: null },
                     formUsage: { id: null, usageType: 'primary', startDate: '', endDate: '', notes: '' },
                     formTenantSub: { id: null, usageId: null, contactId: '', name: '', room: '', rent: '', startDate: '', endDate: '', notes: '' },
-                    formTask: { propertyId: '', titleSelect: '', title: '', zone: '', category: '', beforePhotos: [] },
+                    formTask: { propertyId: '', titleSelect: '', title: '', zone: '', category: '', issueDate: '', beforePhotos: [] },
                     formRepair: { propertyId: '', titleSelect: '', title: '', zone: '', category: '', cost: '', date: '', warrantyEndDate: '', contractorId: '', hasReceipt: true, receiptPhotos: [], beforePhotos: [], afterPhotos: [] },
                     formContact: { id: null, role: 'tenant', name: '', trade: '', propertyId: '', propertyIds: [], phone: '', wechat: '', email: '', notes: '' },
                     formNewRole: { name: '' },
@@ -2045,7 +2057,10 @@
                 contractorContacts() { return this.contacts.filter(c => c.role === 'contractor' || !c.role); },
                 availableUsageTypes() { return { purchased: { label: this.t('usagePurchased'), color: 'bg-blue-500/20 text-blue-400 border-blue-500/30', icon: 'fa-cart-shopping' }, primary: { label: this.t('usagePrimary'), color: 'bg-brand-500/20 text-brand-400 border-brand-500/30', icon: 'fa-house-user' }, rental: { label: this.t('usageRental'), color: 'bg-amber-500/20 text-amber-400 border-amber-500/30', icon: 'fa-key' }, short_term: { label: this.t('usageShortTerm'), color: 'bg-purple-500/20 text-purple-400 border-purple-500/30', icon: 'fa-bed' }, vacant: { label: this.t('usageVacant'), color: 'bg-slate-700/50 text-slate-400 border-slate-600', icon: 'fa-door-closed' }, commercial: { label: this.t('usageCommercial'), color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30', icon: 'fa-building-user' }, sold: { label: this.t('usageSold'), color: 'bg-rose-500/20 text-rose-400 border-rose-500/30', icon: 'fa-handshake' } }; },
                 filteredTasks() {
-                    return this.tasks.filter(t => !t.completed && (this.selectedPropertyId === 'ALL' || t.propertyId === this.selectedPropertyId));
+                    return this.tasks
+                        .filter(t => !t.completed && (this.selectedPropertyId === 'ALL' || t.propertyId === this.selectedPropertyId))
+                        .slice()
+                        .sort((a, b) => (b.issueDate || '').localeCompare(a.issueDate || ''));
                 },
                 filteredRepairs() { return this.selectedPropertyId === 'ALL' ? this.repairs : this.repairs.filter(r => r.propertyId === this.selectedPropertyId); },
                 groupedFilteredRepairs() {
@@ -2459,8 +2474,8 @@
                     this.activeModal = type; const defaultProp = this.viewingPropertyId || (this.properties.length > 0 ? this.properties[0].id : '');
                     if (type === 'property') { if (item) { this.editingPropertyId = item.id; this.formProperty = { name: item.name, buildingType: item.buildingType, address: item.address, lat: item.lat, lng: item.lng }; } else { this.editingPropertyId = null; this.formProperty = { name: '', buildingType: 'detached', address: '', lat: null, lng: null }; } }
                     if (type === 'task') {
-                        if (item) { this.editingTaskId = item.id; let tSelect = item.titleSelect; if (!tSelect) { const found = this.commonTaskTitles[this.currentLang].find(t => t.name === item.title); tSelect = found ? found.name : 'OTHER'; } this.formTask = { propertyId: item.propertyId || defaultProp, titleSelect: tSelect, title: item.title || '', zone: item.zone || '', category: item.category || '', beforePhotos: [...(item.beforePhotos || [])] }; } 
-                        else { this.editingTaskId = null; this.formTask = { propertyId: defaultProp, titleSelect: '', title: '', zone: this.viewingZone || '', category: '', beforePhotos: [] }; }
+                        if (item) { this.editingTaskId = item.id; let tSelect = item.titleSelect; if (!tSelect) { const found = this.commonTaskTitles[this.currentLang].find(t => t.name === item.title); tSelect = found ? found.name : 'OTHER'; } this.formTask = { propertyId: item.propertyId || defaultProp, titleSelect: tSelect, title: item.title || '', zone: item.zone || '', category: item.category || '', issueDate: item.issueDate || '', beforePhotos: [...(item.beforePhotos || [])] }; } 
+                        else { this.editingTaskId = null; this.formTask = { propertyId: defaultProp, titleSelect: '', title: '', zone: this.viewingZone || '', category: '', issueDate: new Date().toISOString().split('T')[0], beforePhotos: [] }; }
                     }
                     if (type === 'repair') {
                         if (item && item.id) { this.editingRepairId = item.id; let rSelect = item.titleSelect; if (!rSelect) { const found = this.commonRepairTitles[this.currentLang].find(r => r.name === item.title); rSelect = found ? found.name : 'OTHER'; } this.formRepair = { propertyId: item.propertyId || defaultProp, titleSelect: rSelect, title: item.title || '', zone: item.zone || '', category: item.category || '', cost: item.cost || '', date: item.date || new Date().toISOString().split('T')[0], warrantyEndDate: item.warrantyEndDate || '', contractorId: item.contractorId || '', hasReceipt: item.hasReceipt !== false, receiptPhotos: Array.isArray(item.receiptPhotos) ? [...item.receiptPhotos] : [], beforePhotos: Array.isArray(item.beforePhotos) ? [...item.beforePhotos] : [], afterPhotos: Array.isArray(item.afterPhotos) ? [...item.afterPhotos] : [] }; } 
@@ -2582,9 +2597,9 @@
                     if (!this.formTask.title && !this.formTask.titleSelect) return;
                     if (this.editingTaskId) {
                         const idx = this.tasks.findIndex(t => t.id === this.editingTaskId);
-                        if (idx !== -1) this.tasks[idx] = { ...this.tasks[idx], propertyId: this.formTask.propertyId, titleSelect: this.formTask.titleSelect, title: this.formTask.title, zone: this.formTask.zone, category: this.formTask.category, beforePhotos: [...this.formTask.beforePhotos] };
+                        if (idx !== -1) this.tasks[idx] = { ...this.tasks[idx], propertyId: this.formTask.propertyId, titleSelect: this.formTask.titleSelect, title: this.formTask.title, zone: this.formTask.zone, category: this.formTask.category, issueDate: this.formTask.issueDate || '', beforePhotos: [...this.formTask.beforePhotos] };
                     } else {
-                        this.tasks.unshift({ id: 't_' + Date.now(), propertyId: this.formTask.propertyId, titleSelect: this.formTask.titleSelect, title: this.formTask.title, zone: this.formTask.zone, category: this.formTask.category, beforePhotos: [...this.formTask.beforePhotos], completed: false });
+                        this.tasks.unshift({ id: 't_' + Date.now(), propertyId: this.formTask.propertyId, titleSelect: this.formTask.titleSelect, title: this.formTask.title, zone: this.formTask.zone, category: this.formTask.category, issueDate: this.formTask.issueDate || new Date().toISOString().split('T')[0], beforePhotos: [...this.formTask.beforePhotos], completed: false });
                     }
                     await this.saveToStorage(); this.closeModal(); this.showToast(this.t('toastTaskSaved')); if (this.dashboardViewMode === 'map') this.renderMapMarkers();
                 },
