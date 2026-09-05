@@ -528,6 +528,11 @@
                                           : (tasks.filter(t => t.propertyId === p.id && !t.completed).length > 0 ? 'bg-brand-500/20 text-brand-400 border border-brand-500/30' : 'bg-slate-900 text-slate-500 border border-slate-700/80')">
                                     {{ tasks.filter(t => t.propertyId === p.id && !t.completed).length }}
                                 </span>
+                                <span v-else-if="workSubTab === 'routines'"
+                                      class="text-[10px] px-1.5 py-0.5 rounded-full font-black ml-0.5 transition-colors"
+                                      :class="selectedPropertyId === p.id ? 'bg-white/20 text-white' : (routines.filter(r => r.propertyId === p.id && isRoutineOverdue(r)).length > 0 ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' : 'bg-slate-900 text-slate-500 border border-slate-700/80')">
+                                    {{ routines.filter(r => r.propertyId === p.id).length }}
+                                </span>
                                 <span v-else
                                       class="text-[10px] px-1.5 py-0.5 rounded-full font-black ml-0.5 transition-colors"
                                       :class="selectedPropertyId === p.id ? 'bg-white/20 text-white' : 'bg-slate-900 text-slate-500 border border-slate-700/80'">
@@ -538,10 +543,13 @@
                     </div>
 
                     <div class="flex bg-slate-800/80 p-1 rounded-2xl border border-slate-700/50">
-                        <button @click="workSubTab = 'tasks'" class="flex-1 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-2" :class="workSubTab === 'tasks' ? 'bg-brand-500 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'">
+                        <button @click="workSubTab = 'tasks'" class="flex-1 py-2 text-[11px] font-bold rounded-xl transition-all flex items-center justify-center gap-1" :class="workSubTab === 'tasks' ? 'bg-brand-500 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'">
                             <i class="fa-solid fa-clipboard-check"></i> {{ t('subTabTasks') }}
                         </button>
-                        <button @click="workSubTab = 'repairs'" class="flex-1 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-2" :class="workSubTab === 'repairs' ? 'bg-brand-500 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'">
+                        <button @click="workSubTab = 'routines'" class="flex-1 py-2 text-[11px] font-bold rounded-xl transition-all flex items-center justify-center gap-1" :class="workSubTab === 'routines' ? 'bg-brand-500 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'">
+                            <i class="fa-solid fa-rotate"></i> {{ t('subTabRoutines') }}
+                        </button>
+                        <button @click="workSubTab = 'repairs'" class="flex-1 py-2 text-[11px] font-bold rounded-xl transition-all flex items-center justify-center gap-1" :class="workSubTab === 'repairs' ? 'bg-brand-500 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'">
                             <i class="fa-solid fa-clock-rotate-left"></i> {{ t('subTabLogs') }}
                         </button>
                     </div>
@@ -581,6 +589,41 @@
                                 </div>
                         </div>
                         <p v-if="filteredTasks.length === 0" class="text-[13px] text-slate-500 text-center py-8">{{ t('noTasks') }}</p>
+                    </template>
+
+                    <template v-if="workSubTab === 'routines'">
+                        <p class="text-[11px] text-slate-400 px-1 leading-relaxed">{{ t('routinesHint') }}</p>
+                        <div v-for="routine in filteredRoutines" :key="routine.id" class="bg-slate-800 rounded-2xl p-3 border transition-all" :class="isRoutineOverdue(routine) ? 'border-rose-500/40' : (isRoutineDueSoon(routine) ? 'border-amber-500/40' : 'border-slate-700/50')">
+                            <div class="flex flex-col gap-2">
+                                <div class="flex items-center gap-2">
+                                    <p class="text-[11px] font-bold flex items-center gap-1.5 min-w-0 flex-1 truncate" :class="isRoutineOverdue(routine) ? 'text-rose-400' : (isRoutineDueSoon(routine) ? 'text-amber-300' : 'text-slate-300')">
+                                        <i class="fa-regular fa-calendar text-[10px]"></i>
+                                        <span class="truncate">{{ t('nextDue') }} {{ routine.nextDueDate || '—' }}</span>
+                                    </p>
+                                    <div class="flex items-center gap-1 flex-shrink-0">
+                                        <button @click="completeRoutine(routine)" class="h-7 px-2.5 rounded-lg bg-brand-500 text-white text-[11px] font-bold flex items-center gap-1 shadow-sm shadow-brand-500/30 active:scale-95">
+                                            <i class="fa-solid fa-circle-check text-[10px]"></i>
+                                            <span>{{ t('btnLogAsRepair') }}</span>
+                                        </button>
+                                        <button @click="openModal('routine', routine)" class="w-7 h-7 rounded-lg bg-slate-900/70 border border-slate-700/80 text-slate-400 flex items-center justify-center">
+                                            <i class="fa-solid fa-pen text-[10px]"></i>
+                                        </button>
+                                        <button @click="promptDeleteRoutine(routine.id)" class="w-7 h-7 rounded-lg bg-slate-900/70 border border-slate-700/80 text-slate-500 hover:text-red-400 flex items-center justify-center">
+                                            <i class="fa-solid fa-trash-can text-[10px]"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <p class="text-[14px] font-bold leading-snug text-slate-100">{{ routine.title }}</p>
+                                <div class="flex flex-wrap items-center gap-1.5">
+                                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-900 border border-slate-700 text-slate-400 font-medium">{{ getPropertyName(routine.propertyId) }}</span>
+                                    <span v-if="routine.zone" class="text-[10px] px-1.5 py-0.5 rounded bg-slate-700 text-slate-300"><i class="fa-solid fa-location-dot mr-1"></i>{{ routine.zone }}</span>
+                                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-violet-500/20 text-violet-300 font-medium">{{ formatRoutineInterval(routine.intervalMonths) }}</span>
+                                    <span v-if="isRoutineOverdue(routine)" class="text-[10px] px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 font-bold">{{ t('overdue') }}</span>
+                                    <span v-else-if="isRoutineDueSoon(routine)" class="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold">{{ t('dueSoon') }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <p v-if="filteredRoutines.length === 0" class="text-[13px] text-slate-500 text-center py-8">{{ t('noRoutines') }}</p>
                     </template>
 
                     <template v-if="workSubTab === 'repairs'">
@@ -970,6 +1013,57 @@
                             </div>
 
                             <button @click="saveTask" class="w-full py-4 mt-4 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-2xl shadow-lg active:scale-95 transition-all text-lg">{{ t('btnSave') }}</button>
+                        </div>
+
+                        <div v-if="activeModal === 'routine'" class="space-y-5">
+                            <h3 class="text-2xl font-black text-white mb-2">{{ editingRoutineId ? t('editRoutine') : t('addRoutine') }}</h3>
+                            <div>
+                                <label class="block text-[12px] font-bold text-slate-400 uppercase tracking-wider mb-2 pl-1">{{ t('routineCatalog') }}</label>
+                                <select v-model="formRoutine.catalogKey" @change="applyRoutineCatalog" class="w-full bg-slate-800 rounded-2xl p-4 text-[15px] text-white outline-none">
+                                    <option value="">{{ t('selectRoutine') }}</option>
+                                    <option v-for="item in routineCatalog[currentLang]" :key="item.key" :value="item.key">{{ item.title }} · {{ formatRoutineInterval(item.intervalMonths) }}</option>
+                                    <option value="OTHER">✍️ {{ t('otherManual') }}</option>
+                                </select>
+                            </div>
+                            <div v-if="formRoutine.catalogKey === 'OTHER'">
+                                <label class="block text-[12px] font-bold text-slate-400 uppercase tracking-wider mb-2 pl-1">{{ t('modalTaskTitle') }}</label>
+                                <input v-model="formRoutine.title" type="text" class="w-full bg-slate-800 rounded-2xl p-4 text-[15px] text-white outline-none">
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-[12px] font-bold text-slate-400 uppercase tracking-wider mb-2 pl-1">{{ t('modalProperty') }}</label>
+                                    <select v-model="formRoutine.propertyId" class="w-full bg-slate-800 rounded-2xl p-4 text-[15px] text-white outline-none">
+                                        <option v-for="p in properties" :key="p.id" :value="p.id">{{ p.name }}</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-[12px] font-bold text-slate-400 uppercase tracking-wider mb-2 pl-1">{{ t('modalZone') }}</label>
+                                    <select v-model="formRoutine.zone" class="w-full bg-slate-800 rounded-2xl p-4 text-[15px] text-white outline-none">
+                                        <option value="">--</option>
+                                        <optgroup v-for="group in userZones" :key="group.category" :label="group.category">
+                                            <option v-for="z in group.zones" :key="z" :value="z">{{ z }}</option>
+                                        </optgroup>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-[12px] font-bold text-slate-400 uppercase tracking-wider mb-2 pl-1">{{ t('interval') }}</label>
+                                    <select v-model.number="formRoutine.intervalMonths" class="w-full bg-slate-800 rounded-2xl p-4 text-[15px] text-white outline-none">
+                                        <option :value="1">{{ formatRoutineInterval(1) }}</option>
+                                        <option :value="3">{{ formatRoutineInterval(3) }}</option>
+                                        <option :value="6">{{ formatRoutineInterval(6) }}</option>
+                                        <option :value="12">{{ formatRoutineInterval(12) }}</option>
+                                        <option :value="24">{{ formatRoutineInterval(24) }}</option>
+                                        <option :value="36">{{ formatRoutineInterval(36) }}</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-[12px] font-bold text-slate-400 uppercase tracking-wider mb-2 pl-1">{{ t('nextDue') }}</label>
+                                    <input v-model="formRoutine.nextDueDate" type="date" class="w-full bg-slate-800 rounded-2xl p-4 text-[15px] text-white outline-none">
+                                </div>
+                            </div>
+                            <button @click="saveRoutine" class="w-full py-4 mt-2 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-2xl shadow-lg active:scale-95 text-lg">{{ t('btnSave') }}</button>
                         </div>
 
                         <!-- Repair / Event Modal -->
@@ -1616,7 +1710,8 @@
         const locales = {
             en: {
                 navDashboard: 'Home', navWork: 'Work', navTasks: 'Tasks', navRepairs: 'Logs', navCRM: 'CRM',
-                subTabTasks: 'Pending', subTabLogs: 'History',
+                subTabTasks: 'Pending', subTabRoutines: 'Cycles', subTabLogs: 'History',
+                addRoutine: 'Add Recurring Check', editRoutine: 'Edit Recurring Check', routineCatalog: 'Standard checklist', selectRoutine: 'Pick a standard item...', interval: 'Interval', nextDue: 'Next due', overdue: 'Overdue', dueSoon: 'Due soon', noRoutines: 'No recurring checks yet.', routinesHint: 'These stay on the list. Completing one writes a History record and rolls the next due date forward.', everyMonths: 'Every {n} mo', everyYear: 'Yearly', everyYears: 'Every {n} yr', toastRoutineSaved: 'Recurring check saved', toastRoutineDone: 'Logged and rolled to next due', toastRoutineDeleted: 'Recurring check removed', confirmDeleteRoutineTitle: 'Delete recurring check?',
                 typeDetached: 'Detached', typeSemiDetached: 'Semi-Detached', typeFreeholdTownhouse: 'Freehold Townhouse', typeCondoTownhouse: 'Condo Townhouse', typeCondoApt: 'Condo Apt', typeLink: 'Link', typeMultiplex: 'Multiplex',
                 dashboardTasks: 'Pending Tasks', dashboardLogs: 'Logs & Events', dashboardTotalCost: 'Total Expenses',
                 noAddress: 'No Address Set', noProperties: 'No properties added yet.', viewAll: 'View All',
@@ -1658,7 +1753,8 @@
             },
             zh: {
                 navDashboard: '资产', navWork: '工作', navTasks: '待办', navRepairs: '病历本', navCRM: '客户/人脉',
-                subTabTasks: '待办任务', subTabLogs: '历史记录',
+                subTabTasks: '待办任务', subTabRoutines: '周期', subTabLogs: '历史记录',
+                addRoutine: '添加周期检查', editRoutine: '编辑周期检查', routineCatalog: '常规检查清单', selectRoutine: '选择常见项目...', interval: '周期', nextDue: '下次日期', overdue: '已过期', dueSoon: '即将到期', noRoutines: '暂无周期检查。', routinesHint: '本栏事项常驻显示。点完成后写入历史记录，并把下次日期按周期后推。', everyMonths: '每{n}个月', everyYear: '每年', everyYears: '每{n}年', toastRoutineSaved: '周期检查已保存', toastRoutineDone: '已记入历史并滚动到下次', toastRoutineDeleted: '周期检查已删除', confirmDeleteRoutineTitle: '删除这项周期检查？',
                 typeDetached: '独立屋', typeSemiDetached: '半独立屋', typeFreeholdTownhouse: '无物业费联排', typeCondoTownhouse: '有物业费联排', typeCondoApt: '高层公寓', typeLink: '连体住宅', typeMultiplex: '多户住宅',
                 dashboardTasks: '待处理任务', dashboardLogs: '维修与事件', dashboardTotalCost: '累计开销',
                 noAddress: '未填写地址', noProperties: '暂无房屋资产。', viewAll: '查看全部',
@@ -1719,6 +1815,43 @@
             const raw = defaultHouseZonesRaw[lang] || defaultHouseZonesRaw['en'];
             return Object.keys(raw).map(k => ({ category: k, zones: [...raw[k]] }));
         }
+
+        const routineCatalog = {
+            en: [
+                { key: 'furnace_filter', title: 'Replace furnace / HRV filter', intervalMonths: 3, zoneHint: 'Furnace Room', category: 'HVAC' },
+                { key: 'hvac_tune', title: 'Furnace & AC professional tune-up', intervalMonths: 12, zoneHint: 'Furnace Room', category: 'HVAC' },
+                { key: 'smoke_test', title: 'Test smoke / CO detectors', intervalMonths: 1, zoneHint: 'Hallway', category: 'Electrical' },
+                { key: 'smoke_batt', title: 'Replace detector batteries', intervalMonths: 12, zoneHint: 'Hallway', category: 'Electrical' },
+                { key: 'gfci', title: 'Test GFCI outlets', intervalMonths: 3, zoneHint: 'Bathrooms', category: 'Electrical' },
+                { key: 'wh_flush', title: 'Flush water heater tank', intervalMonths: 12, zoneHint: 'Furnace Room', category: 'Plumbing' },
+                { key: 'sump', title: 'Test sump pump', intervalMonths: 3, zoneHint: 'Basement', category: 'Plumbing' },
+                { key: 'fridge_filter', title: 'Replace fridge / RO drinking filter', intervalMonths: 6, zoneHint: 'Kitchen', category: 'Appliances' },
+                { key: 'dryer_vent', title: 'Clean dryer vent & lint path', intervalMonths: 12, zoneHint: 'Laundry Room', category: 'Appliances' },
+                { key: 'hood_filter', title: 'Wash range-hood grease filter', intervalMonths: 3, zoneHint: 'Kitchen', category: 'Appliances' },
+                { key: 'gutters', title: 'Clean gutters & downspouts', intervalMonths: 6, zoneHint: 'Gutters & Downspouts', category: 'Roofing' },
+                { key: 'roof_inspect', title: 'Walk roof / attic for leaks', intervalMonths: 12, zoneHint: 'Roof', category: 'Roofing' },
+                { key: 'ext_caulk', title: 'Inspect exterior caulk & weatherstrip', intervalMonths: 12, zoneHint: 'Windows & Doors', category: 'Exterior/Siding' },
+                { key: 'deck', title: 'Inspect / reseal deck or fence', intervalMonths: 24, zoneHint: 'Deck / Patio', category: 'Landscaping' },
+                { key: 'ext_unit', title: 'Rinse AC condenser fins', intervalMonths: 6, zoneHint: 'Backyard / Garden', category: 'HVAC' }
+            ],
+            zh: [
+                { key: 'furnace_filter', title: '更换暖炉 / 新风滤网', intervalMonths: 3, zoneHint: '暖炉房 / 机房', category: '暖通空调' },
+                { key: 'hvac_tune', title: '暖炉与空调专业保养', intervalMonths: 12, zoneHint: '暖炉房 / 机房', category: '暖通空调' },
+                { key: 'smoke_test', title: '测试烟雾 / 一氧化碳报警器', intervalMonths: 1, zoneHint: '楼梯间', category: '电路灯具' },
+                { key: 'smoke_batt', title: '更换报警器电池', intervalMonths: 12, zoneHint: '楼梯间', category: '电路灯具' },
+                { key: 'gfci', title: '测试卫生间/厨房漏电插座', intervalMonths: 3, zoneHint: '卫浴间', category: '电路灯具' },
+                { key: 'wh_flush', title: '冲洗热水器罐体沉积', intervalMonths: 12, zoneHint: '暖炉房 / 机房', category: '水电卫浴' },
+                { key: 'sump', title: '测试地下室排水泵', intervalMonths: 3, zoneHint: '地下室', category: '水电卫浴' },
+                { key: 'fridge_filter', title: '更换冰箱 / 净水滤芯', intervalMonths: 6, zoneHint: '厨房', category: '家电维修' },
+                { key: 'dryer_vent', title: '清理干衣机排风管', intervalMonths: 12, zoneHint: '洗衣房', category: '家电维修' },
+                { key: 'hood_filter', title: '清洗油烟机滤网', intervalMonths: 3, zoneHint: '厨房', category: '家电维修' },
+                { key: 'gutters', title: '清理排水沟与落水管', intervalMonths: 6, zoneHint: '排水沟/落水管', category: '屋顶维修' },
+                { key: 'roof_inspect', title: '检查屋顶 / 阁楼渗漏', intervalMonths: 12, zoneHint: '屋顶', category: '屋顶维修' },
+                { key: 'ext_caulk', title: '检查外墙填缝与门窗密封', intervalMonths: 12, zoneHint: '门窗', category: '室外建筑/外墙' },
+                { key: 'deck', title: '检查 / 重刷露台或围栏', intervalMonths: 24, zoneHint: '户外露台 / 铺砖平台', category: '园林庭院' },
+                { key: 'ext_unit', title: '冲洗室外空调冷凝器翅片', intervalMonths: 6, zoneHint: '后院及花园', category: '暖通空调' }
+            ]
+        };
 
         const taskCategories = {
             en: ['Plumbing', 'HVAC', 'Electrical', 'Roofing', 'Exterior/Siding', 'Landscaping', 'Cleaning', 'Appliances', 'Renovation', 'General/Other'],
@@ -1944,7 +2077,7 @@
             return { properties, tasks, repairs, contacts, customRoles: [], userZones: zones };
         }
 
-        const APP_VERSION = '2026.09.05-b';
+        const APP_VERSION = '2026.09.05-c';
 
         const app = createApp({
             data() {
@@ -1954,7 +2087,8 @@
                 return {
                     currentLang: localStorage.getItem('pocket_prop_lang') || localStorage.getItem('my_home_os_lang') || 'en',
                     currentTab: 'dashboard', 
-                    workSubTab: 'tasks', 
+                    workSubTab: 'tasks',
+                    routineCatalog, 
                     enabledViews: savedViews,
                     dashboardViewMode: 'list', 
                     mapInstance: null,
@@ -1992,7 +2126,9 @@
                     userZones: [], 
                     taskCategories, commonTaskTitles, commonRepairTitles,
                     
-                    properties: [], tasks: [], repairs: [], contacts: [], customRoles: [],
+                    properties: [], tasks: [], repairs: [], routines: [], contacts: [], customRoles: [],
+                    editingRoutineId: null,
+                    formRoutine: { catalogKey: '', title: '', propertyId: '', zone: '', category: '', intervalMonths: 12, nextDueDate: '', lastDoneDate: '' },
                     
                     formProperty: { name: '', buildingType: 'detached', address: '', lat: null, lng: null },
                     formUsage: { id: null, usageType: 'primary', startDate: '', endDate: '', notes: '' },
@@ -2060,7 +2196,8 @@
                         contact: 'confirmDeleteContactTitle',
                         role: 'confirmDeleteRoleTitle',
                         mediaFile: 'confirmDeleteMediaTitle',
-                        repair: 'confirmDeleteLogTitle'
+                        repair: 'confirmDeleteLogTitle',
+                        routine: 'confirmDeleteRoutineTitle'
                     };
                     return (this.itemToDelete && map[this.itemToDelete.type]) || 'confirmDeleteLogTitle';
                 },
@@ -2069,6 +2206,10 @@
                         .filter(t => !t.completed && (this.selectedPropertyId === 'ALL' || t.propertyId === this.selectedPropertyId))
                         .slice()
                         .sort((a, b) => (b.issueDate || '').localeCompare(a.issueDate || ''));
+                },
+                filteredRoutines() {
+                    const list = this.routines.filter(r => this.selectedPropertyId === 'ALL' || r.propertyId === this.selectedPropertyId);
+                    return list.slice().sort((a, b) => (a.nextDueDate || '9999').localeCompare(b.nextDueDate || '9999'));
                 },
                 filteredRepairs() { return this.selectedPropertyId === 'ALL' ? this.repairs : this.repairs.filter(r => r.propertyId === this.selectedPropertyId); },
                 groupedFilteredRepairs() {
@@ -2431,9 +2572,95 @@
                 },
                 handleFabClick() {
                     if (this.currentTab === 'dashboard') this.openModal(this.viewingPropertyId ? 'task' : 'property');
-                    else if (this.currentTab === 'work') this.openModal('task');
+                    else if (this.currentTab === 'work') this.openModal(this.workSubTab === 'routines' ? 'routine' : (this.workSubTab === 'repairs' ? 'repair' : 'task'));
                     else if (this.currentTab === 'crm') this.openModal('contact');
                 },
+                todayIso() { return new Date().toISOString().split('T')[0]; },
+                addMonthsToDate(dateStr, months) {
+                    const base = dateStr || this.todayIso();
+                    const d = new Date(base + 'T00:00:00');
+                    if (isNaN(d.getTime())) return base;
+                    d.setMonth(d.getMonth() + Number(months || 0));
+                    return d.toISOString().split('T')[0];
+                },
+                formatRoutineInterval(months) {
+                    const n = Number(months) || 0;
+                    if (n === 12) return this.t('everyYear');
+                    if (n > 12 && n % 12 === 0) return this.t('everyYears').replace('{n}', String(n / 12));
+                    return this.t('everyMonths').replace('{n}', String(n || 1));
+                },
+                isRoutineOverdue(routine) {
+                    if (!routine || !routine.nextDueDate) return false;
+                    return routine.nextDueDate < this.todayIso();
+                },
+                isRoutineDueSoon(routine) {
+                    if (!routine || !routine.nextDueDate || this.isRoutineOverdue(routine)) return false;
+                    const due = new Date(routine.nextDueDate + 'T00:00:00');
+                    const limit = new Date();
+                    limit.setDate(limit.getDate() + 14);
+                    return due <= limit;
+                },
+                applyRoutineCatalog() {
+                    if (this.formRoutine.catalogKey === 'OTHER') {
+                        if (!this.formRoutine.title) this.formRoutine.title = '';
+                        return;
+                    }
+                    const found = (this.routineCatalog[this.currentLang] || []).find(i => i.key === this.formRoutine.catalogKey);
+                    if (!found) return;
+                    this.formRoutine.title = found.title;
+                    this.formRoutine.intervalMonths = found.intervalMonths;
+                    this.formRoutine.category = found.category;
+                    if (!this.formRoutine.zone) this.formRoutine.zone = found.zoneHint || '';
+                },
+                async saveRoutine() {
+                    if (!this.formRoutine.title && this.formRoutine.catalogKey !== 'OTHER') this.applyRoutineCatalog();
+                    if (!this.formRoutine.title) return;
+                    const payload = {
+                        catalogKey: this.formRoutine.catalogKey,
+                        title: this.formRoutine.title,
+                        propertyId: this.formRoutine.propertyId,
+                        zone: this.formRoutine.zone,
+                        category: this.formRoutine.category,
+                        intervalMonths: Number(this.formRoutine.intervalMonths) || 12,
+                        nextDueDate: this.formRoutine.nextDueDate || this.todayIso(),
+                        lastDoneDate: this.formRoutine.lastDoneDate || ''
+                    };
+                    if (this.editingRoutineId) {
+                        const idx = this.routines.findIndex(r => r.id === this.editingRoutineId);
+                        if (idx !== -1) this.routines[idx] = { ...this.routines[idx], ...payload };
+                    } else {
+                        this.routines.push({ id: 'rt_' + Date.now(), ...payload });
+                    }
+                    await this.saveToStorage();
+                    this.closeModal();
+                    this.showToast(this.t('toastRoutineSaved'));
+                },
+                async completeRoutine(routine) {
+                    if (!routine) return;
+                    const doneOn = this.todayIso();
+                    this.repairs.unshift({
+                        id: 'r_' + Date.now(),
+                        propertyId: routine.propertyId,
+                        titleSelect: 'OTHER',
+                        title: routine.title,
+                        zone: routine.zone || '',
+                        category: routine.category || '',
+                        cost: '',
+                        date: doneOn,
+                        warrantyEndDate: '',
+                        contractorId: '',
+                        hasReceipt: false,
+                        receiptPhotos: [],
+                        beforePhotos: [],
+                        afterPhotos: [],
+                        fromRoutineId: routine.id
+                    });
+                    routine.lastDoneDate = doneOn;
+                    routine.nextDueDate = this.addMonthsToDate(doneOn, routine.intervalMonths);
+                    await this.saveToStorage();
+                    this.showToast(this.t('toastRoutineDone'));
+                },
+                promptDeleteRoutine(id) { this.itemToDelete = { type: 'routine', id }; },
                 openUsageModal(usageItem = null) {
                     this.activeModal = 'usage';
                     if (usageItem) { this.editingUsageId = usageItem.id; this.formUsage = { ...usageItem }; } 
@@ -2481,6 +2708,16 @@
                     if (type === 'repair' && !item && !this.convertingTaskId) { this.formRepair = { propertyId: this.viewingPropertyId || (this.properties.length > 0 ? this.properties[0].id : ''), titleSelect: '', title: '', zone: this.viewingZone || '', category: '', cost: '', date: new Date().toISOString().split('T')[0], warrantyEndDate: '', contractorId: '', hasReceipt: true, receiptPhotos: [], beforePhotos: [], afterPhotos: [] }; }
                     this.activeModal = type; const defaultProp = this.viewingPropertyId || (this.properties.length > 0 ? this.properties[0].id : '');
                     if (type === 'property') { if (item) { this.editingPropertyId = item.id; this.formProperty = { name: item.name, buildingType: item.buildingType, address: item.address, lat: item.lat, lng: item.lng }; } else { this.editingPropertyId = null; this.formProperty = { name: '', buildingType: 'detached', address: '', lat: null, lng: null }; } }
+                    if (type === 'routine') {
+                        const defaultProp = this.viewingPropertyId || (this.properties.length > 0 ? this.properties[0].id : '');
+                        if (item) {
+                            this.editingRoutineId = item.id;
+                            this.formRoutine = { catalogKey: item.catalogKey || 'OTHER', title: item.title || '', propertyId: item.propertyId || defaultProp, zone: item.zone || '', category: item.category || '', intervalMonths: item.intervalMonths || 12, nextDueDate: item.nextDueDate || this.todayIso(), lastDoneDate: item.lastDoneDate || '' };
+                        } else {
+                            this.editingRoutineId = null;
+                            this.formRoutine = { catalogKey: '', title: '', propertyId: defaultProp, zone: '', category: '', intervalMonths: 12, nextDueDate: this.todayIso(), lastDoneDate: '' };
+                        }
+                    }
                     if (type === 'task') {
                         if (item) { this.editingTaskId = item.id; let tSelect = item.titleSelect; if (!tSelect) { const found = this.commonTaskTitles[this.currentLang].find(t => t.name === item.title); tSelect = found ? found.name : 'OTHER'; } this.formTask = { propertyId: item.propertyId || defaultProp, titleSelect: tSelect, title: item.title || '', zone: item.zone || '', category: item.category || '', issueDate: item.issueDate || '', beforePhotos: [...(item.beforePhotos || [])] }; } 
                         else { this.editingTaskId = null; this.formTask = { propertyId: defaultProp, titleSelect: '', title: '', zone: this.viewingZone || '', category: '', issueDate: new Date().toISOString().split('T')[0], beforePhotos: [] }; }
@@ -2513,7 +2750,7 @@
                     const idx = this.formContact.propertyIds.indexOf(propId);
                     if (idx === -1) this.formContact.propertyIds.push(propId); else this.formContact.propertyIds.splice(idx, 1);
                 },
-                closeModal() { this.activeModal = null; this.editingPropertyId = null; this.editingUsageId = null; this.editingTenantSubId = null; this.parentRentalUsage = null; this.editingContactId = null; this.editingTaskId = null; this.editingRepairId = null; this.convertingTaskId = null; },
+                closeModal() { this.activeModal = null; this.editingPropertyId = null; this.editingUsageId = null; this.editingTenantSubId = null; this.parentRentalUsage = null; this.editingContactId = null; this.editingTaskId = null; this.editingRepairId = null; this.editingRoutineId = null; this.convertingTaskId = null; },
                 handleTaskTitleChange() { const found = this.commonTaskTitles[this.currentLang].find(t => t.name === this.formTask.titleSelect); if (found) { this.formTask.title = found.name; this.formTask.category = found.category; } else { this.formTask.title = ''; this.formTask.category = ''; } },
                 handleRepairTitleChange() { const found = this.commonRepairTitles[this.currentLang].find(r => r.name === this.formRepair.titleSelect); if (found) { this.formRepair.title = found.name; this.formRepair.category = found.category; } else { this.formRepair.title = ''; this.formRepair.category = ''; } },
                 triggerFileInput(type, multiple = false) { 
@@ -2633,6 +2870,10 @@
                     else if (this.itemToDelete.type === 'role') { 
                         this.customRoles = this.customRoles.filter(r => r.key !== this.itemToDelete.id); 
                         this.showToast(this.t('toastRoleDeleted')); 
+                    }
+                    else if (this.itemToDelete.type === 'routine') {
+                        this.routines = this.routines.filter(r => r.id !== this.itemToDelete.id);
+                        this.showToast(this.t('toastRoutineDeleted'));
                     }
                     else if (this.itemToDelete.type === 'mediaFile') {
                         this.removeMediaFromParent(this.itemToDelete.fileItem);
@@ -2782,6 +3023,11 @@
                     this.properties = demo.properties;
                     this.tasks = demo.tasks;
                     this.repairs = demo.repairs;
+                    this.routines = [
+                        { id: 'rt_demo_filter', catalogKey: 'furnace_filter', title: this.currentLang === 'zh' ? '更换暖炉 / 新风滤网' : 'Replace furnace / HRV filter', propertyId: demo.properties[0].id, zone: this.currentLang === 'zh' ? '暖炉房 / 机房' : 'Furnace Room', category: this.currentLang === 'zh' ? '暖通空调' : 'HVAC', intervalMonths: 3, nextDueDate: '2026-09-01', lastDoneDate: '2026-06-01' },
+                        { id: 'rt_demo_gutter', catalogKey: 'gutters', title: this.currentLang === 'zh' ? '清理排水沟与落水管' : 'Clean gutters & downspouts', propertyId: demo.properties[0].id, zone: this.currentLang === 'zh' ? '排水沟/落水管' : 'Gutters & Downspouts', category: this.currentLang === 'zh' ? '屋顶维修' : 'Roofing', intervalMonths: 6, nextDueDate: '2026-10-15', lastDoneDate: '2026-04-15' },
+                        { id: 'rt_demo_smoke', catalogKey: 'smoke_test', title: this.currentLang === 'zh' ? '测试烟雾 / 一氧化碳报警器' : 'Test smoke / CO detectors', propertyId: demo.properties[1].id, zone: this.currentLang === 'zh' ? '楼梯间' : 'Hallway', category: this.currentLang === 'zh' ? '电路灯具' : 'Electrical', intervalMonths: 1, nextDueDate: '2026-09-20', lastDoneDate: '2026-08-20' }
+                    ];
                     this.contacts = demo.contacts;
                     this.customRoles = demo.customRoles || [];
                     this.userZones = demo.userZones && demo.userZones.length ? demo.userZones : getDefaultZones(this.currentLang);
@@ -2802,6 +3048,7 @@
                             properties: this.properties,
                             tasks: this.tasks,
                             repairs: this.repairs,
+                            routines: this.routines,
                             contacts: this.contacts,
                             customRoles: this.customRoles,
                             userZones: this.userZones
@@ -2816,6 +3063,7 @@
                             this.properties = data.properties || [];
                             this.tasks = data.tasks || [];
                             this.repairs = data.repairs || [];
+                            this.routines = data.routines || [];
                             this.contacts = data.contacts || [];
                             this.customRoles = data.customRoles || [];
                             if (data.userZones && data.userZones.length > 0) {
@@ -2834,6 +3082,7 @@
                         properties: this.properties,
                         tasks: this.tasks,
                         repairs: this.repairs,
+                        routines: this.routines,
                         contacts: this.contacts,
                         customRoles: this.customRoles,
                         userZones: this.userZones
@@ -2862,6 +3111,7 @@
                                 this.properties = data.properties || [];
                                 this.tasks = data.tasks || [];
                                 this.repairs = data.repairs || [];
+                                this.routines = data.routines || [];
                                 this.contacts = data.contacts || [];
                                 this.customRoles = data.customRoles || [];
                                 this.userZones = data.userZones || getDefaultZones(this.currentLang);
