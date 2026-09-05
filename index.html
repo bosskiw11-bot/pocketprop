@@ -601,7 +601,11 @@
                                         <span class="truncate">{{ t('nextDue') }} {{ routine.nextDueDate || '—' }}</span>
                                     </p>
                                     <div class="flex items-center gap-1 flex-shrink-0">
-                                        <button @click="completeRoutine(routine)" class="h-7 px-2.5 rounded-lg bg-brand-500 text-white text-[11px] font-bold flex items-center gap-1 shadow-sm shadow-brand-500/30 active:scale-95">
+                                        <button v-if="wasRoutineCompletedToday(routine)" class="h-7 px-2.5 rounded-lg bg-slate-700 text-slate-400 text-[11px] font-bold flex items-center gap-1 cursor-default">
+                                            <i class="fa-solid fa-check text-[10px]"></i>
+                                            <span>{{ t('doneToday') }}</span>
+                                        </button>
+                                        <button v-else @click="completeRoutine(routine)" class="h-7 px-2.5 rounded-lg bg-brand-500 text-white text-[11px] font-bold flex items-center gap-1 shadow-sm shadow-brand-500/30 active:scale-95 disabled:opacity-50" :disabled="isRoutineCompleting(routine)">
                                             <i class="fa-solid fa-circle-check text-[10px]"></i>
                                             <span>{{ t('btnLogAsRepair') }}</span>
                                         </button>
@@ -1711,7 +1715,7 @@
             en: {
                 navDashboard: 'Home', navWork: 'Work', navTasks: 'Tasks', navRepairs: 'Logs', navCRM: 'CRM',
                 subTabTasks: 'Pending', subTabRoutines: 'Cycles', subTabLogs: 'History',
-                addRoutine: 'Add Recurring Check', editRoutine: 'Edit Recurring Check', routineCatalog: 'Standard checklist', selectRoutine: 'Pick a standard item...', interval: 'Interval', nextDue: 'Next due', overdue: 'Overdue', dueSoon: 'Due soon', noRoutines: 'No recurring checks yet.', routinesHint: 'These stay on the list. Completing one writes a History record and rolls the next due date forward.', everyMonths: 'Every {n} mo', everyYear: 'Yearly', everyYears: 'Every {n} yr', toastRoutineSaved: 'Recurring check saved', toastRoutineDone: 'Logged and rolled to next due', toastRoutineDeleted: 'Recurring check removed', confirmDeleteRoutineTitle: 'Delete recurring check?',
+                addRoutine: 'Add Recurring Check', editRoutine: 'Edit Recurring Check', routineCatalog: 'Standard checklist', selectRoutine: 'Pick a standard item...', interval: 'Interval', nextDue: 'Next due', overdue: 'Overdue', dueSoon: 'Due soon', noRoutines: 'No recurring checks yet.', routinesHint: 'These stay on the list. Completing one writes a History record and rolls the next due date forward.', everyMonths: 'Every {n} mo', everyYear: 'Yearly', everyYears: 'Every {n} yr', toastRoutineSaved: 'Recurring check saved', toastRoutineDone: 'Logged and rolled to next due', toastRoutineDeleted: 'Recurring check removed', confirmDeleteRoutineTitle: 'Delete recurring check?', doneToday: 'Done today', toastRoutineAlreadyToday: 'Already logged for today', toastRoutineInFlight: 'Saving this check…', confirmEarlyRoutine: 'Next due is still in the future. Log another completion and roll the date again?',
                 typeDetached: 'Detached', typeSemiDetached: 'Semi-Detached', typeFreeholdTownhouse: 'Freehold Townhouse', typeCondoTownhouse: 'Condo Townhouse', typeCondoApt: 'Condo Apt', typeLink: 'Link', typeMultiplex: 'Multiplex',
                 dashboardTasks: 'Pending Tasks', dashboardLogs: 'Logs & Events', dashboardTotalCost: 'Total Expenses',
                 noAddress: 'No Address Set', noProperties: 'No properties added yet.', viewAll: 'View All',
@@ -1754,7 +1758,7 @@
             zh: {
                 navDashboard: '资产', navWork: '工作', navTasks: '待办', navRepairs: '病历本', navCRM: '客户/人脉',
                 subTabTasks: '待办任务', subTabRoutines: '周期', subTabLogs: '历史记录',
-                addRoutine: '添加周期检查', editRoutine: '编辑周期检查', routineCatalog: '常规检查清单', selectRoutine: '选择常见项目...', interval: '周期', nextDue: '下次日期', overdue: '已过期', dueSoon: '即将到期', noRoutines: '暂无周期检查。', routinesHint: '本栏事项常驻显示。点完成后写入历史记录，并把下次日期按周期后推。', everyMonths: '每{n}个月', everyYear: '每年', everyYears: '每{n}年', toastRoutineSaved: '周期检查已保存', toastRoutineDone: '已记入历史并滚动到下次', toastRoutineDeleted: '周期检查已删除', confirmDeleteRoutineTitle: '删除这项周期检查？',
+                addRoutine: '添加周期检查', editRoutine: '编辑周期检查', routineCatalog: '常规检查清单', selectRoutine: '选择常见项目...', interval: '周期', nextDue: '下次日期', overdue: '已过期', dueSoon: '即将到期', noRoutines: '暂无周期检查。', routinesHint: '本栏事项常驻显示。点完成后写入历史记录，并把下次日期按周期后推。', everyMonths: '每{n}个月', everyYear: '每年', everyYears: '每{n}年', toastRoutineSaved: '周期检查已保存', toastRoutineDone: '已记入历史并滚动到下次', toastRoutineDeleted: '周期检查已删除', confirmDeleteRoutineTitle: '删除这项周期检查？', doneToday: '今日已完成', toastRoutineAlreadyToday: '今天已经记过一次', toastRoutineInFlight: '正在保存这次完成…', confirmEarlyRoutine: '下次日期还没到。确认再记一次并重新后推日期？',
                 typeDetached: '独立屋', typeSemiDetached: '半独立屋', typeFreeholdTownhouse: '无物业费联排', typeCondoTownhouse: '有物业费联排', typeCondoApt: '高层公寓', typeLink: '连体住宅', typeMultiplex: '多户住宅',
                 dashboardTasks: '待处理任务', dashboardLogs: '维修与事件', dashboardTotalCost: '累计开销',
                 noAddress: '未填写地址', noProperties: '暂无房屋资产。', viewAll: '查看全部',
@@ -2077,7 +2081,7 @@
             return { properties, tasks, repairs, contacts, customRoles: [], userZones: zones };
         }
 
-        const APP_VERSION = '2026.09.05-c';
+        const APP_VERSION = '2026.09.05-d';
 
         const app = createApp({
             data() {
@@ -2128,6 +2132,7 @@
                     
                     properties: [], tasks: [], repairs: [], routines: [], contacts: [], customRoles: [],
                     editingRoutineId: null,
+                    completingRoutineIds: {},
                     formRoutine: { catalogKey: '', title: '', propertyId: '', zone: '', category: '', intervalMonths: 12, nextDueDate: '', lastDoneDate: '' },
                     
                     formProperty: { name: '', buildingType: 'detached', address: '', lat: null, lng: null },
@@ -2635,30 +2640,70 @@
                     this.closeModal();
                     this.showToast(this.t('toastRoutineSaved'));
                 },
+                wasRoutineCompletedToday(routine) {
+                    if (!routine) return false;
+                    const today = this.todayIso();
+                    if (routine.lastDoneDate === today) return true;
+                    return this.repairs.some(r => r.fromRoutineId === routine.id && r.date === today);
+                },
+                isRoutineCompleting(routine) {
+                    return !!(routine && this.completingRoutineIds[routine.id]);
+                },
+                nextDueAfterCompletion(routine, doneOn) {
+                    const months = Number(routine.intervalMonths) || 12;
+                    let next = this.addMonthsToDate(doneOn, months);
+                    // If still due/overdue after one step (short intervals vs timezone edge), keep rolling
+                    while (next <= doneOn) {
+                        next = this.addMonthsToDate(next, months);
+                        if (months <= 0) break;
+                    }
+                    return next;
+                },
                 async completeRoutine(routine) {
                     if (!routine) return;
+                    if (this.completingRoutineIds[routine.id]) {
+                        this.showToast(this.t('toastRoutineInFlight'));
+                        return;
+                    }
                     const doneOn = this.todayIso();
-                    this.repairs.unshift({
-                        id: 'r_' + Date.now(),
-                        propertyId: routine.propertyId,
-                        titleSelect: 'OTHER',
-                        title: routine.title,
-                        zone: routine.zone || '',
-                        category: routine.category || '',
-                        cost: '',
-                        date: doneOn,
-                        warrantyEndDate: '',
-                        contractorId: '',
-                        hasReceipt: false,
-                        receiptPhotos: [],
-                        beforePhotos: [],
-                        afterPhotos: [],
-                        fromRoutineId: routine.id
-                    });
-                    routine.lastDoneDate = doneOn;
-                    routine.nextDueDate = this.addMonthsToDate(doneOn, routine.intervalMonths);
-                    await this.saveToStorage();
-                    this.showToast(this.t('toastRoutineDone'));
+                    if (this.wasRoutineCompletedToday(routine)) {
+                        this.showToast(this.t('toastRoutineAlreadyToday'));
+                        return;
+                    }
+                    if (routine.nextDueDate && routine.nextDueDate > doneOn) {
+                        if (!confirm(this.t('confirmEarlyRoutine'))) return;
+                    }
+                    this.completingRoutineIds = { ...this.completingRoutineIds, [routine.id]: true };
+                    try {
+                        const alreadyLogged = this.repairs.some(r => r.fromRoutineId === routine.id && r.date === doneOn);
+                        if (!alreadyLogged) {
+                            this.repairs.unshift({
+                                id: 'r_' + Date.now() + '_' + routine.id,
+                                propertyId: routine.propertyId,
+                                titleSelect: 'OTHER',
+                                title: routine.title,
+                                zone: routine.zone || '',
+                                category: routine.category || '',
+                                cost: '',
+                                date: doneOn,
+                                warrantyEndDate: '',
+                                contractorId: '',
+                                hasReceipt: false,
+                                receiptPhotos: [],
+                                beforePhotos: [],
+                                afterPhotos: [],
+                                fromRoutineId: routine.id
+                            });
+                        }
+                        routine.lastDoneDate = doneOn;
+                        routine.nextDueDate = this.nextDueAfterCompletion(routine, doneOn);
+                        await this.saveToStorage();
+                        this.showToast(this.t('toastRoutineDone'));
+                    } finally {
+                        const next = { ...this.completingRoutineIds };
+                        delete next[routine.id];
+                        this.completingRoutineIds = next;
+                    }
                 },
                 promptDeleteRoutine(id) { this.itemToDelete = { type: 'routine', id }; },
                 openUsageModal(usageItem = null) {
