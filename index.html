@@ -751,7 +751,7 @@
                                         </span>
                                     </div>
 
-                                    <p v-else-if="contact.trade" class="text-xs font-semibold text-slate-400 truncate mt-0.5">{{ contact.trade }}</p>
+                                    <p v-if="contact.trade" class="text-xs font-semibold text-slate-400 truncate mt-0.5">{{ contact.trade }}</p>
                                 </div>
                             </div>
 
@@ -2412,7 +2412,7 @@
             return { properties, tasks, repairs, contacts, customRoles, userZones: zones };
         }
 
-        const APP_VERSION = '2026.09.06-f';
+        const APP_VERSION = '2026.09.06-g';
 
         const app = createApp({
             data() {
