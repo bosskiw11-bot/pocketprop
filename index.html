@@ -324,6 +324,14 @@
                                                 </template>
                                             </p>
                                             <p v-if="usage.notes" class="text-[11px] text-slate-400 mt-1 italic truncate">"{{ usage.notes }}"</p>
+                                            <div v-if="showsUsageProfessionals(usage)" class="flex flex-wrap gap-1.5 mt-2">
+                                                <span v-if="usage.realtorId" class="text-[10px] px-1.5 py-0.5 rounded-md bg-purple-500/15 text-purple-300 border border-purple-500/30 font-semibold flex items-center gap-1">
+                                                    <i class="fa-solid fa-user-tie text-[9px]"></i>{{ getContactName(usage.realtorId) }}
+                                                </span>
+                                                <span v-if="usage.lawyerId && isBuySellUsage(usage)" class="text-[10px] px-1.5 py-0.5 rounded-md bg-teal-500/15 text-teal-300 border border-teal-500/30 font-semibold flex items-center gap-1">
+                                                    <i class="fa-solid fa-scale-balanced text-[9px]"></i>{{ getContactName(usage.lawyerId) }}
+                                                </span>
+                                            </div>
                                         </div>
                                         <div class="flex gap-1 flex-shrink-0">
                                             <button @click="openUsageModal(usage)" class="w-7 h-7 rounded-lg bg-slate-800 text-slate-400 hover:text-white active:bg-slate-700 flex items-center justify-center text-[10px] transition-colors">
@@ -894,6 +902,23 @@
                             <div>
                                 <label class="block text-[12px] font-bold text-slate-400 uppercase tracking-wider mb-2 pl-1">{{ t('usageNotes') }}</label>
                                 <input v-model="formUsage.notes" type="text" placeholder="e.g. Price, Tenant Info, Renovation Details" class="w-full bg-slate-800 rounded-2xl p-4 text-[15px] text-white outline-none border border-transparent focus:border-brand-500">
+                            </div>
+
+                            <div v-if="showsUsageProfessionals(formUsage)" class="grid gap-4" :class="isBuySellUsage(formUsage) ? 'grid-cols-1' : 'grid-cols-1'">
+                                <div>
+                                    <label class="block text-[12px] font-bold text-slate-400 uppercase tracking-wider mb-2 pl-1">{{ t('usageRealtor') }}</label>
+                                    <select v-model="formUsage.realtorId" class="w-full bg-slate-800 rounded-2xl p-4 text-[15px] text-white outline-none">
+                                        <option value="">-- {{ t('noneAssigned') }} --</option>
+                                        <option v-for="c in realtorContacts" :key="c.id" :value="c.id">{{ c.name }}</option>
+                                    </select>
+                                </div>
+                                <div v-if="isBuySellUsage(formUsage)">
+                                    <label class="block text-[12px] font-bold text-slate-400 uppercase tracking-wider mb-2 pl-1">{{ t('usageLawyer') }}</label>
+                                    <select v-model="formUsage.lawyerId" class="w-full bg-slate-800 rounded-2xl p-4 text-[15px] text-white outline-none">
+                                        <option value="">-- {{ t('noneAssigned') }} --</option>
+                                        <option v-for="c in lawyerContacts" :key="c.id" :value="c.id">{{ c.name }}</option>
+                                    </select>
+                                </div>
                             </div>
 
                             <button @click="saveUsage" class="w-full py-4 mt-4 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-2xl shadow-lg active:scale-95 transition-all text-lg">{{ t('btnSave') }}</button>
@@ -1740,6 +1765,7 @@
                 confirmDeleteTitle: 'Delete Task?', confirmDeleteLogTitle: 'Delete History Record?', confirmDeleteContactTitle: 'Delete Contact?', confirmDeleteRoleTitle: 'Delete Category?', confirmDeleteMediaTitle: 'Delete File?', btnCancel: 'Cancel', btnConfirmDelete: 'Delete',
                 usageTimeline: 'Usage Timeline', startDate: 'Start Date', endDate: 'End Date', addUsagePeriod: 'Add Event/Period', editUsagePeriod: 'Edit Event/Period', modalAddUsage: 'Add Event or Usage Period', ongoing: 'Present',
                 usageNotes: 'Period Notes / Price / Tenant Info', noUsageHistory: 'No timeline events logged yet.',
+                usageRealtor: 'Realtor', usageLawyer: 'Lawyer', noneAssigned: 'None',
                 tenantSubTimeline: 'Tenant Lease Sub-branch', addTenantSub: 'Add Tenant Lease', editTenantSub: 'Edit Tenant Lease', monthlyRent: 'Monthly Rent', selectCrmTenant: 'Pick from CRM Tenants', tenantName: 'Tenant Name', roomName: 'Room / Sub-unit Track', roomHint: 'e.g. Master Bedroom, Room A', entireHouse: 'Entire House / Single Lease', leasesCount: 'leases',
                 toastTenantSubSaved: 'Tenant lease saved', toastTenantSubDeleted: 'Tenant lease deleted', toastUsageSaved: 'Timeline updated', toastUsageDeleted: 'Timeline record deleted',
                 usagePurchased: 'Purchased', usagePrimary: 'Primary', usageRental: 'Rental', usageShortTerm: 'Short-Term', usageVacant: 'Vacant', usageCommercial: 'Commercial', usageSold: 'Sold',
@@ -1783,6 +1809,7 @@
                 confirmDeleteTitle: '确认删除任务？', confirmDeleteLogTitle: '确认删除历史记录？', confirmDeleteContactTitle: '确认删除联系人？', confirmDeleteRoleTitle: '确认删除人员类别？', confirmDeleteMediaTitle: '确认删除文件？', btnCancel: '取消', btnConfirmDelete: '确认删除',
                 usageTimeline: '房屋用途履历', startDate: '开始日期', endDate: '结束日期', addUsagePeriod: '添加时间节点/区间', editUsagePeriod: '编辑履历节点', modalAddUsage: '新增节点或用途时间段', ongoing: '至今',
                 usageNotes: '节点备注 / 买卖价格 / 租客信息', noUsageHistory: '暂无履历记录。',
+                usageRealtor: '经纪', usageLawyer: '律师', noneAssigned: '未指定',
                 tenantSubTimeline: '租客时间线分枝', addTenantSub: '添加租客履历', editTenantSub: '编辑租客履历', monthlyRent: '月租金', selectCrmTenant: '从 CRM 租客库选择', tenantName: '租客姓名', roomName: '分租房间 / 轨道标识', roomHint: '例如: 主卧, A房, 地下室', entireHouse: '整套出租 / 独立租约', leasesCount: '次租约',
                 toastTenantSubSaved: '租客履历已保存', toastTenantSubDeleted: '租客履历已删除', toastUsageSaved: '履历记录已保存', toastUsageDeleted: '履历记录已删除',
                 usagePurchased: '买入/购入', usagePrimary: '自住', usageRental: '出租(长租)', usageShortTerm: '短租', usageVacant: '空置', usageCommercial: '商业用途', usageSold: '已售出',
@@ -1913,6 +1940,17 @@
             const cRealtor = 'c_demo_realtor';
             const cLawyer = 'c_demo_lawyer';
             const cPm = 'c_demo_pm';
+            const cRoy = 'c_demo_roy';
+            const cSingh = 'c_demo_singh';
+            const cHart = 'c_demo_hart';
+            const cNotary = 'c_demo_notary';
+            const cPaint = 'c_demo_paint';
+            const cYard = 'c_demo_yard';
+            const cLock = 'c_demo_lock';
+            const cKarim = 'c_demo_karim';
+            const cNadia = 'c_demo_nadia';
+            const cIns = 'c_demo_ins';
+            const cMort = 'c_demo_mort';
 
             const zoneRoof = z('Roof', '屋顶');
             const zoneGutters = z('Gutters & Downspouts', '排水沟/落水管');
@@ -1938,7 +1976,7 @@
                     lat: 45.3968,
                     lng: -75.8476,
                     usages: [
-                        { id: 'u_home_buy', usageType: 'purchased', startDate: '2018-06-15', endDate: '', notes: z('Purchase $485,000', '购入价 $485,000') },
+                        { id: 'u_home_buy', usageType: 'purchased', startDate: '2018-06-15', endDate: '', notes: z('Purchase $485,000', '购入价 $485,000'), realtorId: cRealtor, lawyerId: cLawyer },
                         { id: 'u_home_pri', usageType: 'primary', startDate: '2018-06-15', endDate: '', notes: z('Family residence', '家庭自住') }
                     ]
                 },
@@ -1950,7 +1988,7 @@
                     lat: 45.4321,
                     lng: -75.6594,
                     usages: [
-                        { id: 'u_semi_buy', usageType: 'purchased', startDate: '2019-05-02', endDate: '', notes: z('Purchase $429,000', '购入价 $429,000') },
+                        { id: 'u_semi_buy', usageType: 'purchased', startDate: '2019-05-02', endDate: '', notes: z('Purchase $429,000', '购入价 $429,000'), realtorId: cRealtor, lawyerId: cHart },
                         { id: 'u_semi_pri', usageType: 'primary', startDate: '2019-05-02', endDate: '2022-06-30', notes: z('Owner-occupied both floors', '上下层均自住') },
                         { id: 'u_semi_vac', usageType: 'vacant', startDate: '2022-07-01', endDate: '2022-08-31', notes: z('Paint + flooring', '刷漆换地板') },
                         {
@@ -1959,6 +1997,7 @@
                             startDate: '2022-09-01',
                             endDate: '',
                             notes: z('Split into two leases', '分上下两套出租'),
+                            realtorId: cSingh,
                             tenants: [
                                 { id: 'ut_semi_up', contactId: cNguyen, name: z('Linh Nguyen', '阮女士'), room: roomUpper, rent: '1650', startDate: '2022-09-01', endDate: '', notes: z('Includes 1 parking', '含1车位') },
                                 { id: 'ut_semi_lo', contactId: cPatel, name: z('Rahul Patel', 'Rahul Patel'), room: roomLower, rent: '1450', startDate: '2023-01-15', endDate: '', notes: z('Garden suite', '花园层') }
@@ -1974,7 +2013,7 @@
                     lat: 45.4668,
                     lng: -75.5462,
                     usages: [
-                        { id: 'u_town_buy', usageType: 'purchased', startDate: '2016-04-20', endDate: '', notes: z('Purchase $312,000', '购入价 $312,000') },
+                        { id: 'u_town_buy', usageType: 'purchased', startDate: '2016-04-20', endDate: '', notes: z('Purchase $312,000', '购入价 $312,000'), realtorId: cRealtor, lawyerId: cHart },
                         { id: 'u_town_pri', usageType: 'primary', startDate: '2016-04-20', endDate: '2019-12-31', notes: z('Lived in before Gatineau move', '迁往加蒂诺前自住') },
                         {
                             id: 'u_town_rent',
@@ -1982,6 +2021,7 @@
                             startDate: '2020-01-01',
                             endDate: '',
                             notes: z('Whole-unit rental', '整套出租'),
+                            realtorId: cSingh,
                             tenants: [
                                 { id: 'ut_town_old', contactId: '', name: z('The Reid family', 'Reid 一家'), room: roomWhole, rent: '1900', startDate: '2020-01-01', endDate: '2023-12-31', notes: z('3-year term ended', '三年约到期') },
                                 { id: 'ut_town_now', contactId: cDubois, name: z('Émile Dubois', 'Émile Dubois'), room: roomWhole, rent: '2250', startDate: '2024-02-01', endDate: '', notes: z('Month-to-month after year 1', '满一年后转月租') }
@@ -1997,7 +2037,7 @@
                     lat: 45.2754,
                     lng: -75.7368,
                     usages: [
-                        { id: 'u_cth_buy', usageType: 'purchased', startDate: '2020-08-10', endDate: '', notes: z('Purchase $455,000 + condo fee', '购入价 $455,000 + 物业费') },
+                        { id: 'u_cth_buy', usageType: 'purchased', startDate: '2020-08-10', endDate: '', notes: z('Purchase $455,000 + condo fee', '购入价 $455,000 + 物业费'), realtorId: cRealtor, lawyerId: cHart },
                         { id: 'u_cth_vac', usageType: 'vacant', startDate: '2020-08-10', endDate: '2020-10-31', notes: z('Staging', '交割后布置') },
                         { id: 'u_cth_st', usageType: 'short_term', startDate: '2020-11-01', endDate: '2022-04-30', notes: z('Airbnb, city licence expired', '短租，市政许可已到期') },
                         {
@@ -2006,6 +2046,7 @@
                             startDate: '2022-05-15',
                             endDate: '',
                             notes: z('Switched to 12-month lease', '改为一年长租'),
+                            realtorId: cSingh,
                             tenants: [
                                 { id: 'ut_cth', contactId: cLi, name: z('Wei Li', '李伟'), room: roomWhole, rent: '2400', startDate: '2022-05-15', endDate: '', notes: z('Pays condo visitor parking extra', '访客停车另付') }
                             ]
@@ -2020,7 +2061,7 @@
                     lat: 45.4194,
                     lng: -75.7013,
                     usages: [
-                        { id: 'u_condo_buy', usageType: 'purchased', startDate: '2021-03-01', endDate: '', notes: z('Purchase $389,000', '购入价 $389,000') },
+                        { id: 'u_condo_buy', usageType: 'purchased', startDate: '2021-03-01', endDate: '', notes: z('Purchase $389,000', '购入价 $389,000'), realtorId: cRealtor, lawyerId: cHart },
                         { id: 'u_condo_vac', usageType: 'vacant', startDate: '2021-03-01', endDate: '2021-08-31', notes: z('Listed after closing', '交割后空置挂牌') },
                         {
                             id: 'u_condo_rent',
@@ -2028,6 +2069,7 @@
                             startDate: '2021-09-01',
                             endDate: '',
                             notes: z('Long-term lease', '长租'),
+                            realtorId: cSingh,
                             tenants: [
                                 { id: 'ut_old', contactId: cAlex, name: z('Alex Chen', '陈先生'), room: roomWhole, rent: '1850', startDate: '2021-09-01', endDate: '2024-08-31', notes: z('Moved to Toronto', '已搬去多伦多') },
                                 { id: 'ut_now', contactId: cSophie, name: z('Sophie Martin', 'Sophie Martin'), room: roomWhole, rent: '2100', startDate: '2024-09-01', endDate: '', notes: z('12-month lease + deposit $2100', '一年约 + 押金 $2100') }
@@ -2043,7 +2085,7 @@
                     lat: 45.3106,
                     lng: -75.8962,
                     usages: [
-                        { id: 'u_link_buy', usageType: 'purchased', startDate: '2023-07-21', endDate: '', notes: z('Purchase $618,000', '购入价 $618,000') },
+                        { id: 'u_link_buy', usageType: 'purchased', startDate: '2023-07-21', endDate: '', notes: z('Purchase $618,000', '购入价 $618,000'), realtorId: cRealtor, lawyerId: cHart },
                         { id: 'u_link_pri', usageType: 'primary', startDate: '2023-07-21', endDate: '', notes: z('Parents occupy', '父母居住') }
                     ]
                 },
@@ -2055,7 +2097,7 @@
                     lat: 45.4291,
                     lng: -75.7128,
                     usages: [
-                        { id: 'u_multi_buy', usageType: 'purchased', startDate: '2014-09-08', endDate: '', notes: z('Purchase $390,000 as 4-plex', '以四套多户购入 $390,000') },
+                        { id: 'u_multi_buy', usageType: 'purchased', startDate: '2014-09-08', endDate: '', notes: z('Purchase $390,000 as 4-plex', '以四套多户购入 $390,000'), realtorId: cRoy, lawyerId: cNotary },
                         { id: 'u_multi_com', usageType: 'commercial', startDate: '2014-09-08', endDate: '2017-12-31', notes: z('Ground floor was a salon', '一楼曾是美发店') },
                         {
                             id: 'u_multi_rent',
@@ -2063,10 +2105,11 @@
                             startDate: '2018-01-01',
                             endDate: '',
                             notes: z('All four units residential', '四套均改为住宅出租'),
+                            realtorId: cRoy,
                             tenants: [
                                 { id: 'ut_m1', contactId: '', name: z('Unit 1 — vacant turnover', '1号空置周转'), room: room1, rent: '0', startDate: '2026-08-01', endDate: '', notes: z('Listing at $1350', '挂牌 $1350') },
-                                { id: 'ut_m2', contactId: '', name: z('Karim Bensaid', 'Karim Bensaid'), room: room2, rent: '1280', startDate: '2021-04-01', endDate: '', notes: z('Pays e-transfer on the 1st', '每月1日电汇') },
-                                { id: 'ut_m3', contactId: '', name: z('Nadia Fortin', 'Nadia Fortin'), room: room3, rent: '1325', startDate: '2019-11-01', endDate: '', notes: z('Long-term, cat allowed', '长住，可养猫') },
+                                { id: 'ut_m2', contactId: cKarim, name: z('Karim Bensaid', 'Karim Bensaid'), room: room2, rent: '1280', startDate: '2021-04-01', endDate: '', notes: z('Pays e-transfer on the 1st', '每月1日电汇') },
+                                { id: 'ut_m3', contactId: cNadia, name: z('Nadia Fortin', 'Nadia Fortin'), room: room3, rent: '1325', startDate: '2019-11-01', endDate: '', notes: z('Long-term, cat allowed', '长住，可养猫') },
                                 { id: 'ut_m4', contactId: '', name: z('Student house (3 names)', '学生合租三人'), room: room4, rent: '1500', startDate: '2025-09-01', endDate: '2026-08-31', notes: z('Lease ends Aug 31', '租约8月31日到期') }
                             ]
                         }
@@ -2080,13 +2123,13 @@
                     lat: 45.4102,
                     lng: -75.7124,
                     usages: [
-                        { id: 'u_sold_buy', usageType: 'purchased', startDate: '2017-02-14', endDate: '2025-05-30', notes: z('Purchase $269,000', '购入价 $269,000') },
+                        { id: 'u_sold_buy', usageType: 'purchased', startDate: '2017-02-14', endDate: '2025-05-30', notes: z('Purchase $269,000', '购入价 $269,000'), realtorId: cRealtor, lawyerId: cHart },
                         { id: 'u_sold_pri', usageType: 'primary', startDate: '2017-02-14', endDate: '2019-06-30', notes: z('First home', '首套自住') },
-                        { id: 'u_sold_rent', usageType: 'rental', startDate: '2019-07-01', endDate: '2025-03-31', notes: z('Rented until sale', '挂牌前一直出租'), tenants: [
+                        { id: 'u_sold_rent', usageType: 'rental', startDate: '2019-07-01', endDate: '2025-03-31', notes: z('Rented until sale', '挂牌前一直出租'), realtorId: cSingh, tenants: [
                             { id: 'ut_sold', contactId: '', name: z('Jordan Blake', 'Jordan Blake'), room: roomWhole, rent: '1600', startDate: '2022-04-01', endDate: '2025-03-31', notes: z('Vacated for closing', '交割前搬走') }
                         ] },
                         { id: 'u_sold_vac', usageType: 'vacant', startDate: '2025-04-01', endDate: '2025-05-30', notes: z('Staging for sale', '售前空置布置') },
-                        { id: 'u_sold_out', usageType: 'sold', startDate: '2025-05-30', endDate: '', notes: z('Sold $355,000', '售出 $355,000') }
+                        { id: 'u_sold_out', usageType: 'sold', startDate: '2025-05-30', endDate: '', notes: z('Sold $355,000', '售出 $355,000'), realtorId: cRealtor, lawyerId: cHart }
                     ]
                 }
             ];
@@ -2102,13 +2145,26 @@
                 { id: cPlumb, role: 'contractor', name: z('Rive-Nord Plumbing', '北岸水电'), trade: z('Plumbing', '水电卫浴'), propertyId: '', propertyIds: [pHome, pMulti], phone: '819-555-0160', wechat: 'rivenord', email: '', notes: z('24h emergency surcharge $180', '24小时急修加收 $180') },
                 { id: cElec, role: 'contractor', name: z('Sparkline Electric', '闪线电气'), trade: z('Electrical', '电路'), propertyId: '', propertyIds: [pSemi, pMulti], phone: '613-555-0121', wechat: '', email: 'jobs@sparkline.example', notes: z('ESA certified', 'ESA 持证') },
                 { id: cRoof, role: 'contractor', name: z('Capital Roofing Co.', '首府屋顶'), trade: z('Roofing', '屋顶'), propertyId: '', propertyIds: [pTown, pHome], phone: '613-555-0144', wechat: '', email: 'quotes@caproof.example', notes: '' },
-                { id: cRealtor, role: 'realtor', name: z('Maya Patel Realty', 'Maya Patel 地产'), trade: '', propertyId: '', propertyIds: [pHome, pSemi, pTown, pCth, pCondo, pLink, pMulti, pSold], phone: '613-555-0110', wechat: '', email: 'maya@example.com', notes: z('Listing + leasing', '买卖与出租挂牌') },
-                { id: cLawyer, role: 'lawyer', name: z('Tremblay Legal', 'Tremblay 律师行'), trade: '', propertyId: '', propertyIds: [pHome, pCondo, pSold], phone: '819-555-0125', wechat: '', email: 'closings@tremblay.example', notes: z('Quebec + Ontario closings', '魁省与安省交割') },
-                { id: cPm, role: 'role_demo_pm', name: z('Outaouais Property Care', 'Outaouais 托管'), trade: '', propertyId: '', propertyIds: [pMulti, pSemi], phone: '819-555-0190', wechat: '', email: 'desk@opc.example', notes: z('Collects Hull fourplex rent', '代收赫尔四套租金') }
+                { id: cRealtor, role: 'realtor', name: z('Maya Patel Realty', 'Maya Patel 地产'), trade: '', propertyId: '', propertyIds: [pHome, pSemi, pTown, pCth, pCondo, pLink, pSold], phone: '613-555-0110', wechat: '', email: 'maya@example.com', notes: z('Purchase / sale listings', '买卖挂牌') },
+                { id: cRoy, role: 'realtor', name: z('Julie Roy Immobilier', 'Julie Roy 地产'), trade: '', propertyId: '', propertyIds: [pHome, pMulti], phone: '819-555-0102', wechat: '', email: 'julie@royimmo.example', notes: z('Outaouais listings, French first', 'Outaouais 挂牌，法语优先') },
+                { id: cSingh, role: 'realtor', name: z('Kiran Singh Leasing', 'Kiran Singh 租赁'), trade: '', propertyId: '', propertyIds: [pSemi, pTown, pCth, pCondo, pSold], phone: '613-555-0175', wechat: '', email: 'kiran@singhlease.example', notes: z('Tenant placement only', '只做出租配对') },
+                { id: cLawyer, role: 'lawyer', name: z('Tremblay Legal', 'Tremblay 律师行'), trade: '', propertyId: '', propertyIds: [pHome, pMulti], phone: '819-555-0125', wechat: '', email: 'closings@tremblay.example', notes: z('Quebec closings', '魁省交割') },
+                { id: cHart, role: 'lawyer', name: z('Hart & Blake LLP', 'Hart & Blake 律师所'), trade: '', propertyId: '', propertyIds: [pSemi, pTown, pCth, pCondo, pLink, pSold], phone: '613-555-0181', wechat: '', email: 'closings@hartblake.example', notes: z('Ontario residential', '安省住宅交割') },
+                { id: cNotary, role: 'lawyer', name: z('Me. Claire Bélanger', 'Claire Bélanger 公证'), trade: '', propertyId: '', propertyIds: [pMulti, pHome], phone: '819-555-0139', wechat: '', email: 'cb@notaire.example', notes: z('Notary for QC multiplex', '魁省多户公证') },
+                { id: cPaint, role: 'contractor', name: z('Northside Painting', '北岸油漆'), trade: z('Interior paint', '室内油漆'), propertyId: '', propertyIds: [pMulti, pSold], phone: '819-555-0155', wechat: '', email: 'hello@northsidepaint.example', notes: z('Turnover paint packages', '退租刷漆套餐') },
+                { id: cYard, role: 'contractor', name: z('Greenline Lawn', '绿线园林'), trade: z('Landscaping', '园林'), propertyId: '', propertyIds: [pHome, pLink], phone: '613-555-0162', wechat: '', email: 'crew@greenline.example', notes: z('Spring / fall cleanup', '春秋清园') },
+                { id: cLock, role: 'contractor', name: z('Keyway Locksmith', '钥道锁匠'), trade: z('Locks / smart lock', '换锁/智能锁'), propertyId: '', propertyIds: [pSemi, pTown, pMulti], phone: '613-555-0191', wechat: '', email: 'shop@keyway.example', notes: z('Rekey after tenant change', '换租后改钥匙') },
+                { id: cKarim, role: 'tenant', name: z('Karim Bensaid', 'Karim Bensaid'), trade: '', propertyId: pMulti, propertyIds: [pMulti], phone: '819-555-0148', wechat: '', email: 'karim.b@example.com', notes: z('Unit 2, e-transfer on the 1st', '2号单位，每月1日电汇') },
+                { id: cNadia, role: 'tenant', name: z('Nadia Fortin', 'Nadia Fortin'), trade: '', propertyId: pMulti, propertyIds: [pMulti], phone: '819-555-0171', wechat: '', email: 'nadia.fortin@example.com', notes: z('Unit 3, cat on file', '3号单位，已备案一只猫') },
+                { id: cPm, role: 'role_demo_pm', name: z('Outaouais Property Care', 'Outaouais 托管'), trade: '', propertyId: '', propertyIds: [pMulti, pSemi], phone: '819-555-0190', wechat: '', email: 'desk@opc.example', notes: z('Collects Hull fourplex rent', '代收赫尔四套租金') },
+                { id: cIns, role: 'role_demo_ins', name: z('Riverbank Insurance', '河岸保险'), trade: '', propertyId: '', propertyIds: [pHome, pSemi, pTown, pCth, pCondo, pLink, pMulti], phone: '613-555-0128', wechat: '', email: 'desk@riverbank.example', notes: z('Landlord + home policies', '房东险与房屋险') },
+                { id: cMort, role: 'role_demo_mort', name: z('Nova Mortgage', 'Nova 按揭'), trade: '', propertyId: '', propertyIds: [pHome, pLink, pSold], phone: '613-555-0150', wechat: '', email: 'rate@novamort.example', notes: z('Renewal reminder each March', '每年3月提醒续贷') }
             ];
 
             const customRoles = [
-                { key: 'role_demo_pm', name: z('Property manager', '托管经理'), icon: 'fa-clipboard-list', color: 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30', fieldType: 'multiProperty' }
+                { key: 'role_demo_pm', name: z('Property manager', '托管经理'), icon: 'fa-clipboard-list', color: 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30', fieldType: 'multiProperty' },
+                { key: 'role_demo_ins', name: z('Insurance', '保险'), icon: 'fa-shield-halved', color: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30', fieldType: 'multiProperty' },
+                { key: 'role_demo_mort', name: z('Mortgage broker', '按揭经纪'), icon: 'fa-file-invoice-dollar', color: 'bg-lime-500/20 text-lime-400 border-lime-500/30', fieldType: 'multiProperty' }
             ];
 
             const taskFilter = cat.find(t => t.category && (t.category.includes('HVAC') || t.category.includes('暖通'))) || cat[0];
@@ -2362,7 +2418,7 @@
             return { properties, tasks, repairs, contacts, customRoles, userZones: zones };
         }
 
-        const APP_VERSION = '2026.09.06-d';
+        const APP_VERSION = '2026.09.06-e';
 
         const app = createApp({
             data() {
@@ -2418,7 +2474,7 @@
                     formRoutine: { catalogKey: '', title: '', propertyId: '', zone: '', category: '', intervalMonths: 12, nextDueDate: '', lastDoneDate: '' },
                     
                     formProperty: { name: '', buildingType: 'detached', address: '', lat: null, lng: null },
-                    formUsage: { id: null, usageType: 'primary', startDate: '', endDate: '', notes: '' },
+                    formUsage: { id: null, usageType: 'primary', startDate: '', endDate: '', notes: '', realtorId: '', lawyerId: '' },
                     formTenantSub: { id: null, usageId: null, contactId: '', name: '', room: '', rent: '', startDate: '', endDate: '', notes: '' },
                     formTask: { propertyId: '', titleSelect: '', title: '', zone: '', category: '', issueDate: '', beforePhotos: [] },
                     formRepair: { propertyId: '', titleSelect: '', title: '', zone: '', category: '', cost: '', date: '', warrantyEndDate: '', contractorId: '', hasReceipt: true, receiptPhotos: [], beforePhotos: [], afterPhotos: [] },
@@ -2476,6 +2532,8 @@
                     return list;
                 },
                 contractorContacts() { return this.contacts.filter(c => c.role === 'contractor' || !c.role); },
+                realtorContacts() { return this.contacts.filter(c => c.role === 'realtor'); },
+                lawyerContacts() { return this.contacts.filter(c => c.role === 'lawyer'); },
                 availableUsageTypes() { return { purchased: { label: this.t('usagePurchased'), color: 'bg-blue-500/20 text-blue-400 border-blue-500/30', icon: 'fa-cart-shopping' }, primary: { label: this.t('usagePrimary'), color: 'bg-brand-500/20 text-brand-400 border-brand-500/30', icon: 'fa-house-user' }, rental: { label: this.t('usageRental'), color: 'bg-amber-500/20 text-amber-400 border-amber-500/30', icon: 'fa-key' }, short_term: { label: this.t('usageShortTerm'), color: 'bg-purple-500/20 text-purple-400 border-purple-500/30', icon: 'fa-bed' }, vacant: { label: this.t('usageVacant'), color: 'bg-slate-700/50 text-slate-400 border-slate-600', icon: 'fa-door-closed' }, commercial: { label: this.t('usageCommercial'), color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30', icon: 'fa-building-user' }, sold: { label: this.t('usageSold'), color: 'bg-rose-500/20 text-rose-400 border-rose-500/30', icon: 'fa-handshake' } }; },
                 deleteConfirmTitleKey() {
                     const map = {
@@ -2975,10 +3033,12 @@
                     this.openModal('repair');
                 },
                 promptDeleteRoutine(id) { this.itemToDelete = { type: 'routine', id }; },
+                isBuySellUsage(usage) { return !!(usage && (usage.usageType === 'purchased' || usage.usageType === 'sold')); },
+                showsUsageProfessionals(usage) { return !!(usage && (usage.usageType === 'purchased' || usage.usageType === 'sold' || usage.usageType === 'rental')); },
                 openUsageModal(usageItem = null) {
                     this.activeModal = 'usage';
-                    if (usageItem) { this.editingUsageId = usageItem.id; this.formUsage = { ...usageItem }; } 
-                    else { this.editingUsageId = null; this.formUsage = { id: 'u_' + Date.now(), usageType: 'primary', startDate: '', endDate: '', notes: '' }; this.autoFillModalDates(); }
+                    if (usageItem) { this.editingUsageId = usageItem.id; this.formUsage = { realtorId: '', lawyerId: '', ...usageItem }; } 
+                    else { this.editingUsageId = null; this.formUsage = { id: 'u_' + Date.now(), usageType: 'primary', startDate: '', endDate: '', notes: '', realtorId: '', lawyerId: '' }; this.autoFillModalDates(); }
                 },
                 selectUsageType(typeKey) { this.formUsage.usageType = typeKey; this.autoFillModalDates(); },
                 autoFillModalDates() {
