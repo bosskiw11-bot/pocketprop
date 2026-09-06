@@ -1025,7 +1025,7 @@
                                 <label class="block text-[12px] font-bold text-slate-400 uppercase tracking-wider mb-2 pl-1">{{ t('routineCatalog') }}</label>
                                 <select v-model="formRoutine.catalogKey" @change="applyRoutineCatalog" class="w-full bg-slate-800 rounded-2xl p-4 text-[15px] text-white outline-none">
                                     <option value="">{{ t('selectRoutine') }}</option>
-                                    <option v-for="item in routineCatalog[currentLang]" :key="item.key" :value="item.key">{{ item.title }} · {{ formatRoutineInterval(item.intervalMonths) }}</option>
+                                    <option v-for="item in routineCatalog[currentLang]" :key="item.key" :value="item.key">{{ item.title }}</option>
                                     <option value="OTHER">✍️ {{ t('otherManual') }}</option>
                                 </select>
                             </div>
@@ -2081,7 +2081,7 @@
             return { properties, tasks, repairs, contacts, customRoles: [], userZones: zones };
         }
 
-        const APP_VERSION = '2026.09.05-d';
+        const APP_VERSION = '2026.09.06-b';
 
         const app = createApp({
             data() {
@@ -2111,6 +2111,7 @@
                     editingTaskId: null,
                     editingRepairId: null,
                     convertingTaskId: null,
+                    convertingRoutineId: null,
                     itemToDelete: null, 
                     toastMessage: '', 
                     viewingPropertyId: null, 
@@ -2673,37 +2674,24 @@
                     if (routine.nextDueDate && routine.nextDueDate > doneOn) {
                         if (!confirm(this.t('confirmEarlyRoutine'))) return;
                     }
-                    this.completingRoutineIds = { ...this.completingRoutineIds, [routine.id]: true };
-                    try {
-                        const alreadyLogged = this.repairs.some(r => r.fromRoutineId === routine.id && r.date === doneOn);
-                        if (!alreadyLogged) {
-                            this.repairs.unshift({
-                                id: 'r_' + Date.now() + '_' + routine.id,
-                                propertyId: routine.propertyId,
-                                titleSelect: 'OTHER',
-                                title: routine.title,
-                                zone: routine.zone || '',
-                                category: routine.category || '',
-                                cost: '',
-                                date: doneOn,
-                                warrantyEndDate: '',
-                                contractorId: '',
-                                hasReceipt: false,
-                                receiptPhotos: [],
-                                beforePhotos: [],
-                                afterPhotos: [],
-                                fromRoutineId: routine.id
-                            });
-                        }
-                        routine.lastDoneDate = doneOn;
-                        routine.nextDueDate = this.nextDueAfterCompletion(routine, doneOn);
-                        await this.saveToStorage();
-                        this.showToast(this.t('toastRoutineDone'));
-                    } finally {
-                        const next = { ...this.completingRoutineIds };
-                        delete next[routine.id];
-                        this.completingRoutineIds = next;
-                    }
+                    this.convertingRoutineId = routine.id;
+                    this.formRepair = {
+                        propertyId: routine.propertyId,
+                        titleSelect: 'OTHER',
+                        title: routine.title,
+                        zone: routine.zone || '',
+                        category: routine.category || '',
+                        cost: '',
+                        date: doneOn,
+                        warrantyEndDate: '',
+                        contractorId: '',
+                        hasReceipt: false,
+                        receiptPhotos: [],
+                        beforePhotos: [],
+                        afterPhotos: [],
+                        fromRoutineId: routine.id
+                    };
+                    this.openModal('repair');
                 },
                 promptDeleteRoutine(id) { this.itemToDelete = { type: 'routine', id }; },
                 openUsageModal(usageItem = null) {
@@ -2750,7 +2738,7 @@
                 },
                 async deleteTenantSub(parentUsage, tenantId) { if (!parentUsage || !parentUsage.tenants) return; parentUsage.tenants = parentUsage.tenants.filter(t => t.id !== tenantId); await this.saveToStorage(); this.showToast(this.t('toastTenantSubDeleted')); },
                 openModal(type, item = null) {
-                    if (type === 'repair' && !item && !this.convertingTaskId) { this.formRepair = { propertyId: this.viewingPropertyId || (this.properties.length > 0 ? this.properties[0].id : ''), titleSelect: '', title: '', zone: this.viewingZone || '', category: '', cost: '', date: new Date().toISOString().split('T')[0], warrantyEndDate: '', contractorId: '', hasReceipt: true, receiptPhotos: [], beforePhotos: [], afterPhotos: [] }; }
+                    if (type === 'repair' && !item && !this.convertingTaskId && !this.convertingRoutineId) { this.formRepair = { propertyId: this.viewingPropertyId || (this.properties.length > 0 ? this.properties[0].id : ''), titleSelect: '', title: '', zone: this.viewingZone || '', category: '', cost: '', date: new Date().toISOString().split('T')[0], warrantyEndDate: '', contractorId: '', hasReceipt: true, receiptPhotos: [], beforePhotos: [], afterPhotos: [] }; }
                     this.activeModal = type; const defaultProp = this.viewingPropertyId || (this.properties.length > 0 ? this.properties[0].id : '');
                     if (type === 'property') { if (item) { this.editingPropertyId = item.id; this.formProperty = { name: item.name, buildingType: item.buildingType, address: item.address, lat: item.lat, lng: item.lng }; } else { this.editingPropertyId = null; this.formProperty = { name: '', buildingType: 'detached', address: '', lat: null, lng: null }; } }
                     if (type === 'routine') {
@@ -2795,7 +2783,7 @@
                     const idx = this.formContact.propertyIds.indexOf(propId);
                     if (idx === -1) this.formContact.propertyIds.push(propId); else this.formContact.propertyIds.splice(idx, 1);
                 },
-                closeModal() { this.activeModal = null; this.editingPropertyId = null; this.editingUsageId = null; this.editingTenantSubId = null; this.parentRentalUsage = null; this.editingContactId = null; this.editingTaskId = null; this.editingRepairId = null; this.editingRoutineId = null; this.convertingTaskId = null; },
+                closeModal() { this.activeModal = null; this.editingPropertyId = null; this.editingUsageId = null; this.editingTenantSubId = null; this.parentRentalUsage = null; this.editingContactId = null; this.editingTaskId = null; this.editingRepairId = null; this.editingRoutineId = null; this.convertingTaskId = null; this.convertingRoutineId = null; },
                 handleTaskTitleChange() { const found = this.commonTaskTitles[this.currentLang].find(t => t.name === this.formTask.titleSelect); if (found) { this.formTask.title = found.name; this.formTask.category = found.category; } else { this.formTask.title = ''; this.formTask.category = ''; } },
                 handleRepairTitleChange() { const found = this.commonRepairTitles[this.currentLang].find(r => r.name === this.formRepair.titleSelect); if (found) { this.formRepair.title = found.name; this.formRepair.category = found.category; } else { this.formRepair.title = ''; this.formRepair.category = ''; } },
                 triggerFileInput(type, multiple = false) { 
@@ -2960,6 +2948,21 @@
                             const tIdx = this.tasks.findIndex(t => t.id === this.convertingTaskId);
                             if (tIdx !== -1) this.tasks[tIdx].completed = true;
                             this.convertingTaskId = null;
+                        }
+                        if (this.convertingRoutineId) {
+                            const rt = this.routines.find(r => r.id === this.convertingRoutineId);
+                            if (rt) {
+                                const doneOn = this.formRepair.date || this.todayIso();
+                                const alreadyLogged = this.repairs.filter(r => r.fromRoutineId === rt.id && r.date === doneOn).length > 1;
+                                if (alreadyLogged) {
+                                    this.repairs.shift();
+                                    this.showToast(this.t('toastRoutineAlreadyToday'));
+                                } else {
+                                    rt.lastDoneDate = doneOn;
+                                    rt.nextDueDate = this.nextDueAfterCompletion(rt, doneOn);
+                                }
+                            }
+                            this.convertingRoutineId = null;
                         }
                     }
                     await this.saveToStorage();
