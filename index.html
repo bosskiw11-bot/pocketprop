@@ -1102,10 +1102,17 @@
                         <div v-if="activeModal === 'routine'" class="space-y-5">
                             <h3 class="text-2xl font-black text-white mb-2">{{ editingRoutineId ? t('editRoutine') : t('addRoutine') }}</h3>
                             <div>
+                                <label class="block text-[12px] font-bold text-slate-400 uppercase tracking-wider mb-2 pl-1">{{ t('modalCategory') }}</label>
+                                <select v-model="formRoutine.category" class="w-full bg-slate-800 rounded-2xl p-4 text-[15px] text-white outline-none mb-3">
+                                    <option value="">{{ t('selectCategory') }}</option>
+                                    <option v-for="cat in taskCategories[currentLang]" :key="cat" :value="cat">{{ cat }}</option>
+                                </select>
                                 <label class="block text-[12px] font-bold text-slate-400 uppercase tracking-wider mb-2 pl-1">{{ t('routineCatalog') }}</label>
                                 <select v-model="formRoutine.catalogKey" @change="applyRoutineCatalog" class="w-full bg-slate-800 rounded-2xl p-4 text-[15px] text-white outline-none">
                                     <option value="">{{ t('selectRoutine') }}</option>
-                                    <option v-for="item in routineCatalog[currentLang]" :key="item.key" :value="item.key">{{ item.title }}</option>
+                                    <optgroup v-for="group in groupedRoutineCatalog" :key="group.category" :label="group.category">
+                                        <option v-for="item in group.items" :key="item.key" :value="item.key">{{ item.title }}</option>
+                                    </optgroup>
                                     <option value="OTHER">✍️ {{ t('otherManual') }}</option>
                                 </select>
                             </div>
@@ -1898,9 +1905,9 @@
             en: [
                 { key: 'furnace_filter', title: 'Replace furnace / HRV filter', intervalMonths: 3, zoneHint: 'Furnace Room', category: 'HVAC' },
                 { key: 'hvac_tune', title: 'Furnace & AC professional tune-up', intervalMonths: 12, zoneHint: 'Furnace Room', category: 'HVAC' },
-                { key: 'smoke_test', title: 'Test smoke / CO detectors', intervalMonths: 1, zoneHint: 'Hallway', category: 'Electrical' },
-                { key: 'smoke_batt', title: 'Replace detector batteries', intervalMonths: 12, zoneHint: 'Hallway', category: 'Electrical' },
-                { key: 'gfci', title: 'Test GFCI outlets', intervalMonths: 3, zoneHint: 'Bathrooms', category: 'Electrical' },
+                { key: 'smoke_test', title: 'Test smoke / CO detectors', intervalMonths: 1, zoneHint: 'Hallway', category: 'Safety' },
+                { key: 'smoke_batt', title: 'Replace detector batteries', intervalMonths: 12, zoneHint: 'Hallway', category: 'Safety' },
+                { key: 'gfci', title: 'Test GFCI outlets', intervalMonths: 3, zoneHint: 'Bathrooms', category: 'Safety' },
                 { key: 'wh_flush', title: 'Flush water heater tank', intervalMonths: 12, zoneHint: 'Furnace Room', category: 'Plumbing' },
                 { key: 'sump', title: 'Test sump pump', intervalMonths: 3, zoneHint: 'Basement', category: 'Plumbing' },
                 { key: 'fridge_filter', title: 'Replace fridge / RO drinking filter', intervalMonths: 6, zoneHint: 'Kitchen', category: 'Appliances' },
@@ -1915,9 +1922,9 @@
             zh: [
                 { key: 'furnace_filter', title: '更换暖炉 / 新风滤网', intervalMonths: 3, zoneHint: '暖炉房 / 机房', category: '暖通空调' },
                 { key: 'hvac_tune', title: '暖炉与空调专业保养', intervalMonths: 12, zoneHint: '暖炉房 / 机房', category: '暖通空调' },
-                { key: 'smoke_test', title: '测试烟雾 / 一氧化碳报警器', intervalMonths: 1, zoneHint: '楼梯间', category: '电路灯具' },
-                { key: 'smoke_batt', title: '更换报警器电池', intervalMonths: 12, zoneHint: '楼梯间', category: '电路灯具' },
-                { key: 'gfci', title: '测试卫生间/厨房漏电插座', intervalMonths: 3, zoneHint: '卫浴间', category: '电路灯具' },
+                { key: 'smoke_test', title: '测试烟雾 / 一氧化碳报警器', intervalMonths: 1, zoneHint: '楼梯间', category: '安防检查' },
+                { key: 'smoke_batt', title: '更换报警器电池', intervalMonths: 12, zoneHint: '楼梯间', category: '安防检查' },
+                { key: 'gfci', title: '测试卫生间/厨房漏电插座', intervalMonths: 3, zoneHint: '卫浴间', category: '安防检查' },
                 { key: 'wh_flush', title: '冲洗热水器罐体沉积', intervalMonths: 12, zoneHint: '暖炉房 / 机房', category: '水电卫浴' },
                 { key: 'sump', title: '测试地下室排水泵', intervalMonths: 3, zoneHint: '地下室', category: '水电卫浴' },
                 { key: 'fridge_filter', title: '更换冰箱 / 净水滤芯', intervalMonths: 6, zoneHint: '厨房', category: '家电维修' },
@@ -1932,8 +1939,8 @@
         };
 
         const taskCategories = {
-            en: ['Plumbing', 'HVAC', 'Electrical', 'Roofing', 'Exterior/Siding', 'Landscaping', 'Cleaning', 'Appliances', 'Renovation', 'General/Other'],
-            zh: ['水电卫浴', '暖通空调', '电路灯具', '屋顶维修', '室外建筑/外墙', '园林庭院', '家政清洁', '家电维修', '装修翻新', '杂项/其他']
+            en: ['Plumbing', 'HVAC', 'Electrical', 'Safety', 'Roofing', 'Exterior/Siding', 'Landscaping', 'Cleaning', 'Appliances', 'Renovation', 'General/Other'],
+            zh: ['水电卫浴', '暖通空调', '电路灯具', '安防检查', '屋顶维修', '室外建筑/外墙', '园林庭院', '家政清洁', '家电维修', '装修翻新', '杂项/其他']
         };
 
         const commonTaskTitles = {
@@ -2608,7 +2615,7 @@
             return { properties, tasks, repairs, contacts, customRoles, userZones: zones };
         }
 
-        const APP_VERSION = '2026.09.06-l';
+        const APP_VERSION = '2026.09.06-m';
 
         const app = createApp({
             data() {
@@ -2746,6 +2753,21 @@
                     const list = this.commonTaskTitles[this.currentLang] || [];
                     const cats = this.taskCategories[this.currentLang] || [];
                     return cats.map(category => ({ category, items: list.filter(t => t.category === category) })).filter(g => g.items.length);
+                },
+                groupedRoutineCatalog() {
+                    const list = this.routineCatalog[this.currentLang] || [];
+                    const cats = this.taskCategories[this.currentLang] || [];
+                    const grouped = cats.map(category => ({ category, items: list.filter(i => i.category === category) })).filter(g => g.items.length);
+                    const known = new Set(cats);
+                    const extras = {};
+                    list.forEach(i => {
+                        if (i.category && !known.has(i.category)) {
+                            if (!extras[i.category]) extras[i.category] = [];
+                            extras[i.category].push(i);
+                        }
+                    });
+                    Object.keys(extras).forEach(category => grouped.push({ category, items: extras[category] }));
+                    return grouped;
                 },
                 groupedCommonRepairs() {
                     const list = this.commonRepairTitles[this.currentLang] || [];
