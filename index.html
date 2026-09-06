@@ -697,7 +697,10 @@
                                 <div v-for="repair in group.items" :key="repair.id" class="bg-slate-800 rounded-2xl p-4 border border-slate-700/50">
                                     <div class="flex justify-between items-start gap-2 mb-1.5">
                                         <div class="min-w-0 flex-1">
-                                            <p v-if="repair.category" class="text-[11px] font-bold text-brand-400 uppercase tracking-wide mb-0.5">{{ repair.category }}</p>
+                                            <div class="flex items-center gap-1.5 mb-0.5 flex-wrap">
+                                                <p v-if="repair.category" class="text-[11px] font-bold text-brand-400 uppercase tracking-wide">{{ repair.category }}</p>
+                                                <span v-if="repair.fromRoutineId" class="text-[9px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded bg-violet-500/20 text-violet-300 border border-violet-500/30">{{ t('subTabRoutines') }}</span>
+                                            </div>
                                             <p class="text-[16px] font-bold text-white leading-tight truncate">{{ repair.title }}</p>
                                         </div>
                                         <span v-if="repair.cost" class="text-brand-400 font-bold text-[15px] bg-brand-500/10 px-2.5 py-1 rounded-lg flex-shrink-0">${{ repair.cost }}</span>
@@ -1070,9 +1073,7 @@
                                     <optgroup v-for="group in groupedCommonTasks" :key="group.category" :label="group.category">
                                         <option v-for="t in group.items" :key="t.name" :value="t.name">{{ t.name }}</option>
                                     </optgroup>
-                                    <option value="OTHER">✍️ {{ t('otherManual') }}</option>
                                 </select>
-                                <input v-if="formTask.titleSelect === 'OTHER'" v-model="formTask.title" type="text" :placeholder="t('enterTaskManually')" class="w-full bg-slate-800 rounded-2xl p-4 text-[15px] text-white outline-none border border-transparent focus:border-brand-500 mb-3">
                             </div>
 
                             <div class="mt-4 border-t border-slate-700/50 pt-4">
@@ -1113,12 +1114,7 @@
                                     <optgroup v-for="group in groupedRoutineCatalog" :key="group.category" :label="group.category">
                                         <option v-for="item in group.items" :key="item.key" :value="item.key">{{ item.title }}</option>
                                     </optgroup>
-                                    <option value="OTHER">✍️ {{ t('otherManual') }}</option>
                                 </select>
-                            </div>
-                            <div v-if="formRoutine.catalogKey === 'OTHER'">
-                                <label class="block text-[12px] font-bold text-slate-400 uppercase tracking-wider mb-2 pl-1">{{ t('modalTaskTitle') }}</label>
-                                <input v-model="formRoutine.title" type="text" class="w-full bg-slate-800 rounded-2xl p-4 text-[15px] text-white outline-none">
                             </div>
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
@@ -1187,13 +1183,11 @@
                                 <label class="block text-[12px] font-bold text-slate-400 uppercase tracking-wider mb-2 pl-1">{{ t('modalRepairTitle') }}</label>
                                 <select v-model="formRepair.titleSelect" @change="handleRepairTitleChange" class="w-full bg-slate-800 rounded-2xl p-4 text-[15px] text-white outline-none mb-3">
                                     <option value="">{{ t('selectCommonRepair') }}</option>
-                                    <option v-if="formRepair.title && !isCommonRepairTitle(formRepair.title)" value="OTHER">{{ formRepair.title }}</option>
+                                    <option v-if="formRepair.title && !isCommonRepairTitle(formRepair.title)" :value="formRepair.title">{{ formRepair.title }}</option>
                                     <optgroup v-for="group in groupedCommonRepairs" :key="group.category" :label="group.category">
                                         <option v-for="r in group.items" :key="r.name" :value="r.name">{{ r.name }}</option>
                                     </optgroup>
-                                    <option value="OTHER">✍️ {{ t('otherManual') }}</option>
                                 </select>
-                                <input v-if="formRepair.titleSelect === 'OTHER' || convertingRoutineId || convertingTaskId" v-model="formRepair.title" type="text" :placeholder="t('enterRepairManually')" class="w-full bg-slate-800 rounded-2xl p-4 text-[15px] text-white outline-none border border-transparent focus:border-brand-500 mb-3">
                             </div>
 
                             <div class="grid grid-cols-2 gap-4">
@@ -1421,6 +1415,18 @@
                                 <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider pl-1">{{ t('settingsZones') }}</h4>
                                 <p class="text-[11px] text-slate-400 pl-1 -mt-1">{{ t('settingsZonesDesc') }}</p>
 
+                                <button @click="openCatalogManager" class="w-full bg-slate-800/80 hover:bg-slate-800 p-4 rounded-2xl border border-slate-700/60 flex items-center justify-between group active:scale-[0.99] transition-all text-left shadow-sm">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-9 h-9 rounded-xl bg-violet-500/20 text-violet-300 border border-violet-500/30 flex items-center justify-center">
+                                            <i class="fa-solid fa-list-check text-base"></i>
+                                        </div>
+                                        <div>
+                                            <p class="text-sm font-bold text-white group-hover:text-violet-300 transition-colors">{{ t('manageCatalog') }}</p>
+                                            <p class="text-[11px] text-slate-400 mt-0.5">{{ t('manageCatalogDesc') }}</p>
+                                        </div>
+                                    </div>
+                                    <i class="fa-solid fa-chevron-right text-slate-600 text-xs group-hover:text-violet-300 transition-colors"></i>
+                                </button>
                                 <button @click="openZoneManager" class="w-full bg-slate-800/80 hover:bg-slate-800 p-4 rounded-2xl border border-slate-700/60 flex items-center justify-between group active:scale-[0.99] transition-all text-left shadow-sm">
                                     <div class="flex items-center gap-3">
                                         <div class="w-9 h-9 rounded-xl bg-orange-500/20 text-orange-400 border border-orange-500/30 flex items-center justify-center">
@@ -1589,6 +1595,60 @@
                                     </div>
                                     <i class="fa-solid fa-chevron-right text-slate-600 text-xs"></i>
                                 </button>
+                            </div>
+                        </div>
+
+                        <div v-if="activeModal === 'catalogManager'" class="space-y-4">
+                            <div class="flex justify-between items-center border-b border-slate-800 pb-3 sticky top-0 bg-slate-900 z-10 pt-2">
+                                <h3 class="text-xl font-black text-white">{{ t('manageCatalog') }}</h3>
+                                <button @click="openModal('settings')" class="w-8 h-8 rounded-full bg-slate-800 text-slate-400 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+                            </div>
+                            <p class="text-[12px] text-slate-400">{{ t('manageCatalogHint') }}</p>
+                            <div class="flex gap-2">
+                                <input v-model="formCatalogCategory" type="text" :placeholder="t('newCategory')" class="flex-1 bg-slate-800 rounded-xl px-3 py-2.5 text-sm text-white outline-none">
+                                <button @click="addCatalogCategory" class="px-3 rounded-xl bg-brand-500 text-white text-xs font-bold">{{ t('addZoneBtn') }}</button>
+                            </div>
+                            <div v-for="cat in taskCategories[currentLang]" :key="cat" class="bg-slate-800/80 rounded-2xl p-3 border border-slate-700/60 space-y-2">
+                                <div class="flex items-center justify-between gap-2">
+                                    <span class="text-sm font-black text-white">{{ cat }}</span>
+                                    <div class="flex items-center gap-2 flex-shrink-0">
+                                        <button @click="renameCatalogCategory(cat)" class="text-[11px] text-slate-400">{{ t('btnRename') }}</button>
+                                        <button @click="removeCatalogCategory(cat)" class="text-[11px] text-red-400">{{ t('btnConfirmDelete') }}</button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <p class="text-[10px] font-bold text-slate-500 uppercase mb-1">{{ t('subTabTasks') }}</p>
+                                    <div class="flex flex-wrap gap-1.5">
+                                        <span v-for="item in catalogItems('tasks', cat)" :key="item.name" class="text-[11px] bg-slate-900 border border-slate-700 text-slate-300 px-2 py-0.5 rounded-lg flex items-center gap-1">
+                                            {{ item.name }}
+                                            <button @click="renameCatalogPreset('tasks', item.name)" class="text-slate-500">✎</button>
+                                            <button @click="removeCatalogPreset('tasks', item.name)" class="text-slate-500">×</button>
+                                        </span>
+                                        <button @click="addCatalogPreset('tasks', cat)" class="text-[11px] text-brand-400 font-bold">+</button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <p class="text-[10px] font-bold text-slate-500 uppercase mb-1">{{ t('subTabRoutines') }}</p>
+                                    <div class="flex flex-wrap gap-1.5">
+                                        <span v-for="item in catalogItems('routines', cat)" :key="item.key" class="text-[11px] bg-slate-900 border border-slate-700 text-slate-300 px-2 py-0.5 rounded-lg flex items-center gap-1">
+                                            {{ item.title }}
+                                            <button @click="renameCatalogPreset('routines', item.key)" class="text-slate-500">✎</button>
+                                            <button @click="removeCatalogPreset('routines', item.key)" class="text-slate-500">×</button>
+                                        </span>
+                                        <button @click="addCatalogPreset('routines', cat)" class="text-[11px] text-brand-400 font-bold">+</button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <p class="text-[10px] font-bold text-slate-500 uppercase mb-1">{{ t('subTabLogs') }}</p>
+                                    <div class="flex flex-wrap gap-1.5">
+                                        <span v-for="item in catalogItems('repairs', cat)" :key="item.name" class="text-[11px] bg-slate-900 border border-slate-700 text-slate-300 px-2 py-0.5 rounded-lg flex items-center gap-1">
+                                            {{ item.name }}
+                                            <button @click="renameCatalogPreset('repairs', item.name)" class="text-slate-500">✎</button>
+                                            <button @click="removeCatalogPreset('repairs', item.name)" class="text-slate-500">×</button>
+                                        </span>
+                                        <button @click="addCatalogPreset('repairs', cat)" class="text-[11px] text-brand-400 font-bold">+</button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -1828,7 +1888,7 @@
                 settingsFileManager: 'Media & File Storage', fileManagerTitle: 'Local File Gallery', filesCount: 'Files', storageUsed: 'Used', btnManageFiles: 'Open Gallery', noMediaFiles: 'No photo or document files match.', toastMediaDeleted: 'File removed from local storage.', fileTypeAll: 'All Files',
                 roleTenant: 'Tenant', roleContractor: 'Contractor', roleRealtor: 'Realtor', roleLawyer: 'Lawyer', roleType: 'Contact Role', contactName: 'Full Name', contactTrade: 'Specialty / Trade Title', contactTradeHint: 'e.g. HVAC, Plumbing Specialist', assocProperty: 'Associated Property', assocProperties: 'Associated Properties', contractorNote: 'Contractors are linked through repair logs.', noneGeneral: 'General / Unlinked', searchContact: 'Search contacts...', noContacts: 'No contacts found.',
                 contactPhone: 'Phone', contactWechat: 'WeChat ID', contactEmail: 'Email', contactNotes: 'Private Notes',
-                settingsZones: 'Property Zones & Areas', settingsZonesDesc: 'Customize specific rooms and areas for your properties.', manageZones: 'Manage Zones & Areas',
+                settingsZones: 'Property Zones & Areas', settingsZonesDesc: 'Customize specific rooms and areas for your properties.', manageCatalog: 'Work catalog', manageCatalogDesc: 'Preset categories and titles for pending, cycles and history.', manageCatalogHint: 'Work forms only use these presets.', newCategory: 'New category', newPresetName: 'Preset title', confirmDeleteCategory: 'Delete this category and its preset titles?', btnRename: 'Rename', renameTo: 'Rename to', confirmRenameInUse: '"{old}" is already used on {n} record(s). Renaming to "{new}" will update those records too. Continue?', manageZones: 'Manage Zones & Areas',
                 addZoneBtn: 'Add Zone', addZoneName: 'Enter new zone/area name:', categoryName: 'Category Name',
                 resetZones: 'Reset to Defaults', confirmResetZones: 'Reset to default zones? All custom zones will be lost.', confirmDeleteZoneCat: 'Delete this category and all its zones?', toastZoneSaved: 'Zones updated', zoneManagerHint: 'Zones appear on each property blueprint and in task/log location pickers. Renaming a zone updates existing records.',
                 settingsPwa: 'App install', pwaVersion: 'Build', pwaStandalone: 'Home Screen (standalone)', pwaBrowser: 'Safari / browser tab', pwaCheckUpdate: 'Check for update', pwaUpdated: 'Updated — relaunch the Home Screen icon', pwaNoUpdate: 'Already on the latest cached build', pwaAddToHome: 'Add to Home Screen', pwaAddToHomeHint: 'Safari Share → Add to Home Screen. Re-open from the icon after each GitHub deploy to pick up a new build number.'
@@ -1874,7 +1934,7 @@
                 settingsFileManager: '文件与媒体存储管理', fileManagerTitle: '本地照片与票据库', filesCount: '个文件', storageUsed: '已用容量', btnManageFiles: '进入文件库', noMediaFiles: '未匹配到媒体文件。', toastMediaDeleted: '文件已彻底删除。', fileTypeAll: '全部文件',
                 roleTenant: '租客', roleContractor: '师傅', roleRealtor: '经纪', roleLawyer: '律师', roleType: '联系人身份角色', contactName: '姓名/称呼', contactTrade: '工种/专长头衔', contactTradeHint: '例如: 暖通水工, 专修屋顶', assocProperty: '关联房屋节点', assocProperties: '关联房屋资产 (支持多选)', contractorNote: '师傅无直接关联房屋，通过修缮病历本自动关联。', noneGeneral: '通用 / 未绑定具体房屋', searchContact: '搜索联系人...', noContacts: '该分类下暂无联系人。',
                 contactPhone: '电话', contactWechat: '微信号', contactEmail: '邮箱', contactNotes: '私密备注',
-                settingsZones: '房屋空间与区域设置', settingsZonesDesc: '自定义房屋内可用的具体房间与区域列表。', manageZones: '管理空间与区域',
+                settingsZones: '房屋空间与区域设置', settingsZonesDesc: '自定义房屋内可用的具体房间与区域列表。', manageCatalog: '工作事项目录', manageCatalogDesc: '预设待办、周期和历史的分类与名称。', manageCatalogHint: '工作页只能选择这些预设。', newCategory: '新分类', newPresetName: '预设名称', confirmDeleteCategory: '删除该分类及其预设名称？', btnRename: '重命名', renameTo: '改为', confirmRenameInUse: '“{old}”已被 {n} 条记录使用。改成“{new}”会同时改这些记录里的名称或分类。确认继续？', manageZones: '管理空间与区域',
                 addZoneBtn: '添加区域', addZoneName: '请输入新区域名称 (例如: 泳池房):', categoryName: '大类名称 (如: 室内)',
                 resetZones: '恢复默认区域列表', confirmResetZones: '确定要恢复默认区域列表吗？您自己添加的所有自定义区域将会丢失。', confirmDeleteZoneCat: '确定删除该分类及其下属所有区域吗？', toastZoneSaved: '区域设置已更新', zoneManagerHint: '区域会出现在每套房屋的空间剖面图，以及待办/维修记录的位置选择中。重命名会同步更新已有记录。',
                 settingsPwa: '安装与版本', pwaVersion: '版本', pwaStandalone: '主屏幕独立运行', pwaBrowser: 'Safari / 浏览器标签', pwaCheckUpdate: '检查更新', pwaUpdated: '已更新 — 请从主屏幕图标重新打开', pwaNoUpdate: '当前已是最新缓存版本', pwaAddToHome: '添加到主屏幕', pwaAddToHomeHint: 'Safari 分享 → 添加到主屏幕。每次 GitHub 发布后，退出后台再点桌面图标即可加载新版本号。'
@@ -2057,6 +2117,15 @@
         };
 
         // National Capital Region (Ottawa–Gatineau) — used when a property has no geocoded pin
+        function cloneDefaultCatalog() {
+            return JSON.parse(JSON.stringify({
+                categories: taskCategories,
+                tasks: commonTaskTitles,
+                repairs: commonRepairTitles,
+                routines: routineCatalog
+            }));
+        }
+
         const MAP_HOME_CENTER = { lat: 45.4270, lng: -75.7100 };
 
         function buildDemoDataset(lang) {
@@ -2615,7 +2684,7 @@
             return { properties, tasks, repairs, contacts, customRoles, userZones: zones };
         }
 
-        const APP_VERSION = '2026.09.06-m';
+        const APP_VERSION = '2026.09.06-o';
 
         const app = createApp({
             data() {
@@ -2626,7 +2695,7 @@
                     currentLang: localStorage.getItem('pocket_prop_lang') || localStorage.getItem('my_home_os_lang') || 'en',
                     currentTab: 'dashboard', 
                     workSubTab: 'tasks',
-                    routineCatalog, 
+                    formCatalogCategory: '', 
                     enabledViews: savedViews,
                     dashboardViewMode: 'list', 
                     mapInstance: null,
@@ -2662,8 +2731,9 @@
                     appVersion: APP_VERSION,
                     isStandalonePwa: false,
                     
-                    userZones: [], 
-                    taskCategories, commonTaskTitles, commonRepairTitles,
+                    userZones: [],
+                    userCatalog: cloneDefaultCatalog(),
+                    formCatalogCategory: '',
                     
                     properties: [], tasks: [], repairs: [], routines: [], contacts: [], customRoles: [],
                     editingRoutineId: null,
@@ -2754,6 +2824,10 @@
                     const cats = this.taskCategories[this.currentLang] || [];
                     return cats.map(category => ({ category, items: list.filter(t => t.category === category) })).filter(g => g.items.length);
                 },
+                taskCategories() { return (this.userCatalog && this.userCatalog.categories) || taskCategories; },
+                commonTaskTitles() { return (this.userCatalog && this.userCatalog.tasks) || commonTaskTitles; },
+                commonRepairTitles() { return (this.userCatalog && this.userCatalog.repairs) || commonRepairTitles; },
+                routineCatalog() { return (this.userCatalog && this.userCatalog.routines) || routineCatalog; },
                 groupedRoutineCatalog() {
                     const list = this.routineCatalog[this.currentLang] || [];
                     const cats = this.taskCategories[this.currentLang] || [];
@@ -2881,6 +2955,115 @@
                     }
                 },
 
+                openCatalogManager() { this.formCatalogCategory = ''; this.activeModal = 'catalogManager'; },
+                catalogItems(kind, cat) {
+                    const lang = this.currentLang;
+                    if (kind === 'routines') return (this.userCatalog.routines[lang] || []).filter(i => i.category === cat);
+                    if (kind === 'repairs') return (this.userCatalog.repairs[lang] || []).filter(i => i.category === cat);
+                    return (this.userCatalog.tasks[lang] || []).filter(i => i.category === cat);
+                },
+                catalogUsageCount(kind, oldName) {
+                    if (kind === 'category') {
+                        return this.tasks.filter(t => t.category === oldName).length
+                            + this.repairs.filter(r => r.category === oldName).length
+                            + this.routines.filter(r => r.category === oldName).length;
+                    }
+                    if (kind === 'tasks') {
+                        return this.tasks.filter(t => t.title === oldName || t.titleSelect === oldName).length;
+                    }
+                    if (kind === 'repairs') {
+                        return this.repairs.filter(r => r.title === oldName || r.titleSelect === oldName).length;
+                    }
+                    return this.routines.filter(r => r.title === oldName || r.catalogKey === oldName).length
+                        + this.repairs.filter(r => r.title === oldName).length;
+                },
+                confirmCatalogRename(kind, oldName, newName, count) {
+                    const msg = this.t('confirmRenameInUse')
+                        .replace('{old}', oldName)
+                        .replace('{new}', newName)
+                        .replace('{n}', String(count));
+                    return confirm(msg);
+                },
+                async renameCatalogCategory(oldName) {
+                    const next = prompt(this.t('renameTo'), oldName);
+                    if (!next || !next.trim() || next.trim() === oldName) return;
+                    const newName = next.trim();
+                    const count = this.catalogUsageCount('category', oldName);
+                    if (count > 0 && !this.confirmCatalogRename('category', oldName, newName, count)) return;
+                    const lang = this.currentLang;
+                    this.userCatalog.categories[lang] = this.userCatalog.categories[lang].map(c => c === oldName ? newName : c);
+                    ['tasks', 'repairs'].forEach(k => {
+                        this.userCatalog[k][lang].forEach(i => { if (i.category === oldName) i.category = newName; });
+                    });
+                    this.userCatalog.routines[lang].forEach(i => { if (i.category === oldName) i.category = newName; });
+                    this.tasks.forEach(t => { if (t.category === oldName) t.category = newName; });
+                    this.repairs.forEach(r => { if (r.category === oldName) r.category = newName; });
+                    this.routines.forEach(r => { if (r.category === oldName) r.category = newName; });
+                    await this.saveToStorage();
+                },
+                async renameCatalogPreset(kind, id) {
+                    const lang = this.currentLang;
+                    let oldName = id;
+                    if (kind === 'routines') {
+                        const found = this.userCatalog.routines[lang].find(i => i.key === id);
+                        if (!found) return;
+                        oldName = found.title;
+                    }
+                    const next = prompt(this.t('renameTo'), oldName);
+                    if (!next || !next.trim() || next.trim() === oldName) return;
+                    const newName = next.trim();
+                    const count = this.catalogUsageCount(kind, oldName);
+                    if (count > 0 && !this.confirmCatalogRename(kind, oldName, newName, count)) return;
+                    if (kind === 'routines') {
+                        this.userCatalog.routines[lang].forEach(i => { if (i.key === id) i.title = newName; });
+                        this.routines.forEach(r => { if (r.title === oldName || r.catalogKey === id) r.title = newName; });
+                        this.repairs.forEach(r => { if (r.title === oldName) { r.title = newName; r.titleSelect = newName; } });
+                    } else if (kind === 'repairs') {
+                        this.userCatalog.repairs[lang].forEach(i => { if (i.name === id) i.name = newName; });
+                        this.repairs.forEach(r => { if (r.title === oldName || r.titleSelect === oldName) { r.title = newName; r.titleSelect = newName; } });
+                    } else {
+                        this.userCatalog.tasks[lang].forEach(i => { if (i.name === id) i.name = newName; });
+                        this.tasks.forEach(t => { if (t.title === oldName || t.titleSelect === oldName) { t.title = newName; t.titleSelect = newName; } });
+                    }
+                    await this.saveToStorage();
+                },
+                async addCatalogCategory() {
+                    const name = (this.formCatalogCategory || '').trim();
+                    if (!name) return;
+                    const lang = this.currentLang;
+                    if (!this.userCatalog.categories[lang].includes(name)) this.userCatalog.categories[lang].push(name);
+                    this.formCatalogCategory = '';
+                    await this.saveToStorage();
+                },
+                async removeCatalogCategory(cat) {
+                    if (!confirm(this.t('confirmDeleteCategory'))) return;
+                    const lang = this.currentLang;
+                    this.userCatalog.categories[lang] = this.userCatalog.categories[lang].filter(c => c !== cat);
+                    this.userCatalog.tasks[lang] = this.userCatalog.tasks[lang].filter(i => i.category !== cat);
+                    this.userCatalog.repairs[lang] = this.userCatalog.repairs[lang].filter(i => i.category !== cat);
+                    this.userCatalog.routines[lang] = this.userCatalog.routines[lang].filter(i => i.category !== cat);
+                    await this.saveToStorage();
+                },
+                async addCatalogPreset(kind, cat) {
+                    const name = prompt(this.t('newPresetName'));
+                    if (!name || !name.trim()) return;
+                    const lang = this.currentLang;
+                    if (kind === 'routines') {
+                        this.userCatalog.routines[lang].push({ key: 'rtk_' + Date.now(), title: name.trim(), intervalMonths: 12, zoneHint: '', category: cat });
+                    } else if (kind === 'repairs') {
+                        this.userCatalog.repairs[lang].push({ name: name.trim(), category: cat });
+                    } else {
+                        this.userCatalog.tasks[lang].push({ name: name.trim(), category: cat });
+                    }
+                    await this.saveToStorage();
+                },
+                async removeCatalogPreset(kind, id) {
+                    const lang = this.currentLang;
+                    if (kind === 'routines') this.userCatalog.routines[lang] = this.userCatalog.routines[lang].filter(i => i.key !== id);
+                    else if (kind === 'repairs') this.userCatalog.repairs[lang] = this.userCatalog.repairs[lang].filter(i => i.name !== id);
+                    else this.userCatalog.tasks[lang] = this.userCatalog.tasks[lang].filter(i => i.name !== id);
+                    await this.saveToStorage();
+                },
                 openZoneManager() {
                     this.activeModal = 'zoneManager';
                 },
@@ -3217,7 +3400,8 @@
                     if (!this.formRoutine.zone) this.formRoutine.zone = found.zoneHint || '';
                 },
                 async saveRoutine() {
-                    if (!this.formRoutine.title && this.formRoutine.catalogKey !== 'OTHER') this.applyRoutineCatalog();
+                    if (!this.formRoutine.catalogKey) return;
+                    this.applyRoutineCatalog();
                     if (!this.formRoutine.title) return;
                     const payload = {
                         catalogKey: this.formRoutine.catalogKey,
@@ -3275,7 +3459,7 @@
                     this.convertingRoutineId = routine.id;
                     this.formRepair = {
                         propertyId: routine.propertyId,
-                        titleSelect: 'OTHER',
+                        titleSelect: routine.title,
                         title: routine.title,
                         zone: routine.zone || '',
                         category: routine.category || '',
@@ -3496,7 +3680,8 @@
                     }
                 },
                 async saveTask() {
-                    if (!this.formTask.title && !this.formTask.titleSelect) return;
+                    if (!this.formTask.titleSelect) return;
+                    this.formTask.title = this.formTask.titleSelect;
                     if (this.editingTaskId) {
                         const idx = this.tasks.findIndex(t => t.id === this.editingTaskId);
                         if (idx !== -1) this.tasks[idx] = { ...this.tasks[idx], propertyId: this.formTask.propertyId, titleSelect: this.formTask.titleSelect, title: this.formTask.title, zone: this.formTask.zone, category: this.formTask.category, issueDate: this.formTask.issueDate || '', beforePhotos: [...this.formTask.beforePhotos] };
@@ -3545,8 +3730,8 @@
                     this.convertingTaskId = task.id;
                     this.formRepair = {
                         propertyId: task.propertyId,
-                        titleSelect: task.titleSelect,
-                        title: task.title,
+                        titleSelect: task.title || task.titleSelect,
+                        title: task.title || task.titleSelect,
                         zone: task.zone,
                         category: task.category,
                         cost: '',
@@ -3724,6 +3909,7 @@
                     ];
                     this.contacts = demo.contacts;
                     this.customRoles = demo.customRoles || [];
+                    this.userCatalog = cloneDefaultCatalog();
                     this.userZones = demo.userZones && demo.userZones.length ? demo.userZones : getDefaultZones(this.currentLang);
                     this.viewingPropertyId = null;
                     this.viewingZone = null;
@@ -3745,7 +3931,8 @@
                             routines: this.routines,
                             contacts: this.contacts,
                             customRoles: this.customRoles,
-                            userZones: this.userZones
+                            userZones: this.userZones,
+                            userCatalog: this.userCatalog
                         }));
                         await localforage.setItem('pocket_prop_data', data);
                     }
@@ -3760,6 +3947,8 @@
                             this.routines = data.routines || [];
                             this.contacts = data.contacts || [];
                             this.customRoles = data.customRoles || [];
+                            if (data.userCatalog && data.userCatalog.categories) this.userCatalog = data.userCatalog;
+                            else this.userCatalog = cloneDefaultCatalog();
                             if (data.userZones && data.userZones.length > 0) {
                                 this.userZones = data.userZones;
                             } else {
@@ -3779,7 +3968,8 @@
                         routines: this.routines,
                         contacts: this.contacts,
                         customRoles: this.customRoles,
-                        userZones: this.userZones
+                        userZones: this.userZones,
+                        userCatalog: this.userCatalog
                     };
                     const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
                     const url = URL.createObjectURL(blob);
@@ -3806,6 +3996,7 @@
                                 this.tasks = data.tasks || [];
                                 this.repairs = data.repairs || [];
                                 this.routines = data.routines || [];
+                                this.userCatalog = data.userCatalog && data.userCatalog.categories ? data.userCatalog : cloneDefaultCatalog();
                                 this.contacts = data.contacts || [];
                                 this.customRoles = data.customRoles || [];
                                 this.userZones = data.userZones || getDefaultZones(this.currentLang);
