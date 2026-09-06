@@ -266,23 +266,12 @@
                             </div>
                         </div>
                         
-                        <div class="bg-slate-900/50 rounded-2xl p-4 flex items-center justify-between border border-slate-700/50 relative z-10">
-                            <div>
-                                <div class="flex items-center gap-2 mb-1">
-                                    <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{{ t('dashboardTotalCost') }}</p>
-                                    <div class="relative">
-                                        <select v-model="selectedExpenseYear" class="appearance-none bg-brand-500/20 text-brand-400 text-[12px] font-bold rounded-lg pl-3 pr-7 py-1 outline-none border border-brand-500/30 cursor-pointer active:bg-brand-500/30 transition-colors">
-                                            <option value="ALL">{{ t('allTime') }}</option>
-                                            <option v-for="year in availableYears" :key="year" :value="year">{{ year }}</option>
-                                        </select>
-                                        <i class="fa-solid fa-chevron-down text-[10px] text-brand-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-                                    </div>
-                                </div>
-                                <p class="text-3xl font-black text-white">${{ getPropertyTotalCost(viewingPropertyId) }}</p>
-                            </div>
-                            <div class="w-12 h-12 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xl">
-                                <i class="fa-solid fa-sack-dollar"></i>
-                            </div>
+                        <div class="bg-slate-900/50 rounded-2xl p-4 border border-slate-700/50 relative z-10">
+                            <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                                <i class="fa-solid fa-align-left text-brand-400"></i>
+                                {{ t('propertyIntro') }}
+                            </p>
+                            <p class="text-[13px] text-slate-200 leading-relaxed whitespace-pre-wrap">{{ getPropertyIntro(viewingPropertyId) }}</p>
                         </div>
                     </div>
 
@@ -449,6 +438,60 @@
                                 </div>
                                 <div v-if="blueprintLayers.length === 0" class="text-center text-xs text-slate-500 py-4">
                                     {{ currentLang === 'zh' ? '未配置任何区域，请前往设置中添加。' : 'No zones configured. Please add them in Settings.' }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-800/90 rounded-3xl p-5 border border-slate-700/50 shadow-sm">
+                        <div class="flex items-end justify-between gap-3 mb-4">
+                            <div>
+                                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                                    <i class="fa-solid fa-sack-dollar text-emerald-400"></i>
+                                    {{ t('maintenanceTotalCost') }}
+                                </h3>
+                                <p class="text-[11px] text-slate-400 mt-1">{{ t('maintenanceTotalHint') }}</p>
+                            </div>
+                            <p class="text-xl font-black text-white">${{ formatMoney(getPropertyLifetimeCost(viewingPropertyId)) }}</p>
+                        </div>
+                        <div v-if="propertyExpenseYears.length === 0" class="text-[13px] text-slate-500 text-center py-4">{{ t('noMaintenanceCost') }}</div>
+                        <div v-else class="space-y-3">
+                            <div v-for="yearBlock in propertyExpenseYears" :key="yearBlock.year" class="bg-slate-900/70 rounded-2xl p-3.5 border border-slate-700/50">
+                                <div class="flex items-center justify-between mb-3">
+                                    <span class="text-sm font-black text-white">{{ yearBlock.year }}</span>
+                                    <span class="text-sm font-black text-emerald-300">${{ formatMoney(yearBlock.total) }}</span>
+                                </div>
+                                <div class="space-y-2">
+                                    <div class="rounded-xl bg-slate-950/60 border border-slate-800 p-2.5">
+                                        <div class="flex items-center justify-between mb-1.5">
+                                            <span class="text-[11px] font-bold text-sky-300 flex items-center gap-1.5">
+                                                <i class="fa-solid fa-receipt text-[10px]"></i>{{ t('expenseWithReceipt') }}
+                                            </span>
+                                            <span class="text-[12px] font-black text-slate-200">${{ formatMoney(yearBlock.withReceipt.total) }}</span>
+                                        </div>
+                                        <div v-if="yearBlock.withReceipt.items.length === 0" class="text-[11px] text-slate-500">{{ t('noneInCategory') }}</div>
+                                        <div v-else class="space-y-1">
+                                            <div v-for="item in yearBlock.withReceipt.items" :key="item.id" class="flex items-start justify-between gap-2 text-[11px]">
+                                                <span class="text-slate-300 min-w-0 truncate">{{ item.title }}</span>
+                                                <span class="text-slate-400 flex-shrink-0">${{ formatMoney(item.cost) }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="rounded-xl bg-slate-950/60 border border-slate-800 p-2.5">
+                                        <div class="flex items-center justify-between mb-1.5">
+                                            <span class="text-[11px] font-bold text-amber-300 flex items-center gap-1.5">
+                                                <i class="fa-solid fa-file-circle-xmark text-[10px]"></i>{{ t('expenseNoReceipt') }}
+                                            </span>
+                                            <span class="text-[12px] font-black text-slate-200">${{ formatMoney(yearBlock.withoutReceipt.total) }}</span>
+                                        </div>
+                                        <div v-if="yearBlock.withoutReceipt.items.length === 0" class="text-[11px] text-slate-500">{{ t('noneInCategory') }}</div>
+                                        <div v-else class="space-y-1">
+                                            <div v-for="item in yearBlock.withoutReceipt.items" :key="item.id" class="flex items-start justify-between gap-2 text-[11px]">
+                                                <span class="text-slate-300 min-w-0 truncate">{{ item.title }}</span>
+                                                <span class="text-slate-400 flex-shrink-0">${{ formatMoney(item.cost) }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -859,6 +902,11 @@
                                     </button>
                                 </div>
                                 <input v-model="formProperty.address" type="text" placeholder="e.g. 710 St Laurent Blvd, Ottawa" class="w-full bg-slate-800 rounded-2xl p-4 text-[15px] text-white outline-none border border-transparent focus:border-brand-500">
+                            </div>
+
+                            <div>
+                                <label class="block text-[12px] font-bold text-slate-400 uppercase tracking-wider mb-2 pl-1">{{ t('propertyIntro') }}</label>
+                                <textarea v-model="formProperty.intro" rows="3" :placeholder="t('propertyIntroPlaceholder')" class="w-full bg-slate-800 rounded-2xl p-4 text-[15px] text-white outline-none border border-transparent focus:border-brand-500 resize-none leading-relaxed"></textarea>
                             </div>
 
                             <button @click="saveProperty" class="w-full py-4 mt-4 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-2xl shadow-lg active:scale-95 transition-all text-lg">{{ t('btnSave') }}</button>
@@ -1734,6 +1782,7 @@
                 addRoutine: 'Add Recurring Check', editRoutine: 'Edit Recurring Check', routineCatalog: 'Standard checklist', selectRoutine: 'Pick a standard item...', interval: 'Interval', nextDue: 'Next due', overdue: 'Overdue', dueSoon: 'Due soon', noRoutines: 'No recurring checks yet.', routinesHint: 'These stay on the list. Completing one writes a History record and rolls the next due date forward.', everyMonths: 'Every {n} mo', everyYear: 'Yearly', everyYears: 'Every {n} yr', toastRoutineSaved: 'Recurring check saved', toastRoutineDone: 'Logged and rolled to next due', toastRoutineDeleted: 'Recurring check removed', confirmDeleteRoutineTitle: 'Delete recurring check?', doneToday: 'Done today', toastRoutineAlreadyToday: 'Already logged for today', toastRoutineInFlight: 'Saving this check…', confirmEarlyRoutine: 'Next due is still in the future. Log another completion and roll the date again?',
                 typeDetached: 'Detached', typeSemiDetached: 'Semi-Detached', typeFreeholdTownhouse: 'Freehold Townhouse', typeCondoTownhouse: 'Condo Townhouse', typeCondoApt: 'Condo Apt', typeLink: 'Link', typeMultiplex: 'Multiplex',
                 dashboardTasks: 'Pending Tasks', dashboardLogs: 'Logs & Events', dashboardTotalCost: 'Total Expenses',
+                maintenanceTotalCost: 'Maintenance totals', maintenanceTotalHint: 'By year, then with / without receipt', expenseWithReceipt: 'With receipt', expenseNoReceipt: 'No receipt', noneInCategory: 'None', noMaintenanceCost: 'No maintenance spend recorded.', propertyIntro: 'Property overview', propertyIntroPlaceholder: 'Short note: layout, why you bought it, current use…', propertyIntroEmpty: 'No overview yet. Edit the property to add one.',
                 noAddress: 'No Address Set', noProperties: 'No properties added yet.', viewAll: 'View All',
                 allProperties: 'All Properties', noTasks: 'No pending tasks.', btnLogAsRepair: 'Done',
                 noLogs: 'No records found.', warrantyUntil: 'Warranty until', warrantyActive: '(Active)', warrantyExpired: '(Expired)', noneSelf: 'Self / None', gpsDenied: 'GPS access denied',
@@ -1779,6 +1828,7 @@
                 addRoutine: '添加周期检查', editRoutine: '编辑周期检查', routineCatalog: '常规检查清单', selectRoutine: '选择常见项目...', interval: '周期', nextDue: '下次日期', overdue: '已过期', dueSoon: '即将到期', noRoutines: '暂无周期检查。', routinesHint: '本栏事项常驻显示。点完成后写入历史记录，并把下次日期按周期后推。', everyMonths: '每{n}个月', everyYear: '每年', everyYears: '每{n}年', toastRoutineSaved: '周期检查已保存', toastRoutineDone: '已记入历史并滚动到下次', toastRoutineDeleted: '周期检查已删除', confirmDeleteRoutineTitle: '删除这项周期检查？', doneToday: '今日已完成', toastRoutineAlreadyToday: '今天已经记过一次', toastRoutineInFlight: '正在保存这次完成…', confirmEarlyRoutine: '下次日期还没到。确认再记一次并重新后推日期？',
                 typeDetached: '独立屋', typeSemiDetached: '半独立屋', typeFreeholdTownhouse: '无物业费联排', typeCondoTownhouse: '有物业费联排', typeCondoApt: '高层公寓', typeLink: '连体住宅', typeMultiplex: '多户住宅',
                 dashboardTasks: '待处理任务', dashboardLogs: '维修与事件', dashboardTotalCost: '累计开销',
+                maintenanceTotalCost: '房屋维护累计开销', maintenanceTotalHint: '按年份列出，年内再分有无收据', expenseWithReceipt: '有收据', expenseNoReceipt: '无收据', noneInCategory: '暂无', noMaintenanceCost: '暂无维护开销记录。', propertyIntro: '房屋介绍', propertyIntroPlaceholder: '简要说明户型、购入原因、当前用途等…', propertyIntroEmpty: '还没有介绍。点右上角编辑房屋即可填写。',
                 noAddress: '未填写地址', noProperties: '暂无房屋资产。', viewAll: '查看全部',
                 allProperties: '所有房屋', noTasks: '暂无待办任务。', btnLogAsRepair: '完成',
                 noLogs: '暂无记录。', warrantyUntil: '保修至', warrantyActive: '(有效)', warrantyExpired: '(已过期)', noneSelf: '自己动手 / 无', gpsDenied: 'GPS 权限被拒绝',
@@ -1964,6 +2014,7 @@
                     id: pHome,
                     name: z('Aylmer House', '艾尔默主屋'),
                     buildingType: 'detached',
+                    intro: z('Family home since 2018. Finished basement, south-facing yard, furnace room on the lower level.', '2018年起自住。地下室已装修，南向后院，机房在下层。'),
                     address: '12 rue Principale, Gatineau, QC',
                     lat: 45.3968,
                     lng: -75.8476,
@@ -1976,6 +2027,7 @@
                     id: pSemi,
                     name: z('Vanier Semi', 'Vanier 半独立'),
                     buildingType: 'semi_detached',
+                    intro: z('Converted to upper/lower leases in 2022 after a vacant refresh.', '2022年空置翻新后改成上下两套分租。'),
                     address: '214 Montreal Rd, Ottawa, ON',
                     lat: 45.4321,
                     lng: -75.6594,
@@ -2050,6 +2102,7 @@
                     id: pCondo,
                     name: z('Bay St Condo', 'Bay街高层公寓'),
                     buildingType: 'condo_apt',
+                    intro: z('Downtown 1-bed used as long-term rental. Current tenant Sophie since Sep 2024.', '市中心一居长租。现租客 Sophie，2024年9月起住。'),
                     address: '255 Bay Street, Ottawa, ON',
                     lat: 45.4194,
                     lng: -75.7013,
@@ -2086,6 +2139,7 @@
                     id: pMulti,
                     name: z('Hull Fourplex', '赫尔四套多户'),
                     buildingType: 'multiplex',
+                    intro: z('Four residential units. Ground floor was a salon until 2017. Unit 1 is in turnover.', '四套住宅。一楼2017年前是美发店。1号单位正在周转。'),
                     address: '48 rue Eddy, Gatineau, QC',
                     lat: 45.4291,
                     lng: -75.7128,
@@ -2412,7 +2466,7 @@
             return { properties, tasks, repairs, contacts, customRoles, userZones: zones };
         }
 
-        const APP_VERSION = '2026.09.06-g';
+        const APP_VERSION = '2026.09.06-h';
 
         const app = createApp({
             data() {
@@ -2467,7 +2521,7 @@
                     completingRoutineIds: {},
                     formRoutine: { catalogKey: '', title: '', propertyId: '', zone: '', category: '', intervalMonths: 12, nextDueDate: '', lastDoneDate: '' },
                     
-                    formProperty: { name: '', buildingType: 'detached', address: '', lat: null, lng: null },
+                    formProperty: { name: '', buildingType: 'detached', address: '', intro: '', lat: null, lng: null },
                     formUsage: { id: null, usageType: 'primary', startDate: '', endDate: '', notes: '', realtorId: '', lawyerId: '', managerId: '' },
                     formTenantSub: { id: null, usageId: null, contactId: '', name: '', room: '', rent: '', startDate: '', endDate: '', notes: '' },
                     formTask: { propertyId: '', titleSelect: '', title: '', zone: '', category: '', issueDate: '', beforePhotos: [] },
@@ -2568,6 +2622,25 @@
                     const years = new Set(this.repairs.filter(r => r.propertyId === this.viewingPropertyId && r.date && typeof r.date === 'string').map(r => r.date.substring(0,4)));
                     years.add(new Date().getFullYear().toString()); 
                     return Array.from(years).sort((a,b) => b - a);
+                },
+                propertyExpenseYears() {
+                    if (!this.viewingPropertyId) return [];
+                    const groups = {};
+                    this.repairs.filter(r => r.propertyId === this.viewingPropertyId).forEach(r => {
+                        const year = (r.date && String(r.date).substring(0, 4)) || '—';
+                        if (!groups[year]) groups[year] = { year, total: 0, withReceipt: { total: 0, items: [] }, withoutReceipt: { total: 0, items: [] } };
+                        const cost = Number(r.cost) || 0;
+                        const item = { id: r.id, title: r.title || '—', cost, date: r.date || '' };
+                        const bucket = this.repairHasReceipt(r) ? groups[year].withReceipt : groups[year].withoutReceipt;
+                        bucket.total += cost;
+                        bucket.items.push(item);
+                        groups[year].total += cost;
+                    });
+                    Object.values(groups).forEach(g => {
+                        g.withReceipt.items.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+                        g.withoutReceipt.items.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+                    });
+                    return Object.values(groups).sort((a, b) => String(b.year).localeCompare(String(a.year)));
                 },
                 blueprintLayers() {
                     const icons = ['fa-cubes', 'fa-couch', 'fa-screwdriver-wrench', 'fa-tree'];
@@ -3093,7 +3166,7 @@
                 openModal(type, item = null) {
                     if (type === 'repair' && !item && !this.convertingTaskId && !this.convertingRoutineId) { this.formRepair = { propertyId: this.viewingPropertyId || (this.properties.length > 0 ? this.properties[0].id : ''), titleSelect: '', title: '', zone: this.viewingZone || '', category: '', cost: '', date: new Date().toISOString().split('T')[0], warrantyEndDate: '', contractorId: '', hasReceipt: true, receiptPhotos: [], beforePhotos: [], afterPhotos: [] }; }
                     this.activeModal = type; const defaultProp = this.viewingPropertyId || (this.properties.length > 0 ? this.properties[0].id : '');
-                    if (type === 'property') { if (item) { this.editingPropertyId = item.id; this.formProperty = { name: item.name, buildingType: item.buildingType, address: item.address, lat: item.lat, lng: item.lng }; } else { this.editingPropertyId = null; this.formProperty = { name: '', buildingType: 'detached', address: '', lat: null, lng: null }; } }
+                    if (type === 'property') { if (item) { this.editingPropertyId = item.id; this.formProperty = { name: item.name, buildingType: item.buildingType, address: item.address, intro: item.intro || '', lat: item.lat, lng: item.lng }; } else { this.editingPropertyId = null; this.formProperty = { name: '', buildingType: 'detached', address: '', intro: '', lat: null, lng: null }; } }
                     if (type === 'routine') {
                         const defaultProp = this.viewingPropertyId || (this.properties.length > 0 ? this.properties[0].id : '');
                         if (item) {
@@ -3361,15 +3434,32 @@
                     };
                     return map[type] || type;
                 },
+                formatMoney(n) {
+                    return (Number(n) || 0).toLocaleString();
+                },
+                repairHasReceipt(repair) {
+                    if (!repair) return false;
+                    if (repair.hasReceipt === false) return false;
+                    const photos = this.getRepairReceiptPhotos ? this.getRepairReceiptPhotos(repair) : (repair.receiptPhotos || []);
+                    if (Array.isArray(photos) && photos.length > 0) return true;
+                    return repair.hasReceipt === true;
+                },
+                getPropertyLifetimeCost(id) {
+                    return (id ? this.repairs.filter(r => r.propertyId === id) : this.repairs).reduce((sum, r) => sum + (Number(r.cost) || 0), 0);
+                },
                 getPropertyTotalCost(id) {
-                    let total = 0;
-                    const reps = id ? this.repairs.filter(r => r.propertyId === id) : this.repairs;
-                    reps.forEach(r => {
-                        if (this.selectedExpenseYear === 'ALL' || (r.date && r.date.startsWith(this.selectedExpenseYear))) {
-                            total += Number(r.cost) || 0;
-                        }
-                    });
-                    return total.toLocaleString();
+                    return this.formatMoney(this.getPropertyLifetimeCost(id));
+                },
+                getPropertyIntro(id) {
+                    const prop = this.getProp(id);
+                    if (!prop) return this.t('propertyIntroEmpty');
+                    if (prop.intro && String(prop.intro).trim()) return prop.intro.trim();
+                    const bits = [];
+                    if (prop.buildingType) bits.push(this.getBuildingTypeName(prop.buildingType));
+                    const usage = this.getUsageConfig(this.getCurrentUsageType(prop));
+                    if (usage && usage.label) bits.push(usage.label);
+                    if (prop.address) bits.push(prop.address);
+                    return bits.length ? bits.join(' · ') : this.t('propertyIntroEmpty');
                 },
                 getZoneTaskCount(propId, zone) {
                     return this.tasks.filter(t => t.propertyId === propId && t.zone === zone && !t.completed).length;
