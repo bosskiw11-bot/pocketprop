@@ -1893,13 +1893,26 @@
             const rec = commonRepairTitles[lang] || commonRepairTitles.en;
 
             const pHome = 'p_demo_home';
-            const pCondo = 'p_demo_condo';
+            const pSemi = 'p_demo_semi';
             const pTown = 'p_demo_town';
-            const cTenant = 'c_demo_tenant';
+            const pCth = 'p_demo_cth';
+            const pCondo = 'p_demo_condo';
+            const pLink = 'p_demo_link';
+            const pMulti = 'p_demo_multi';
+            const pSold = 'p_demo_sold';
+            const cSophie = 'c_demo_sophie';
+            const cAlex = 'c_demo_alex';
+            const cNguyen = 'c_demo_nguyen';
+            const cPatel = 'c_demo_patel';
+            const cDubois = 'c_demo_dubois';
+            const cLi = 'c_demo_li';
             const cHvac = 'c_demo_hvac';
             const cPlumb = 'c_demo_plumb';
+            const cElec = 'c_demo_elec';
+            const cRoof = 'c_demo_roof';
             const cRealtor = 'c_demo_realtor';
             const cLawyer = 'c_demo_lawyer';
+            const cPm = 'c_demo_pm';
 
             const zoneRoof = z('Roof', '屋顶');
             const zoneGutters = z('Gutters & Downspouts', '排水沟/落水管');
@@ -1907,6 +1920,14 @@
             const zoneBath = z('Bathrooms', '卫浴间');
             const zoneFurnace = z('Furnace Room', '暖炉房 / 机房');
             const zoneYard = z('Backyard / Garden', '后院及花园');
+
+            const roomWhole = z('Entire House / Single Lease', '整套出租 / 独立租约');
+            const roomUpper = z('Upper unit', '上层单位');
+            const roomLower = z('Lower unit', '下层单位');
+            const room1 = z('Unit 1', '1号单位');
+            const room2 = z('Unit 2', '2号单位');
+            const room3 = z('Unit 3', '3号单位');
+            const room4 = z('Unit 4', '4号单位');
 
             const properties = [
                 {
@@ -1918,12 +1939,82 @@
                     lng: -75.8476,
                     usages: [
                         { id: 'u_home_buy', usageType: 'purchased', startDate: '2018-06-15', endDate: '', notes: z('Purchase $485,000', '购入价 $485,000') },
-                        { id: 'u_home_pri', usageType: 'primary', startDate: '2018-06-15', endDate: '', notes: z('Family residence', '自住') }
+                        { id: 'u_home_pri', usageType: 'primary', startDate: '2018-06-15', endDate: '', notes: z('Family residence', '家庭自住') }
+                    ]
+                },
+                {
+                    id: pSemi,
+                    name: z('Vanier Semi', 'Vanier 半独立'),
+                    buildingType: 'semi_detached',
+                    address: '214 Montreal Rd, Ottawa, ON',
+                    lat: 45.4321,
+                    lng: -75.6594,
+                    usages: [
+                        { id: 'u_semi_buy', usageType: 'purchased', startDate: '2019-05-02', endDate: '', notes: z('Purchase $429,000', '购入价 $429,000') },
+                        { id: 'u_semi_pri', usageType: 'primary', startDate: '2019-05-02', endDate: '2022-06-30', notes: z('Owner-occupied both floors', '上下层均自住') },
+                        { id: 'u_semi_vac', usageType: 'vacant', startDate: '2022-07-01', endDate: '2022-08-31', notes: z('Paint + flooring', '刷漆换地板') },
+                        {
+                            id: 'u_semi_rent',
+                            usageType: 'rental',
+                            startDate: '2022-09-01',
+                            endDate: '',
+                            notes: z('Split into two leases', '分上下两套出租'),
+                            tenants: [
+                                { id: 'ut_semi_up', contactId: cNguyen, name: z('Linh Nguyen', '阮女士'), room: roomUpper, rent: '1650', startDate: '2022-09-01', endDate: '', notes: z('Includes 1 parking', '含1车位') },
+                                { id: 'ut_semi_lo', contactId: cPatel, name: z('Rahul Patel', 'Rahul Patel'), room: roomLower, rent: '1450', startDate: '2023-01-15', endDate: '', notes: z('Garden suite', '花园层') }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    id: pTown,
+                    name: z('Orleans Townhome', '奥尔良无物业费联排'),
+                    buildingType: 'freehold_townhouse',
+                    address: '88 Charlemagne Blvd, Orleans, ON',
+                    lat: 45.4668,
+                    lng: -75.5462,
+                    usages: [
+                        { id: 'u_town_buy', usageType: 'purchased', startDate: '2016-04-20', endDate: '', notes: z('Purchase $312,000', '购入价 $312,000') },
+                        { id: 'u_town_pri', usageType: 'primary', startDate: '2016-04-20', endDate: '2019-12-31', notes: z('Lived in before Gatineau move', '迁往加蒂诺前自住') },
+                        {
+                            id: 'u_town_rent',
+                            usageType: 'rental',
+                            startDate: '2020-01-01',
+                            endDate: '',
+                            notes: z('Whole-unit rental', '整套出租'),
+                            tenants: [
+                                { id: 'ut_town_old', contactId: '', name: z('The Reid family', 'Reid 一家'), room: roomWhole, rent: '1900', startDate: '2020-01-01', endDate: '2023-12-31', notes: z('3-year term ended', '三年约到期') },
+                                { id: 'ut_town_now', contactId: cDubois, name: z('Émile Dubois', 'Émile Dubois'), room: roomWhole, rent: '2250', startDate: '2024-02-01', endDate: '', notes: z('Month-to-month after year 1', '满一年后转月租') }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    id: pCth,
+                    name: z('Barrhaven Condo TH', 'Barrhaven 有物业费联排'),
+                    buildingType: 'condo_townhouse',
+                    address: '40 Marketplace Ave, Nepean, ON',
+                    lat: 45.2754,
+                    lng: -75.7368,
+                    usages: [
+                        { id: 'u_cth_buy', usageType: 'purchased', startDate: '2020-08-10', endDate: '', notes: z('Purchase $455,000 + condo fee', '购入价 $455,000 + 物业费') },
+                        { id: 'u_cth_vac', usageType: 'vacant', startDate: '2020-08-10', endDate: '2020-10-31', notes: z('Staging', '交割后布置') },
+                        { id: 'u_cth_st', usageType: 'short_term', startDate: '2020-11-01', endDate: '2022-04-30', notes: z('Airbnb, city licence expired', '短租，市政许可已到期') },
+                        {
+                            id: 'u_cth_rent',
+                            usageType: 'rental',
+                            startDate: '2022-05-15',
+                            endDate: '',
+                            notes: z('Switched to 12-month lease', '改为一年长租'),
+                            tenants: [
+                                { id: 'ut_cth', contactId: cLi, name: z('Wei Li', '李伟'), room: roomWhole, rent: '2400', startDate: '2022-05-15', endDate: '', notes: z('Pays condo visitor parking extra', '访客停车另付') }
+                            ]
+                        }
                     ]
                 },
                 {
                     id: pCondo,
-                    name: z('Bay St Condo', 'Bay街公寓'),
+                    name: z('Bay St Condo', 'Bay街高层公寓'),
                     buildingType: 'condo_apt',
                     address: '255 Bay Street, Ottawa, ON',
                     lat: 45.4194,
@@ -1938,33 +2029,86 @@
                             endDate: '',
                             notes: z('Long-term lease', '长租'),
                             tenants: [
-                                { id: 'ut_old', contactId: '', name: z('Alex Chen', '陈先生'), room: z('Entire House / Single Lease', '整套出租 / 独立租约'), rent: '1850', startDate: '2021-09-01', endDate: '2024-08-31', notes: z('Moved out', '已退租') },
-                                { id: 'ut_now', contactId: cTenant, name: z('Sophie Martin', 'Sophie Martin'), room: z('Entire House / Single Lease', '整套出租 / 独立租约'), rent: '2100', startDate: '2024-09-01', endDate: '', notes: z('12-month lease + deposit $2100', '一年约 + 押金 $2100') }
+                                { id: 'ut_old', contactId: cAlex, name: z('Alex Chen', '陈先生'), room: roomWhole, rent: '1850', startDate: '2021-09-01', endDate: '2024-08-31', notes: z('Moved to Toronto', '已搬去多伦多') },
+                                { id: 'ut_now', contactId: cSophie, name: z('Sophie Martin', 'Sophie Martin'), room: roomWhole, rent: '2100', startDate: '2024-09-01', endDate: '', notes: z('12-month lease + deposit $2100', '一年约 + 押金 $2100') }
                             ]
                         }
                     ]
                 },
                 {
-                    id: pTown,
-                    name: z('Orleans Townhome', '奥尔良联排'),
-                    buildingType: 'freehold_townhouse',
-                    address: '88 Charlemagne Blvd, Orleans, ON',
-                    lat: 45.4668,
-                    lng: -75.5462,
+                    id: pLink,
+                    name: z('Kanata Link', '卡纳塔连体屋'),
+                    buildingType: 'link',
+                    address: '9 Goldridge Dr, Kanata, ON',
+                    lat: 45.3106,
+                    lng: -75.8962,
                     usages: [
-                        { id: 'u_town_buy', usageType: 'purchased', startDate: '2016-04-20', endDate: '', notes: z('Purchase $312,000', '购入价 $312,000') },
-                        { id: 'u_town_pri', usageType: 'primary', startDate: '2016-04-20', endDate: '2019-12-31', notes: z('Lived in before moving to Gatineau', '迁往加蒂诺前自住') },
-                        { id: 'u_town_rent', usageType: 'rental', startDate: '2020-01-01', endDate: '', notes: z('Whole-unit rental', '整套出租'), tenants: [] }
+                        { id: 'u_link_buy', usageType: 'purchased', startDate: '2023-07-21', endDate: '', notes: z('Purchase $618,000', '购入价 $618,000') },
+                        { id: 'u_link_pri', usageType: 'primary', startDate: '2023-07-21', endDate: '', notes: z('Parents occupy', '父母居住') }
+                    ]
+                },
+                {
+                    id: pMulti,
+                    name: z('Hull Fourplex', '赫尔四套多户'),
+                    buildingType: 'multiplex',
+                    address: '48 rue Eddy, Gatineau, QC',
+                    lat: 45.4291,
+                    lng: -75.7128,
+                    usages: [
+                        { id: 'u_multi_buy', usageType: 'purchased', startDate: '2014-09-08', endDate: '', notes: z('Purchase $390,000 as 4-plex', '以四套多户购入 $390,000') },
+                        { id: 'u_multi_com', usageType: 'commercial', startDate: '2014-09-08', endDate: '2017-12-31', notes: z('Ground floor was a salon', '一楼曾是美发店') },
+                        {
+                            id: 'u_multi_rent',
+                            usageType: 'rental',
+                            startDate: '2018-01-01',
+                            endDate: '',
+                            notes: z('All four units residential', '四套均改为住宅出租'),
+                            tenants: [
+                                { id: 'ut_m1', contactId: '', name: z('Unit 1 — vacant turnover', '1号空置周转'), room: room1, rent: '0', startDate: '2026-08-01', endDate: '', notes: z('Listing at $1350', '挂牌 $1350') },
+                                { id: 'ut_m2', contactId: '', name: z('Karim Bensaid', 'Karim Bensaid'), room: room2, rent: '1280', startDate: '2021-04-01', endDate: '', notes: z('Pays e-transfer on the 1st', '每月1日电汇') },
+                                { id: 'ut_m3', contactId: '', name: z('Nadia Fortin', 'Nadia Fortin'), room: room3, rent: '1325', startDate: '2019-11-01', endDate: '', notes: z('Long-term, cat allowed', '长住，可养猫') },
+                                { id: 'ut_m4', contactId: '', name: z('Student house (3 names)', '学生合租三人'), room: room4, rent: '1500', startDate: '2025-09-01', endDate: '2026-08-31', notes: z('Lease ends Aug 31', '租约8月31日到期') }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    id: pSold,
+                    name: z('Lebreton Studio (sold)', 'Lebreton 一居（已售）'),
+                    buildingType: 'condo_apt',
+                    address: '101 Champagne Ave S, Ottawa, ON',
+                    lat: 45.4102,
+                    lng: -75.7124,
+                    usages: [
+                        { id: 'u_sold_buy', usageType: 'purchased', startDate: '2017-02-14', endDate: '2025-05-30', notes: z('Purchase $269,000', '购入价 $269,000') },
+                        { id: 'u_sold_pri', usageType: 'primary', startDate: '2017-02-14', endDate: '2019-06-30', notes: z('First home', '首套自住') },
+                        { id: 'u_sold_rent', usageType: 'rental', startDate: '2019-07-01', endDate: '2025-03-31', notes: z('Rented until sale', '挂牌前一直出租'), tenants: [
+                            { id: 'ut_sold', contactId: '', name: z('Jordan Blake', 'Jordan Blake'), room: roomWhole, rent: '1600', startDate: '2022-04-01', endDate: '2025-03-31', notes: z('Vacated for closing', '交割前搬走') }
+                        ] },
+                        { id: 'u_sold_vac', usageType: 'vacant', startDate: '2025-04-01', endDate: '2025-05-30', notes: z('Staging for sale', '售前空置布置') },
+                        { id: 'u_sold_out', usageType: 'sold', startDate: '2025-05-30', endDate: '', notes: z('Sold $355,000', '售出 $355,000') }
                     ]
                 }
             ];
 
             const contacts = [
-                { id: cTenant, role: 'tenant', name: z('Sophie Martin', 'Sophie Martin'), trade: '', propertyId: pCondo, propertyIds: [pCondo], phone: '613-555-0142', wechat: '', email: 'sophie.martin@example.com', notes: z('Prefers email. Rent on the 1st.', '偏好邮件，每月1日交租') },
-                { id: cHvac, role: 'contractor', name: z('Ottawa Valley HVAC', '河谷暖通'), trade: z('Furnace / AC', '暖炉/空调'), propertyId: '', propertyIds: [], phone: '613-555-0198', wechat: '', email: 'service@ovhvac.example', notes: z('Annual tune-up in October', '每年10月保养') },
-                { id: cPlumb, role: 'contractor', name: z('Rive-Nord Plumbing', '北岸水电'), trade: z('Plumbing', '水电卫浴'), propertyId: '', propertyIds: [], phone: '819-555-0160', wechat: 'rivenord', email: '', notes: '' },
-                { id: cRealtor, role: 'realtor', name: z('Maya Patel Realty', 'Maya Patel 地产'), trade: '', propertyId: '', propertyIds: [pHome, pCondo, pTown], phone: '613-555-0110', wechat: '', email: 'maya@example.com', notes: z('Original listing agent', '原始挂牌经纪') },
-                { id: cLawyer, role: 'lawyer', name: z('Tremblay Legal', 'Tremblay 律师行'), trade: '', propertyId: '', propertyIds: [pHome, pCondo], phone: '819-555-0125', wechat: '', email: 'closings@tremblay.example', notes: '' }
+                { id: cSophie, role: 'tenant', name: z('Sophie Martin', 'Sophie Martin'), trade: '', propertyId: pCondo, propertyIds: [pCondo], phone: '613-555-0142', wechat: '', email: 'sophie.martin@example.com', notes: z('Prefers email. Rent on the 1st.', '偏好邮件，每月1日交租') },
+                { id: cAlex, role: 'tenant', name: z('Alex Chen', '陈先生'), trade: '', propertyId: pCondo, propertyIds: [pCondo], phone: '647-555-0108', wechat: 'alexchen', email: 'alex.chen@example.com', notes: z('Former Bay St tenant', 'Bay街前租客') },
+                { id: cNguyen, role: 'tenant', name: z('Linh Nguyen', '阮女士'), trade: '', propertyId: pSemi, propertyIds: [pSemi], phone: '613-555-0177', wechat: '', email: 'linh.nguyen@example.com', notes: z('Upper unit, quiet hours after 10pm', '上层，晚上10点后安静') },
+                { id: cPatel, role: 'tenant', name: z('Rahul Patel', 'Rahul Patel'), trade: '', propertyId: pSemi, propertyIds: [pSemi], phone: '613-555-0133', wechat: '', email: 'rahul.patel@example.com', notes: z('Pays on the 3rd via e-transfer', '每月3日电汇') },
+                { id: cDubois, role: 'tenant', name: z('Émile Dubois', 'Émile Dubois'), trade: '', propertyId: pTown, propertyIds: [pTown], phone: '613-555-0188', wechat: '', email: 'emile.dubois@example.com', notes: z('Has two cats, extra deposit on file', '两只猫，已收额外押金') },
+                { id: cLi, role: 'tenant', name: z('Wei Li', '李伟'), trade: '', propertyId: pCth, propertyIds: [pCth], phone: '343-555-0166', wechat: 'liweihome', email: 'wei.li@example.com', notes: z('Works nights, maintenance after 1pm', '夜班，维修请下午1点后') },
+                { id: cHvac, role: 'contractor', name: z('Ottawa Valley HVAC', '河谷暖通'), trade: z('Furnace / AC', '暖炉/空调'), propertyId: '', propertyIds: [pHome, pLink, pCondo], phone: '613-555-0198', wechat: '', email: 'service@ovhvac.example', notes: z('Annual tune-up in October', '每年10月保养') },
+                { id: cPlumb, role: 'contractor', name: z('Rive-Nord Plumbing', '北岸水电'), trade: z('Plumbing', '水电卫浴'), propertyId: '', propertyIds: [pHome, pMulti], phone: '819-555-0160', wechat: 'rivenord', email: '', notes: z('24h emergency surcharge $180', '24小时急修加收 $180') },
+                { id: cElec, role: 'contractor', name: z('Sparkline Electric', '闪线电气'), trade: z('Electrical', '电路'), propertyId: '', propertyIds: [pSemi, pMulti], phone: '613-555-0121', wechat: '', email: 'jobs@sparkline.example', notes: z('ESA certified', 'ESA 持证') },
+                { id: cRoof, role: 'contractor', name: z('Capital Roofing Co.', '首府屋顶'), trade: z('Roofing', '屋顶'), propertyId: '', propertyIds: [pTown, pHome], phone: '613-555-0144', wechat: '', email: 'quotes@caproof.example', notes: '' },
+                { id: cRealtor, role: 'realtor', name: z('Maya Patel Realty', 'Maya Patel 地产'), trade: '', propertyId: '', propertyIds: [pHome, pSemi, pTown, pCth, pCondo, pLink, pMulti, pSold], phone: '613-555-0110', wechat: '', email: 'maya@example.com', notes: z('Listing + leasing', '买卖与出租挂牌') },
+                { id: cLawyer, role: 'lawyer', name: z('Tremblay Legal', 'Tremblay 律师行'), trade: '', propertyId: '', propertyIds: [pHome, pCondo, pSold], phone: '819-555-0125', wechat: '', email: 'closings@tremblay.example', notes: z('Quebec + Ontario closings', '魁省与安省交割') },
+                { id: cPm, role: 'role_demo_pm', name: z('Outaouais Property Care', 'Outaouais 托管'), trade: '', propertyId: '', propertyIds: [pMulti, pSemi], phone: '819-555-0190', wechat: '', email: 'desk@opc.example', notes: z('Collects Hull fourplex rent', '代收赫尔四套租金') }
+            ];
+
+            const customRoles = [
+                { key: 'role_demo_pm', name: z('Property manager', '托管经理'), icon: 'fa-clipboard-list', color: 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30', fieldType: 'multiProperty' }
             ];
 
             const taskFilter = cat.find(t => t.category && (t.category.includes('HVAC') || t.category.includes('暖通'))) || cat[0];
@@ -2023,8 +2167,64 @@
                     title: z('Deck staining (archived)', '露台刷漆（已归档）'),
                     zone: zoneYard,
                     category: z('Landscaping', '园林庭院'),
+                    issueDate: '2026-05-01',
                     beforePhotos: [],
                     completed: true
+                },
+                {
+                    id: 't_demo_semi_gfci',
+                    propertyId: pSemi,
+                    titleSelect: 'OTHER',
+                    title: z('Lower-unit GFCI trips', '下层漏电插座跳闸'),
+                    zone: zoneBath,
+                    category: z('Electrical', '电路灯具'),
+                    issueDate: '2026-08-20',
+                    beforePhotos: [createMockPhotoSvg(z('GFCI red', '漏电插座红灯'), '#1e293b', '#fbbf24', '⚡')],
+                    completed: false
+                },
+                {
+                    id: 't_demo_cth_fan',
+                    propertyId: pCth,
+                    titleSelect: 'OTHER',
+                    title: z('Bathroom fan rattles', '卫生间排风扇异响'),
+                    zone: zoneBath,
+                    category: z('Electrical', '电路灯具'),
+                    issueDate: '2026-09-01',
+                    beforePhotos: [],
+                    completed: false
+                },
+                {
+                    id: 't_demo_link_seal',
+                    propertyId: pLink,
+                    titleSelect: 'OTHER',
+                    title: z('Garage door weatherstrip', '车库门底部密封条'),
+                    zone: z('Garage', '车库'),
+                    category: z('Exterior/Siding', '室外建筑/外墙'),
+                    issueDate: '2026-08-12',
+                    beforePhotos: [],
+                    completed: false
+                },
+                {
+                    id: 't_demo_multi_unit1',
+                    propertyId: pMulti,
+                    titleSelect: 'OTHER',
+                    title: z('Unit 1 turnover paint', '1号单位退租刷漆'),
+                    zone: z('Living Room', '客厅'),
+                    category: z('Interior/Finishing', '室内装修'),
+                    issueDate: '2026-08-05',
+                    beforePhotos: [createMockPhotoSvg(z('Scuffed walls', '墙面刮痕'), '#1e293b', '#cbd5e1', '🎨')],
+                    completed: false
+                },
+                {
+                    id: 't_demo_town_siding',
+                    propertyId: pTown,
+                    titleSelect: 'OTHER',
+                    title: z('Loose vinyl corner', '外墙挂板转角松动'),
+                    zone: z('Exterior Walls / Siding', '外墙/挂板'),
+                    category: z('Exterior/Siding', '室外建筑/外墙'),
+                    issueDate: '2026-07-28',
+                    beforePhotos: [],
+                    completed: false
                 }
             ];
 
@@ -2076,13 +2276,93 @@
                     beforePhotos: [createMockPhotoSvg(z('Error code 3', '故障代码 3'), '#1e293b', '#38bdf8', '❄')],
                     afterPhotos: [createMockPhotoSvg(z('Board replaced', '控制板已换'), '#052e16', '#34d399', '✓')],
                     receiptPhotos: [createMockReceiptSvg(z('Ottawa Valley HVAC', '河谷暖通'), '420', '2026-02-18', z('Control board labour', '控制板工时'))]
+                },
+                {
+                    id: 'r_demo_semi_panel',
+                    propertyId: pSemi,
+                    titleSelect: 'OTHER',
+                    title: z('Panel label + breaker swap', '电箱标注并更换空开'),
+                    zone: z('Basement', '地下室'),
+                    category: z('Electrical', '电路灯具'),
+                    cost: '310',
+                    date: '2025-04-09',
+                    warrantyEndDate: '2026-04-09',
+                    contractorId: cElec,
+                    hasReceipt: true,
+                    beforePhotos: [],
+                    afterPhotos: [createMockPhotoSvg(z('Labeled panel', '已标注电箱'), '#052e16', '#34d399', '✓')],
+                    receiptPhotos: [createMockReceiptSvg(z('Sparkline Electric', '闪线电气'), '310', '2025-04-09', z('2 breakers + labels', '两个空开+标注'))]
+                },
+                {
+                    id: 'r_demo_cth_hose',
+                    propertyId: pCth,
+                    titleSelect: 'OTHER',
+                    title: z('Washer hose replacement', '洗衣机进水管更换'),
+                    zone: z('Laundry Room', '洗衣房'),
+                    category: z('Plumbing', '水电卫浴'),
+                    cost: '95',
+                    date: '2026-01-11',
+                    warrantyEndDate: '',
+                    contractorId: '',
+                    hasReceipt: true,
+                    beforePhotos: [createMockPhotoSvg(z('Bulging hose', '水管鼓包'), '#1e293b', '#f87171', '💧')],
+                    afterPhotos: [createMockPhotoSvg(z('Steel braided', '不锈钢编织管'), '#052e16', '#34d399', '✓')],
+                    receiptPhotos: [createMockReceiptSvg('Canadian Tire', '95', '2026-01-11', z('Hoses + clamp', '水管+卡箍'))]
+                },
+                {
+                    id: 'r_demo_link_hrv',
+                    propertyId: pLink,
+                    titleSelect: 'OTHER',
+                    title: z('HRV core clean', '新风机芯清洗'),
+                    zone: zoneFurnace,
+                    category: z('HVAC', '暖通空调'),
+                    cost: '180',
+                    date: '2025-10-02',
+                    warrantyEndDate: '',
+                    contractorId: cHvac,
+                    hasReceipt: true,
+                    beforePhotos: [],
+                    afterPhotos: [],
+                    receiptPhotos: [createMockReceiptSvg(z('Ottawa Valley HVAC', '河谷暖通'), '180', '2025-10-02', z('HRV service', '新风保养'))]
+                },
+                {
+                    id: 'r_demo_multi_stack',
+                    propertyId: pMulti,
+                    titleSelect: 'OTHER',
+                    title: z('Unit 3 stack blockage', '3号单位下水堵塞'),
+                    zone: zoneBath,
+                    category: z('Plumbing', '水电卫浴'),
+                    cost: '265',
+                    date: '2026-03-22',
+                    warrantyEndDate: '',
+                    contractorId: cPlumb,
+                    hasReceipt: true,
+                    beforePhotos: [createMockPhotoSvg(z('Slow drain', '下水缓慢'), '#1e293b', '#22d3ee', '🚿')],
+                    afterPhotos: [createMockPhotoSvg(z('Cleared stack', '主管已通'), '#052e16', '#34d399', '✓')],
+                    receiptPhotos: [createMockReceiptSvg(z('Rive-Nord Plumbing', '北岸水电'), '265', '2026-03-22', z('Snake + camera', '疏通+内窥'))]
+                },
+                {
+                    id: 'r_demo_sold_close',
+                    propertyId: pSold,
+                    titleSelect: 'OTHER',
+                    title: z('Pre-sale paint & patch', '售前修补刷漆'),
+                    zone: z('Living Room', '客厅'),
+                    category: z('Interior/Finishing', '室内装修'),
+                    cost: '740',
+                    date: '2025-04-18',
+                    warrantyEndDate: '',
+                    contractorId: '',
+                    hasReceipt: true,
+                    beforePhotos: [],
+                    afterPhotos: [createMockPhotoSvg(z('Staged living', '布置后客厅'), '#052e16', '#34d399', '✓')],
+                    receiptPhotos: [createMockReceiptSvg(z('Cash painter', '现金油漆工'), '740', '2025-04-18', z('Labour + paint', '工时+涂料'))]
                 }
             ];
 
-            return { properties, tasks, repairs, contacts, customRoles: [], userZones: zones };
+            return { properties, tasks, repairs, contacts, customRoles, userZones: zones };
         }
 
-        const APP_VERSION = '2026.09.06-c';
+        const APP_VERSION = '2026.09.06-d';
 
         const app = createApp({
             data() {
@@ -3085,10 +3365,15 @@
                     this.properties = demo.properties;
                     this.tasks = demo.tasks;
                     this.repairs = demo.repairs;
+                    const zh = this.currentLang === 'zh';
                     this.routines = [
-                        { id: 'rt_demo_filter', catalogKey: 'furnace_filter', title: this.currentLang === 'zh' ? '更换暖炉 / 新风滤网' : 'Replace furnace / HRV filter', propertyId: demo.properties[0].id, zone: this.currentLang === 'zh' ? '暖炉房 / 机房' : 'Furnace Room', category: this.currentLang === 'zh' ? '暖通空调' : 'HVAC', intervalMonths: 3, nextDueDate: '2026-09-01', lastDoneDate: '2026-06-01' },
-                        { id: 'rt_demo_gutter', catalogKey: 'gutters', title: this.currentLang === 'zh' ? '清理排水沟与落水管' : 'Clean gutters & downspouts', propertyId: demo.properties[0].id, zone: this.currentLang === 'zh' ? '排水沟/落水管' : 'Gutters & Downspouts', category: this.currentLang === 'zh' ? '屋顶维修' : 'Roofing', intervalMonths: 6, nextDueDate: '2026-10-15', lastDoneDate: '2026-04-15' },
-                        { id: 'rt_demo_smoke', catalogKey: 'smoke_test', title: this.currentLang === 'zh' ? '测试烟雾 / 一氧化碳报警器' : 'Test smoke / CO detectors', propertyId: demo.properties[1].id, zone: this.currentLang === 'zh' ? '楼梯间' : 'Hallway', category: this.currentLang === 'zh' ? '电路灯具' : 'Electrical', intervalMonths: 1, nextDueDate: '2026-09-20', lastDoneDate: '2026-08-20' }
+                        { id: 'rt_demo_filter', catalogKey: 'furnace_filter', title: zh ? '更换暖炉 / 新风滤网' : 'Replace furnace / HRV filter', propertyId: 'p_demo_home', zone: zh ? '暖炉房 / 机房' : 'Furnace Room', category: zh ? '暖通空调' : 'HVAC', intervalMonths: 3, nextDueDate: '2026-09-01', lastDoneDate: '2026-06-01' },
+                        { id: 'rt_demo_gutter', catalogKey: 'gutters', title: zh ? '清理排水沟与落水管' : 'Clean gutters & downspouts', propertyId: 'p_demo_home', zone: zh ? '排水沟/落水管' : 'Gutters & Downspouts', category: zh ? '屋顶维修' : 'Roofing', intervalMonths: 6, nextDueDate: '2026-10-15', lastDoneDate: '2026-04-15' },
+                        { id: 'rt_demo_smoke', catalogKey: 'smoke_test', title: zh ? '测试烟雾 / 一氧化碳报警器' : 'Test smoke / CO detectors', propertyId: 'p_demo_condo', zone: zh ? '楼梯间' : 'Hallway', category: zh ? '电路灯具' : 'Electrical', intervalMonths: 1, nextDueDate: '2026-09-20', lastDoneDate: '2026-08-20' },
+                        { id: 'rt_demo_wh', catalogKey: 'wh_flush', title: zh ? '冲洗热水器罐体沉积' : 'Flush water heater tank', propertyId: 'p_demo_semi', zone: zh ? '暖炉房 / 机房' : 'Furnace Room', category: zh ? '水电卫浴' : 'Plumbing', intervalMonths: 12, nextDueDate: '2026-11-01', lastDoneDate: '2025-11-01' },
+                        { id: 'rt_demo_dryer', catalogKey: 'dryer_vent', title: zh ? '清理干衣机排风管' : 'Clean dryer vent & lint path', propertyId: 'p_demo_cth', zone: zh ? '洗衣房' : 'Laundry Room', category: zh ? '家电维修' : 'Appliances', intervalMonths: 12, nextDueDate: '2026-08-20', lastDoneDate: '2025-08-20' },
+                        { id: 'rt_demo_sump', catalogKey: 'sump', title: zh ? '测试地下室排水泵' : 'Test sump pump', propertyId: 'p_demo_multi', zone: zh ? '地下室' : 'Basement', category: zh ? '水电卫浴' : 'Plumbing', intervalMonths: 3, nextDueDate: '2026-09-10', lastDoneDate: '2026-06-10' },
+                        { id: 'rt_demo_hrv', catalogKey: 'furnace_filter', title: zh ? '更换暖炉 / 新风滤网' : 'Replace furnace / HRV filter', propertyId: 'p_demo_link', zone: zh ? '暖炉房 / 机房' : 'Furnace Room', category: zh ? '暖通空调' : 'HVAC', intervalMonths: 3, nextDueDate: '2026-10-01', lastDoneDate: '2026-07-01' }
                     ];
                     this.contacts = demo.contacts;
                     this.customRoles = demo.customRoles || [];
