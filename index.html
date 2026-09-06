@@ -1617,7 +1617,7 @@
                                     </div>
                                 </div>
                                 <div>
-                                    <p class="text-[10px] font-bold text-slate-500 uppercase mb-1">{{ t('subTabTasks') }}</p>
+                                    <p class="text-[10px] font-bold text-slate-500 uppercase mb-1">{{ t('catalogNonCycle') }}</p>
                                     <div class="flex flex-wrap gap-1.5">
                                         <span v-for="item in catalogItems('tasks', cat)" :key="item.name" class="text-[11px] bg-slate-900 border border-slate-700 text-slate-300 px-2 py-0.5 rounded-lg flex items-center gap-1">
                                             {{ item.name }}
@@ -1628,7 +1628,7 @@
                                     </div>
                                 </div>
                                 <div>
-                                    <p class="text-[10px] font-bold text-slate-500 uppercase mb-1">{{ t('subTabRoutines') }}</p>
+                                    <p class="text-[10px] font-bold text-violet-300/80 uppercase mb-1">{{ t('catalogCycle') }}</p>
                                     <div class="flex flex-wrap gap-1.5">
                                         <span v-for="item in catalogItems('routines', cat)" :key="item.key" class="text-[11px] bg-slate-900 border border-slate-700 text-slate-300 px-2 py-0.5 rounded-lg flex items-center gap-1">
                                             {{ item.title }}
@@ -1638,17 +1638,8 @@
                                         <button @click="addCatalogPreset('routines', cat)" class="text-[11px] text-brand-400 font-bold">+</button>
                                     </div>
                                 </div>
-                                <div>
-                                    <p class="text-[10px] font-bold text-slate-500 uppercase mb-1">{{ t('subTabLogs') }}</p>
-                                    <div class="flex flex-wrap gap-1.5">
-                                        <span v-for="item in catalogItems('repairs', cat)" :key="item.name" class="text-[11px] bg-slate-900 border border-slate-700 text-slate-300 px-2 py-0.5 rounded-lg flex items-center gap-1">
-                                            {{ item.name }}
-                                            <button @click="renameCatalogPreset('repairs', item.name)" class="text-slate-500">✎</button>
-                                            <button @click="removeCatalogPreset('repairs', item.name)" class="text-slate-500">×</button>
-                                        </span>
-                                        <button @click="addCatalogPreset('repairs', cat)" class="text-[11px] text-brand-400 font-bold">+</button>
-                                    </div>
-                                </div>
+
+
                             </div>
                         </div>
 
@@ -1888,7 +1879,7 @@
                 settingsFileManager: 'Media & File Storage', fileManagerTitle: 'Local File Gallery', filesCount: 'Files', storageUsed: 'Used', btnManageFiles: 'Open Gallery', noMediaFiles: 'No photo or document files match.', toastMediaDeleted: 'File removed from local storage.', fileTypeAll: 'All Files',
                 roleTenant: 'Tenant', roleContractor: 'Contractor', roleRealtor: 'Realtor', roleLawyer: 'Lawyer', roleType: 'Contact Role', contactName: 'Full Name', contactTrade: 'Specialty / Trade Title', contactTradeHint: 'e.g. HVAC, Plumbing Specialist', assocProperty: 'Associated Property', assocProperties: 'Associated Properties', contractorNote: 'Contractors are linked through repair logs.', noneGeneral: 'General / Unlinked', searchContact: 'Search contacts...', noContacts: 'No contacts found.',
                 contactPhone: 'Phone', contactWechat: 'WeChat ID', contactEmail: 'Email', contactNotes: 'Private Notes',
-                settingsZones: 'Property Zones & Areas', settingsZonesDesc: 'Customize specific rooms and areas for your properties.', manageCatalog: 'Work catalog', manageCatalogDesc: 'Preset categories and titles for pending, cycles and history.', manageCatalogHint: 'Work forms only use these presets.', newCategory: 'New category', newPresetName: 'Preset title', confirmDeleteCategory: 'Delete this category and its preset titles?', btnRename: 'Rename', renameTo: 'Rename to', confirmRenameInUse: '"{old}" is already used on {n} record(s). Renaming to "{new}" will update those records too. Continue?', manageZones: 'Manage Zones & Areas',
+                settingsZones: 'Property Zones & Areas', settingsZonesDesc: 'Customize specific rooms and areas for your properties.', manageCatalog: 'Work catalog', manageCatalogDesc: 'Preset categories and titles for pending, cycles and history.', manageCatalogHint: 'Work forms only use these presets.', catalogNonCycle: 'Non-cycle (Pending + History)', catalogCycle: 'Cycle only', newCategory: 'New category', newPresetName: 'Preset title', confirmDeleteCategory: 'Delete this category and its preset titles?', btnRename: 'Rename', renameTo: 'Rename to', confirmRenameInUse: '"{old}" is already used on {n} record(s). Renaming to "{new}" will update those records too. Continue?', manageZones: 'Manage Zones & Areas',
                 addZoneBtn: 'Add Zone', addZoneName: 'Enter new zone/area name:', categoryName: 'Category Name',
                 resetZones: 'Reset to Defaults', confirmResetZones: 'Reset to default zones? All custom zones will be lost.', confirmDeleteZoneCat: 'Delete this category and all its zones?', toastZoneSaved: 'Zones updated', zoneManagerHint: 'Zones appear on each property blueprint and in task/log location pickers. Renaming a zone updates existing records.',
                 settingsPwa: 'App install', pwaVersion: 'Build', pwaStandalone: 'Home Screen (standalone)', pwaBrowser: 'Safari / browser tab', pwaCheckUpdate: 'Check for update', pwaUpdated: 'Updated — relaunch the Home Screen icon', pwaNoUpdate: 'Already on the latest cached build', pwaAddToHome: 'Add to Home Screen', pwaAddToHomeHint: 'Safari Share → Add to Home Screen. Re-open from the icon after each GitHub deploy to pick up a new build number.'
@@ -1934,7 +1925,7 @@
                 settingsFileManager: '文件与媒体存储管理', fileManagerTitle: '本地照片与票据库', filesCount: '个文件', storageUsed: '已用容量', btnManageFiles: '进入文件库', noMediaFiles: '未匹配到媒体文件。', toastMediaDeleted: '文件已彻底删除。', fileTypeAll: '全部文件',
                 roleTenant: '租客', roleContractor: '师傅', roleRealtor: '经纪', roleLawyer: '律师', roleType: '联系人身份角色', contactName: '姓名/称呼', contactTrade: '工种/专长头衔', contactTradeHint: '例如: 暖通水工, 专修屋顶', assocProperty: '关联房屋节点', assocProperties: '关联房屋资产 (支持多选)', contractorNote: '师傅无直接关联房屋，通过修缮病历本自动关联。', noneGeneral: '通用 / 未绑定具体房屋', searchContact: '搜索联系人...', noContacts: '该分类下暂无联系人。',
                 contactPhone: '电话', contactWechat: '微信号', contactEmail: '邮箱', contactNotes: '私密备注',
-                settingsZones: '房屋空间与区域设置', settingsZonesDesc: '自定义房屋内可用的具体房间与区域列表。', manageCatalog: '工作事项目录', manageCatalogDesc: '预设待办、周期和历史的分类与名称。', manageCatalogHint: '工作页只能选择这些预设。', newCategory: '新分类', newPresetName: '预设名称', confirmDeleteCategory: '删除该分类及其预设名称？', btnRename: '重命名', renameTo: '改为', confirmRenameInUse: '“{old}”已被 {n} 条记录使用。改成“{new}”会同时改这些记录里的名称或分类。确认继续？', manageZones: '管理空间与区域',
+                settingsZones: '房屋空间与区域设置', settingsZonesDesc: '自定义房屋内可用的具体房间与区域列表。', manageCatalog: '工作事项目录', manageCatalogDesc: '预设待办、周期和历史的分类与名称。', manageCatalogHint: '工作页只能选择这些预设。', catalogNonCycle: '非周期（待办与历史共用）', catalogCycle: '仅周期', newCategory: '新分类', newPresetName: '预设名称', confirmDeleteCategory: '删除该分类及其预设名称？', btnRename: '重命名', renameTo: '改为', confirmRenameInUse: '“{old}”已被 {n} 条记录使用。改成“{new}”会同时改这些记录里的名称或分类。确认继续？', manageZones: '管理空间与区域',
                 addZoneBtn: '添加区域', addZoneName: '请输入新区域名称 (例如: 泳池房):', categoryName: '大类名称 (如: 室内)',
                 resetZones: '恢复默认区域列表', confirmResetZones: '确定要恢复默认区域列表吗？您自己添加的所有自定义区域将会丢失。', confirmDeleteZoneCat: '确定删除该分类及其下属所有区域吗？', toastZoneSaved: '区域设置已更新', zoneManagerHint: '区域会出现在每套房屋的空间剖面图，以及待办/维修记录的位置选择中。重命名会同步更新已有记录。',
                 settingsPwa: '安装与版本', pwaVersion: '版本', pwaStandalone: '主屏幕独立运行', pwaBrowser: 'Safari / 浏览器标签', pwaCheckUpdate: '检查更新', pwaUpdated: '已更新 — 请从主屏幕图标重新打开', pwaNoUpdate: '当前已是最新缓存版本', pwaAddToHome: '添加到主屏幕', pwaAddToHomeHint: 'Safari 分享 → 添加到主屏幕。每次 GitHub 发布后，退出后台再点桌面图标即可加载新版本号。'
@@ -2118,12 +2109,22 @@
 
         // National Capital Region (Ottawa–Gatineau) — used when a property has no geocoded pin
         function cloneDefaultCatalog() {
-            return JSON.parse(JSON.stringify({
+            const catalog = JSON.parse(JSON.stringify({
                 categories: taskCategories,
                 tasks: commonTaskTitles,
                 repairs: commonRepairTitles,
                 routines: routineCatalog
             }));
+            ['en', 'zh'].forEach(lang => {
+                const names = new Set((catalog.tasks[lang] || []).map(i => i.name));
+                (catalog.repairs[lang] || []).forEach(i => {
+                    if (i.name && !names.has(i.name)) {
+                        catalog.tasks[lang].push({ name: i.name, category: i.category });
+                        names.add(i.name);
+                    }
+                });
+            });
+            return catalog;
         }
 
         const MAP_HOME_CENTER = { lat: 45.4270, lng: -75.7100 };
@@ -2684,7 +2685,7 @@
             return { properties, tasks, repairs, contacts, customRoles, userZones: zones };
         }
 
-        const APP_VERSION = '2026.09.06-o';
+        const APP_VERSION = '2026.09.06-p';
 
         const app = createApp({
             data() {
@@ -2844,9 +2845,7 @@
                     return grouped;
                 },
                 groupedCommonRepairs() {
-                    const list = this.commonRepairTitles[this.currentLang] || [];
-                    const cats = this.taskCategories[this.currentLang] || [];
-                    return cats.map(category => ({ category, items: list.filter(r => r.category === category) })).filter(g => g.items.length);
+                    return this.groupedCommonTasks;
                 },
                 filteredTasks() {
                     return this.tasks
@@ -2969,7 +2968,8 @@
                             + this.routines.filter(r => r.category === oldName).length;
                     }
                     if (kind === 'tasks') {
-                        return this.tasks.filter(t => t.title === oldName || t.titleSelect === oldName).length;
+                        return this.tasks.filter(t => t.title === oldName || t.titleSelect === oldName).length
+                            + this.repairs.filter(r => !r.fromRoutineId && (r.title === oldName || r.titleSelect === oldName)).length;
                     }
                     if (kind === 'repairs') {
                         return this.repairs.filter(r => r.title === oldName || r.titleSelect === oldName).length;
@@ -3024,6 +3024,7 @@
                     } else {
                         this.userCatalog.tasks[lang].forEach(i => { if (i.name === id) i.name = newName; });
                         this.tasks.forEach(t => { if (t.title === oldName || t.titleSelect === oldName) { t.title = newName; t.titleSelect = newName; } });
+                        this.repairs.forEach(r => { if (!r.fromRoutineId && (r.title === oldName || r.titleSelect === oldName)) { r.title = newName; r.titleSelect = newName; } });
                     }
                     await this.saveToStorage();
                 },
@@ -3575,17 +3576,17 @@
                 },
                 handleTaskTitleChange() { const found = this.commonTaskTitles[this.currentLang].find(t => t.name === this.formTask.titleSelect); if (found) { this.formTask.title = found.name; this.formTask.category = found.category; } else if (this.formTask.titleSelect !== 'OTHER') { this.formTask.title = ''; } },
                 handleRepairCategoryChange() {
-                    const stillValid = (this.commonRepairTitles[this.currentLang] || []).some(r => r.name === this.formRepair.titleSelect && r.category === this.formRepair.category);
+                    const stillValid = (this.commonTaskTitles[this.currentLang] || []).some(r => r.name === this.formRepair.titleSelect && r.category === this.formRepair.category);
                     if (!stillValid && this.formRepair.titleSelect !== 'OTHER') {
                         this.formRepair.titleSelect = '';
                         this.formRepair.title = '';
                     }
                 },
                 isCommonRepairTitle(name) {
-                    return !!(name && (this.commonRepairTitles[this.currentLang] || []).some(r => r.name === name));
+                    return !!(name && (this.commonTaskTitles[this.currentLang] || []).some(r => r.name === name));
                 },
                 handleRepairTitleChange() {
-                    const found = this.commonRepairTitles[this.currentLang].find(r => r.name === this.formRepair.titleSelect);
+                    const found = (this.commonTaskTitles[this.currentLang] || []).find(r => r.name === this.formRepair.titleSelect);
                     if (found) {
                         this.formRepair.title = found.name;
                         this.formRepair.category = found.category;
