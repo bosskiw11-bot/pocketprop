@@ -2463,10 +2463,54 @@
                 }
             ];
 
+            const extraLogs = [
+                [pHome, 'r_home_tune', z('Annual furnace tune-up', '暖炉年度保养'), zoneFurnace, z('HVAC', '暖通空调'), '240', '2025-10-08', cHvac, true],
+                [pHome, 'r_home_gutter', z('Gutter hanger screws', '排水沟挂钩加固'), zoneGutters, z('Roofing', '屋顶维修'), '85', '2024-10-12', '', false],
+                [pHome, 'r_home_smoke', z('Replace smoke / CO units', '更换烟感与一氧化碳报警器'), zoneBath, z('Electrical', '电路灯具'), '160', '2023-05-01', cElec, true],
+                [pHome, 'r_home_deck', z('Deck oil stain DIY', '露台木油 DIY'), zoneYard, z('Landscaping', '园林庭院'), '210', '2024-07-20', '', false],
+                [pSemi, 'r_semi_sump', z('Sump float replacement', '排水泵浮球更换'), z('Basement', '地下室'), z('Plumbing', '水电卫浴'), '145', '2024-03-11', cPlumb, true],
+                [pSemi, 'r_semi_well', z('Window-well cleanout', '窗井清淤'), z('Foundation', '地基'), z('Exterior/Siding', '室外建筑/外墙'), '40', '2025-06-02', '', false],
+                [pSemi, 'r_semi_vent', z('Dryer vent clean', '干衣机排风清理'), z('Laundry Room', '洗衣房'), z('Appliances', '家电维修'), '190', '2023-11-18', cHvac, true],
+                [pSemi, 'r_semi_caulk', z('Front stoop caulking', '门口台阶填缝'), z('Front Yard', '前院及草坪'), z('Exterior/Siding', '室外建筑/外墙'), '70', '2026-05-03', '', false],
+                [pTown, 'r_town_filter', z('Filter rack repair', '滤网支架维修'), zoneFurnace, z('HVAC', '暖通空调'), '55', '2025-09-14', '', false],
+                [pTown, 'r_town_fence', z('Fence post sistering', '围栏柱加固'), z('Fence & Gates', '围栏与院门'), z('Landscaping', '园林庭院'), '380', '2024-08-21', '', true],
+                [pTown, 'r_town_fan', z('Bath fan motor', '卫生间排风扇电机'), zoneBath, z('Electrical', '电路灯具'), '210', '2023-02-10', cElec, true],
+                [pTown, 'r_town_guard', z('Leaf-guard install', '排水沟防叶网'), zoneGutters, z('Roofing', '屋顶维修'), '640', '2026-04-19', cRoof, true],
+                [pCth, 'r_cth_dw', z('Dishwasher door seal', '洗碗机门封条'), zoneKitchen, z('Appliances', '家电维修'), '88', '2025-07-07', '', false],
+                [pCth, 'r_cth_stat', z('Smart thermostat', '智能温控器'), zoneFurnace, z('HVAC', '暖通空调'), '175', '2024-01-22', cHvac, true],
+                [pCth, 'r_cth_door', z('Patio door rollers', '露台门滑轮'), z('Windows & Doors', '门窗'), z('Exterior/Siding', '室外建筑/外墙'), '260', '2023-09-09', '', true],
+                [pCth, 'r_cth_paint', z('Hallway touch-up paint', '走廊补漆'), z('Foyer / Entryway', '玄关 / 门厅'), z('Interior/Finishing', '室内装修'), '120', '2025-12-03', '', false],
+                [pCondo, 'r_condo_cart', z('Kitchen faucet cartridge', '厨房龙头阀芯'), zoneKitchen, z('Plumbing', '水电卫浴'), '64', '2024-11-05', '', false],
+                [pCondo, 'r_condo_blind', z('Bedroom blackout blinds', '卧室遮光帘'), z('Primary Bedroom', '主卧'), z('Interior/Finishing', '室内装修'), '210', '2023-08-16', '', false],
+                [pCondo, 'r_condo_filt', z('In-suite HRV filter', '户内新风滤网'), zoneFurnace, z('HVAC', '暖通空调'), '45', '2025-06-20', '', false],
+                [pCondo, 'r_condo_sweep', z('Balcony door sweep', '阳台门底部密封'), z('Windows & Doors', '门窗'), z('Exterior/Siding', '室外建筑/外墙'), '130', '2026-03-01', '', true],
+                [pLink, 'r_link_opener', z('Garage door opener', '车库门电机'), z('Garage', '车库'), z('Electrical', '电路灯具'), '320', '2024-12-04', cElec, true],
+                [pLink, 'r_link_salt', z('Softener salt top-up', '软水机加盐'), zoneFurnace, z('Plumbing', '水电卫浴'), '28', '2025-02-14', '', false],
+                [pLink, 'r_link_rake', z('Roof snow rake', '屋顶清雪耙'), zoneRoof, z('Roofing', '屋顶维修'), '48', '2024-01-19', '', false],
+                [pLink, 'r_link_disp', z('Kitchen disposal', '厨房垃圾处理器'), zoneKitchen, z('Plumbing', '水电卫浴'), '275', '2026-06-08', cPlumb, true],
+                [pMulti, 'r_multi_stove', z('Unit 2 stove element', '2号单位炉盘'), zoneKitchen, z('Appliances', '家电维修'), '410', '2024-05-30', '', true],
+                [pMulti, 'r_multi_light', z('Stairwell fixture', '楼梯间灯具'), z('Stairwell', '楼梯间'), z('Electrical', '电路灯具'), '95', '2025-01-17', cElec, true],
+                [pMulti, 'r_multi_lock', z('Unit 4 deadbolt', '4号单位门锁'), z('Foyer / Entryway', '玄关 / 门厅'), z('Interior/Finishing', '室内装修'), '75', '2023-10-02', '', false],
+                [pMulti, 'r_multi_tar', z('Flat-roof tar patch', '平屋顶沥青修补'), zoneRoof, z('Roofing', '屋顶维修'), '890', '2024-07-11', cRoof, true],
+                [pSold, 'r_sold_fridge', z('Fridge compressor', '冰箱压缩机'), zoneKitchen, z('Appliances', '家电维修'), '540', '2022-06-18', '', true],
+                [pSold, 'r_sold_wax', z('Toilet wax ring', '马桶密封圈'), zoneBath, z('Plumbing', '水电卫浴'), '42', '2021-09-03', '', false],
+                [pSold, 'r_sold_screen', z('Window screen re-mesh', '窗纱更换'), z('Windows & Doors', '门窗'), z('Exterior/Siding', '室外建筑/外墙'), '60', '2023-04-25', '', false],
+                [pSold, 'r_sold_punch', z('Buyer punch-list fixes', '买方验房修补'), z('Living Room', '客厅'), z('Interior/Finishing', '室内装修'), '220', '2025-05-02', '', true]
+            ];
+            extraLogs.forEach((row, i) => {
+                const [propertyId, id, title, zone, category, cost, date, contractorId, hasReceipt] = row;
+                repairs.push({
+                    id, propertyId, titleSelect: 'OTHER', title, zone, category, cost, date,
+                    warrantyEndDate: '', contractorId, hasReceipt,
+                    beforePhotos: [], afterPhotos: [],
+                    receiptPhotos: hasReceipt ? [createMockReceiptSvg(title, cost, date, title)] : []
+                });
+            });
+
             return { properties, tasks, repairs, contacts, customRoles, userZones: zones };
         }
 
-        const APP_VERSION = '2026.09.06-h';
+        const APP_VERSION = '2026.09.06-i';
 
         const app = createApp({
             data() {
