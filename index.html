@@ -1095,12 +1095,13 @@
                                 <label class="block text-[12px] font-bold text-slate-400 uppercase tracking-wider mb-2 pl-1">{{ t('modalRepairTitle') }}</label>
                                 <select v-model="formRepair.titleSelect" @change="handleRepairTitleChange" class="w-full bg-slate-800 rounded-2xl p-4 text-[15px] text-white outline-none mb-3">
                                     <option value="">{{ t('selectCommonRepair') }}</option>
+                                    <option v-if="formRepair.title && !isCommonRepairTitle(formRepair.title)" value="OTHER">{{ formRepair.title }}</option>
                                     <option v-for="r in commonRepairTitles[currentLang]" :key="r.name" :value="r.name">{{ r.name }}</option>
                                     <option value="OTHER">✍️ {{ t('otherManual') }}</option>
                                 </select>
-                                <input v-if="formRepair.titleSelect === 'OTHER'" v-model="formRepair.title" type="text" :placeholder="t('enterRepairManually')" class="w-full bg-slate-800 rounded-2xl p-4 text-[15px] text-white outline-none border border-transparent focus:border-brand-500 mb-3">
+                                <input v-if="formRepair.titleSelect === 'OTHER' || convertingRoutineId || convertingTaskId" v-model="formRepair.title" type="text" :placeholder="t('enterRepairManually')" class="w-full bg-slate-800 rounded-2xl p-4 text-[15px] text-white outline-none border border-transparent focus:border-brand-500 mb-3">
                                 
-                                <select v-if="formRepair.titleSelect === 'OTHER'" v-model="formRepair.category" class="w-full bg-slate-800 rounded-2xl p-4 text-[15px] text-white outline-none">
+                                <select v-if="formRepair.titleSelect === 'OTHER' || convertingRoutineId || convertingTaskId" v-model="formRepair.category" class="w-full bg-slate-800 rounded-2xl p-4 text-[15px] text-white outline-none">
                                     <option value="">-- Category --</option>
                                     <option v-for="cat in taskCategories[currentLang]" :key="cat" :value="cat">{{ cat }}</option>
                                 </select>
@@ -2081,7 +2082,7 @@
             return { properties, tasks, repairs, contacts, customRoles: [], userZones: zones };
         }
 
-        const APP_VERSION = '2026.09.06-b';
+        const APP_VERSION = '2026.09.06-c';
 
         const app = createApp({
             data() {
@@ -2757,7 +2758,8 @@
                     }
                     if (type === 'repair') {
                         if (item && item.id) { this.editingRepairId = item.id; let rSelect = item.titleSelect; if (!rSelect) { const found = this.commonRepairTitles[this.currentLang].find(r => r.name === item.title); rSelect = found ? found.name : 'OTHER'; } this.formRepair = { propertyId: item.propertyId || defaultProp, titleSelect: rSelect, title: item.title || '', zone: item.zone || '', category: item.category || '', cost: item.cost || '', date: item.date || new Date().toISOString().split('T')[0], warrantyEndDate: item.warrantyEndDate || '', contractorId: item.contractorId || '', hasReceipt: item.hasReceipt !== false, receiptPhotos: Array.isArray(item.receiptPhotos) ? [...item.receiptPhotos] : [], beforePhotos: Array.isArray(item.beforePhotos) ? [...item.beforePhotos] : [], afterPhotos: Array.isArray(item.afterPhotos) ? [...item.afterPhotos] : [] }; } 
-                        else { this.editingRepairId = null; this.formRepair = { propertyId: defaultProp, titleSelect: '', title: '', zone: this.viewingZone || '', category: '', cost: '', date: new Date().toISOString().split('T')[0], warrantyEndDate: '', contractorId: '', hasReceipt: true, receiptPhotos: [], beforePhotos: [], afterPhotos: [] }; }
+                        else if (!this.convertingTaskId && !this.convertingRoutineId) { this.editingRepairId = null; this.formRepair = { propertyId: defaultProp, titleSelect: '', title: '', zone: this.viewingZone || '', category: '', cost: '', date: new Date().toISOString().split('T')[0], warrantyEndDate: '', contractorId: '', hasReceipt: true, receiptPhotos: [], beforePhotos: [], afterPhotos: [] }; }
+                        else { this.editingRepairId = null; }
                     }
                     if (type === 'contact') {
                         if (item) { this.editingContactId = item.id; this.formContact = { id: item.id, role: item.role || 'tenant', name: item.name || '', trade: item.trade || '', propertyId: item.propertyId || '', propertyIds: Array.isArray(item.propertyIds) ? [...item.propertyIds] : (item.propertyId ? [item.propertyId] : []), phone: item.phone || '', wechat: item.wechat || '', email: item.email || '', notes: item.notes || '' }; } 
@@ -2785,7 +2787,19 @@
                 },
                 closeModal() { this.activeModal = null; this.editingPropertyId = null; this.editingUsageId = null; this.editingTenantSubId = null; this.parentRentalUsage = null; this.editingContactId = null; this.editingTaskId = null; this.editingRepairId = null; this.editingRoutineId = null; this.convertingTaskId = null; this.convertingRoutineId = null; },
                 handleTaskTitleChange() { const found = this.commonTaskTitles[this.currentLang].find(t => t.name === this.formTask.titleSelect); if (found) { this.formTask.title = found.name; this.formTask.category = found.category; } else { this.formTask.title = ''; this.formTask.category = ''; } },
-                handleRepairTitleChange() { const found = this.commonRepairTitles[this.currentLang].find(r => r.name === this.formRepair.titleSelect); if (found) { this.formRepair.title = found.name; this.formRepair.category = found.category; } else { this.formRepair.title = ''; this.formRepair.category = ''; } },
+                isCommonRepairTitle(name) {
+                    return !!(name && (this.commonRepairTitles[this.currentLang] || []).some(r => r.name === name));
+                },
+                handleRepairTitleChange() {
+                    const found = this.commonRepairTitles[this.currentLang].find(r => r.name === this.formRepair.titleSelect);
+                    if (found) {
+                        this.formRepair.title = found.name;
+                        this.formRepair.category = found.category;
+                    } else if (this.formRepair.titleSelect !== 'OTHER') {
+                        this.formRepair.title = '';
+                        this.formRepair.category = '';
+                    }
+                },
                 triggerFileInput(type, multiple = false) { 
                     this.currentUploadType = type;
                     if (this.$refs.fileInput) {
