@@ -331,6 +331,9 @@
                                                 <span v-if="usage.lawyerId && isBuySellUsage(usage)" class="text-[10px] px-1.5 py-0.5 rounded-md bg-teal-500/15 text-teal-300 border border-teal-500/30 font-semibold flex items-center gap-1">
                                                     <i class="fa-solid fa-scale-balanced text-[9px]"></i>{{ getContactName(usage.lawyerId) }}
                                                 </span>
+                                                <span v-if="usage.managerId && usage.usageType === 'rental'" class="text-[10px] px-1.5 py-0.5 rounded-md bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 font-semibold flex items-center gap-1">
+                                                    <i class="fa-solid fa-clipboard-list text-[9px]"></i>{{ getContactName(usage.managerId) }}
+                                                </span>
                                             </div>
                                         </div>
                                         <div class="flex gap-1 flex-shrink-0">
@@ -736,19 +739,14 @@
                                 <div class="min-w-0 flex-1">
                                     <h3 class="text-base font-black text-white truncate">{{ contact.name }}</h3>
                                     
-                                    <p v-if="contact.role === 'tenant'" class="text-xs font-semibold text-amber-400 truncate mt-0.5 flex items-center gap-1">
-                                        <i class="fa-solid fa-house-chimney text-[10px]"></i>
-                                        <span>{{ getPropertyName(contact.propertyId) || t('noneGeneral') }}</span>
-                                    </p>
-
-                                    <div v-else-if="contact.role === 'realtor' || contact.role === 'lawyer' || getRoleFieldType(contact.role) === 'multiProperty'" class="mt-1 flex flex-wrap gap-1.5">
-                                        <span v-for="pid in (contact.propertyIds || [])" :key="pid" 
+                                    <div class="mt-1 flex flex-wrap gap-1.5">
+                                        <span v-for="pid in getContactLinkedPropertyIds(contact)" :key="pid"
                                               class="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md border"
-                                              :class="contact.role === 'lawyer' ? 'text-teal-400 bg-teal-500/10 border-teal-500/20' : 'text-purple-400 bg-purple-500/10 border-purple-500/20'">
+                                              :class="contact.role === 'lawyer' ? 'text-teal-400 bg-teal-500/10 border-teal-500/20' : (contact.role === 'tenant' ? 'text-amber-400 bg-amber-500/10 border-amber-500/20' : 'text-purple-400 bg-purple-500/10 border-purple-500/20')">
                                             <i class="fa-solid fa-building text-[9px]"></i>
                                             {{ getPropertyName(pid) }}
                                         </span>
-                                        <span v-if="!contact.propertyIds || contact.propertyIds.length === 0" class="text-xs font-semibold text-slate-500">
+                                        <span v-if="getContactLinkedPropertyIds(contact).length === 0 && contact.role !== 'contractor'" class="text-xs font-semibold text-slate-500">
                                             {{ t('noneGeneral') }}
                                         </span>
                                     </div>
@@ -917,6 +915,13 @@
                                     <select v-model="formUsage.lawyerId" class="w-full bg-slate-800 rounded-2xl p-4 text-[15px] text-white outline-none">
                                         <option value="">-- {{ t('noneAssigned') }} --</option>
                                         <option v-for="c in lawyerContacts" :key="c.id" :value="c.id">{{ c.name }}</option>
+                                    </select>
+                                </div>
+                                <div v-if="formUsage.usageType === 'rental'">
+                                    <label class="block text-[12px] font-bold text-slate-400 uppercase tracking-wider mb-2 pl-1">{{ t('usageManager') }}</label>
+                                    <select v-model="formUsage.managerId" class="w-full bg-slate-800 rounded-2xl p-4 text-[15px] text-white outline-none">
+                                        <option value="">-- {{ t('noneAssigned') }} --</option>
+                                        <option v-for="c in managerContacts" :key="c.id" :value="c.id">{{ c.name }}</option>
                                     </select>
                                 </div>
                             </div>
@@ -1260,18 +1265,9 @@
                                 </div>
                             </div>
 
-                            <div v-if="getRoleFieldType(formContact.role) === 'singleProperty'" class="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label class="block text-[12px] font-bold text-slate-400 uppercase tracking-wider mb-2 pl-1">{{ t('contactName') }}</label>
-                                    <input v-model="formContact.name" type="text" class="w-full bg-slate-800 rounded-2xl p-3.5 text-[14px] text-white outline-none border border-transparent focus:border-brand-500">
-                                </div>
-                                <div>
-                                    <label class="block text-[12px] font-bold text-slate-400 uppercase tracking-wider mb-2 pl-1">{{ t('assocProperty') }}</label>
-                                    <select v-model="formContact.propertyId" class="w-full bg-slate-800 rounded-2xl p-3.5 text-[14px] text-white outline-none border border-transparent focus:border-brand-500">
-                                        <option value="">-- {{ t('noneGeneral') }} --</option>
-                                        <option v-for="p in properties" :key="p.id" :value="p.id">{{ p.name }}</option>
-                                    </select>
-                                </div>
+                            <div v-if="getRoleFieldType(formContact.role) === 'singleProperty'">
+                                <label class="block text-[12px] font-bold text-slate-400 uppercase tracking-wider mb-2 pl-1">{{ t('contactName') }}</label>
+                                <input v-model="formContact.name" type="text" class="w-full bg-slate-800 rounded-2xl p-3.5 text-[14px] text-white outline-none border border-transparent focus:border-brand-500">
                             </div>
 
                             <div v-else-if="getRoleFieldType(formContact.role) === 'trade'" class="grid grid-cols-2 gap-3">
@@ -1290,19 +1286,13 @@
                                     <label class="block text-[12px] font-bold text-slate-400 uppercase tracking-wider mb-2 pl-1">{{ t('contactName') }}</label>
                                     <input v-model="formContact.name" type="text" class="w-full bg-slate-800 rounded-2xl p-3.5 text-[14px] text-white outline-none border border-transparent focus:border-brand-500">
                                 </div>
-                                <div>
-                                    <label class="block text-[12px] font-bold text-slate-400 uppercase tracking-wider mb-2 pl-1">{{ t('assocProperties') }}</label>
-                                    <div class="flex flex-wrap gap-2 bg-slate-900/60 p-3 rounded-2xl border border-slate-700/60 min-h-[50px] items-center">
-                                        <button v-for="p in properties" :key="p.id"
-                                                type="button"
-                                                @click="toggleRealtorProperty(p.id)"
-                                                class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all border active:scale-95 flex items-center gap-1.5"
-                                                :class="formContact.propertyIds?.includes(p.id) ? (formContact.role === 'lawyer' ? 'bg-teal-500 text-white border-teal-400 shadow-md shadow-teal-500/30' : 'bg-purple-500 text-white border-purple-400 shadow-md shadow-purple-500/30') : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-slate-200'">
-                                            <i class="fa-solid" :class="formContact.propertyIds?.includes(p.id) ? 'fa-square-check' : 'fa-square'"></i>
-                                            <span>{{ p.name }}</span>
-                                        </button>
-                                        <p v-if="properties.length === 0" class="text-xs text-slate-500">{{ t('noProperties') }}</p>
-                                    </div>
+                            </div>
+
+                            <div class="bg-slate-900/40 p-3 rounded-2xl border border-slate-800">
+                                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">{{ t('linkedFromProperties') }}</p>
+                                <div class="flex flex-wrap gap-1.5">
+                                    <span v-for="pid in getContactLinkedPropertyIds(formContact)" :key="pid" class="text-[10px] px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 border border-slate-700">{{ getPropertyName(pid) }}</span>
+                                    <span v-if="getContactLinkedPropertyIds(formContact).length === 0" class="text-[11px] text-slate-500">{{ t('linkedFromHint') }}</span>
                                 </div>
                             </div>
 
@@ -1765,7 +1755,8 @@
                 confirmDeleteTitle: 'Delete Task?', confirmDeleteLogTitle: 'Delete History Record?', confirmDeleteContactTitle: 'Delete Contact?', confirmDeleteRoleTitle: 'Delete Category?', confirmDeleteMediaTitle: 'Delete File?', btnCancel: 'Cancel', btnConfirmDelete: 'Delete',
                 usageTimeline: 'Usage Timeline', startDate: 'Start Date', endDate: 'End Date', addUsagePeriod: 'Add Event/Period', editUsagePeriod: 'Edit Event/Period', modalAddUsage: 'Add Event or Usage Period', ongoing: 'Present',
                 usageNotes: 'Period Notes / Price / Tenant Info', noUsageHistory: 'No timeline events logged yet.',
-                usageRealtor: 'Realtor', usageLawyer: 'Lawyer', noneAssigned: 'None',
+                usageRealtor: 'Realtor', usageLawyer: 'Lawyer', usageManager: 'Property manager', noneAssigned: 'None',
+                linkedFromProperties: 'Linked houses', linkedFromHint: 'Appears after this person is chosen on a property timeline.',
                 tenantSubTimeline: 'Tenant Lease Sub-branch', addTenantSub: 'Add Tenant Lease', editTenantSub: 'Edit Tenant Lease', monthlyRent: 'Monthly Rent', selectCrmTenant: 'Pick from CRM Tenants', tenantName: 'Tenant Name', roomName: 'Room / Sub-unit Track', roomHint: 'e.g. Master Bedroom, Room A', entireHouse: 'Entire House / Single Lease', leasesCount: 'leases',
                 toastTenantSubSaved: 'Tenant lease saved', toastTenantSubDeleted: 'Tenant lease deleted', toastUsageSaved: 'Timeline updated', toastUsageDeleted: 'Timeline record deleted',
                 usagePurchased: 'Purchased', usagePrimary: 'Primary', usageRental: 'Rental', usageShortTerm: 'Short-Term', usageVacant: 'Vacant', usageCommercial: 'Commercial', usageSold: 'Sold',
@@ -1809,7 +1800,8 @@
                 confirmDeleteTitle: '确认删除任务？', confirmDeleteLogTitle: '确认删除历史记录？', confirmDeleteContactTitle: '确认删除联系人？', confirmDeleteRoleTitle: '确认删除人员类别？', confirmDeleteMediaTitle: '确认删除文件？', btnCancel: '取消', btnConfirmDelete: '确认删除',
                 usageTimeline: '房屋用途履历', startDate: '开始日期', endDate: '结束日期', addUsagePeriod: '添加时间节点/区间', editUsagePeriod: '编辑履历节点', modalAddUsage: '新增节点或用途时间段', ongoing: '至今',
                 usageNotes: '节点备注 / 买卖价格 / 租客信息', noUsageHistory: '暂无履历记录。',
-                usageRealtor: '经纪', usageLawyer: '律师', noneAssigned: '未指定',
+                usageRealtor: '经纪', usageLawyer: '律师', usageManager: '托管', noneAssigned: '未指定',
+                linkedFromProperties: '关联房屋', linkedFromHint: '在房屋履历里选中此人后，房屋会出现在这里。',
                 tenantSubTimeline: '租客时间线分枝', addTenantSub: '添加租客履历', editTenantSub: '编辑租客履历', monthlyRent: '月租金', selectCrmTenant: '从 CRM 租客库选择', tenantName: '租客姓名', roomName: '分租房间 / 轨道标识', roomHint: '例如: 主卧, A房, 地下室', entireHouse: '整套出租 / 独立租约', leasesCount: '次租约',
                 toastTenantSubSaved: '租客履历已保存', toastTenantSubDeleted: '租客履历已删除', toastUsageSaved: '履历记录已保存', toastUsageDeleted: '履历记录已删除',
                 usagePurchased: '买入/购入', usagePrimary: '自住', usageRental: '出租(长租)', usageShortTerm: '短租', usageVacant: '空置', usageCommercial: '商业用途', usageSold: '已售出',
@@ -1998,6 +1990,7 @@
                             endDate: '',
                             notes: z('Split into two leases', '分上下两套出租'),
                             realtorId: cSingh,
+                            managerId: cPm,
                             tenants: [
                                 { id: 'ut_semi_up', contactId: cNguyen, name: z('Linh Nguyen', '阮女士'), room: roomUpper, rent: '1650', startDate: '2022-09-01', endDate: '', notes: z('Includes 1 parking', '含1车位') },
                                 { id: 'ut_semi_lo', contactId: cPatel, name: z('Rahul Patel', 'Rahul Patel'), room: roomLower, rent: '1450', startDate: '2023-01-15', endDate: '', notes: z('Garden suite', '花园层') }
@@ -2106,6 +2099,7 @@
                             endDate: '',
                             notes: z('All four units residential', '四套均改为住宅出租'),
                             realtorId: cRoy,
+                            managerId: cPm,
                             tenants: [
                                 { id: 'ut_m1', contactId: '', name: z('Unit 1 — vacant turnover', '1号空置周转'), room: room1, rent: '0', startDate: '2026-08-01', endDate: '', notes: z('Listing at $1350', '挂牌 $1350') },
                                 { id: 'ut_m2', contactId: cKarim, name: z('Karim Bensaid', 'Karim Bensaid'), room: room2, rent: '1280', startDate: '2021-04-01', endDate: '', notes: z('Pays e-transfer on the 1st', '每月1日电汇') },
@@ -2418,7 +2412,7 @@
             return { properties, tasks, repairs, contacts, customRoles, userZones: zones };
         }
 
-        const APP_VERSION = '2026.09.06-e';
+        const APP_VERSION = '2026.09.06-f';
 
         const app = createApp({
             data() {
@@ -2474,7 +2468,7 @@
                     formRoutine: { catalogKey: '', title: '', propertyId: '', zone: '', category: '', intervalMonths: 12, nextDueDate: '', lastDoneDate: '' },
                     
                     formProperty: { name: '', buildingType: 'detached', address: '', lat: null, lng: null },
-                    formUsage: { id: null, usageType: 'primary', startDate: '', endDate: '', notes: '', realtorId: '', lawyerId: '' },
+                    formUsage: { id: null, usageType: 'primary', startDate: '', endDate: '', notes: '', realtorId: '', lawyerId: '', managerId: '' },
                     formTenantSub: { id: null, usageId: null, contactId: '', name: '', room: '', rent: '', startDate: '', endDate: '', notes: '' },
                     formTask: { propertyId: '', titleSelect: '', title: '', zone: '', category: '', issueDate: '', beforePhotos: [] },
                     formRepair: { propertyId: '', titleSelect: '', title: '', zone: '', category: '', cost: '', date: '', warrantyEndDate: '', contractorId: '', hasReceipt: true, receiptPhotos: [], beforePhotos: [], afterPhotos: [] },
@@ -2524,8 +2518,7 @@
                             const tradeMatch = c.trade && c.trade.toLowerCase().includes(q);
                             const notesMatch = c.notes && c.notes.toLowerCase().includes(q);
                             let propMatch = false;
-                            if (c.propertyId) propMatch = this.getPropertyName(c.propertyId).toLowerCase().includes(q);
-                            if (!propMatch && Array.isArray(c.propertyIds)) propMatch = c.propertyIds.some(pid => this.getPropertyName(pid).toLowerCase().includes(q));
+                            propMatch = this.getContactLinkedPropertyIds(c).some(pid => this.getPropertyName(pid).toLowerCase().includes(q));
                             return nameMatch || phoneMatch || tradeMatch || notesMatch || propMatch;
                         });
                     }
@@ -2534,6 +2527,13 @@
                 contractorContacts() { return this.contacts.filter(c => c.role === 'contractor' || !c.role); },
                 realtorContacts() { return this.contacts.filter(c => c.role === 'realtor'); },
                 lawyerContacts() { return this.contacts.filter(c => c.role === 'lawyer'); },
+                managerContacts() {
+                    return this.contacts.filter(c => {
+                        if (c.role === 'role_demo_pm') return true;
+                        const custom = this.customRoles.find(r => r.key === c.role);
+                        return !!(custom && /manager|托管|pm/i.test(custom.name || ''));
+                    });
+                },
                 availableUsageTypes() { return { purchased: { label: this.t('usagePurchased'), color: 'bg-blue-500/20 text-blue-400 border-blue-500/30', icon: 'fa-cart-shopping' }, primary: { label: this.t('usagePrimary'), color: 'bg-brand-500/20 text-brand-400 border-brand-500/30', icon: 'fa-house-user' }, rental: { label: this.t('usageRental'), color: 'bg-amber-500/20 text-amber-400 border-amber-500/30', icon: 'fa-key' }, short_term: { label: this.t('usageShortTerm'), color: 'bg-purple-500/20 text-purple-400 border-purple-500/30', icon: 'fa-bed' }, vacant: { label: this.t('usageVacant'), color: 'bg-slate-700/50 text-slate-400 border-slate-600', icon: 'fa-door-closed' }, commercial: { label: this.t('usageCommercial'), color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30', icon: 'fa-building-user' }, sold: { label: this.t('usageSold'), color: 'bg-rose-500/20 text-rose-400 border-rose-500/30', icon: 'fa-handshake' } }; },
                 deleteConfirmTitleKey() {
                     const map = {
@@ -2772,6 +2772,18 @@
                 getRoleFieldType(roleKey) { return this.roleConfigMap[roleKey] ? this.roleConfigMap[roleKey].fieldType : 'multiProperty'; },
                 getContactCountByRole(roleKey) { return this.contacts.filter(c => (c.role || 'tenant') === roleKey).length; },
                 getContactName(id) { if (!id) return this.t('noneSelf'); const c = this.contacts.find(i => i.id === id); return c ? c.name : this.t('noneSelf'); },
+                getContactLinkedPropertyIds(contact) {
+                    if (!contact || !contact.id) return [];
+                    const ids = new Set();
+                    this.properties.forEach(p => {
+                        (p.usages || []).forEach(u => {
+                            if (u.realtorId === contact.id || u.lawyerId === contact.id || u.managerId === contact.id) ids.add(p.id);
+                            (u.tenants || []).forEach(tn => { if (tn.contactId === contact.id) ids.add(p.id); });
+                        });
+                    });
+                    this.repairs.forEach(r => { if (r.contractorId === contact.id && r.propertyId) ids.add(r.propertyId); });
+                    return [...ids];
+                },
                 movePropertyUp(index) { if (index > 0) { const item = this.properties.splice(index, 1)[0]; this.properties.splice(index - 1, 0, item); this.saveToStorage(); if (this.dashboardViewMode === 'map') this.renderMapMarkers(); } },
                 movePropertyDown(index) { if (index < this.properties.length - 1) { const item = this.properties.splice(index, 1)[0]; this.properties.splice(index + 1, 0, item); this.saveToStorage(); if (this.dashboardViewMode === 'map') this.renderMapMarkers(); } },
                 getUsageConfig(typeKey) { return this.availableUsageTypes[typeKey] || this.availableUsageTypes.primary; },
@@ -3037,8 +3049,8 @@
                 showsUsageProfessionals(usage) { return !!(usage && (usage.usageType === 'purchased' || usage.usageType === 'sold' || usage.usageType === 'rental')); },
                 openUsageModal(usageItem = null) {
                     this.activeModal = 'usage';
-                    if (usageItem) { this.editingUsageId = usageItem.id; this.formUsage = { realtorId: '', lawyerId: '', ...usageItem }; } 
-                    else { this.editingUsageId = null; this.formUsage = { id: 'u_' + Date.now(), usageType: 'primary', startDate: '', endDate: '', notes: '', realtorId: '', lawyerId: '' }; this.autoFillModalDates(); }
+                    if (usageItem) { this.editingUsageId = usageItem.id; this.formUsage = { realtorId: '', lawyerId: '', managerId: '', ...usageItem }; } 
+                    else { this.editingUsageId = null; this.formUsage = { id: 'u_' + Date.now(), usageType: 'primary', startDate: '', endDate: '', notes: '', realtorId: '', lawyerId: '', managerId: '' }; this.autoFillModalDates(); }
                 },
                 selectUsageType(typeKey) { this.formUsage.usageType = typeKey; this.autoFillModalDates(); },
                 autoFillModalDates() {
