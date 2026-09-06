@@ -597,11 +597,11 @@
                     </div>
 
                     <div class="flex bg-slate-800/80 p-1 rounded-2xl border border-slate-700/50">
-                        <button @click="workSubTab = 'tasks'" class="flex-1 py-2 text-[11px] font-bold rounded-xl transition-all flex items-center justify-center gap-1" :class="workSubTab === 'tasks' ? 'bg-brand-500 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'">
-                            <i class="fa-solid fa-clipboard-check"></i> {{ t('subTabTasks') }}
-                        </button>
                         <button @click="workSubTab = 'routines'" class="flex-1 py-2 text-[11px] font-bold rounded-xl transition-all flex items-center justify-center gap-1" :class="workSubTab === 'routines' ? 'bg-brand-500 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'">
                             <i class="fa-solid fa-rotate"></i> {{ t('subTabRoutines') }}
+                        </button>
+                        <button @click="workSubTab = 'tasks'" class="flex-1 py-2 text-[11px] font-bold rounded-xl transition-all flex items-center justify-center gap-1" :class="workSubTab === 'tasks' ? 'bg-brand-500 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'">
+                            <i class="fa-solid fa-clipboard-check"></i> {{ t('subTabTasks') }}
                         </button>
                         <button @click="workSubTab = 'repairs'" class="flex-1 py-2 text-[11px] font-bold rounded-xl transition-all flex items-center justify-center gap-1" :class="workSubTab === 'repairs' ? 'bg-brand-500 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'">
                             <i class="fa-solid fa-clock-rotate-left"></i> {{ t('subTabLogs') }}
@@ -1059,18 +1059,18 @@
                                 </div>
                             </div>
                             <div>
+                                <label class="block text-[12px] font-bold text-slate-400 uppercase tracking-wider mb-2 pl-1">{{ t('modalCategory') }}</label>
+                                <select v-model="formTask.category" @change="handleTaskCategoryChange" class="w-full bg-slate-800 rounded-2xl p-4 text-[15px] text-white outline-none mb-3">
+                                    <option value="">{{ t('selectCategory') }}</option>
+                                    <option v-for="cat in taskCategories[currentLang]" :key="cat" :value="cat">{{ cat }}</option>
+                                </select>
                                 <label class="block text-[12px] font-bold text-slate-400 uppercase tracking-wider mb-2 pl-1">{{ t('modalTaskTitle') }}</label>
                                 <select v-model="formTask.titleSelect" @change="handleTaskTitleChange" class="w-full bg-slate-800 rounded-2xl p-4 text-[15px] text-white outline-none mb-3">
                                     <option value="">{{ t('selectCommonTask') }}</option>
-                                    <option v-for="t in commonTaskTitles[currentLang]" :key="t.name" :value="t.name">{{ t.name }}</option>
+                                    <option v-for="t in filteredCommonTasks" :key="t.name" :value="t.name">{{ t.name }}</option>
                                     <option value="OTHER">✍️ {{ t('otherManual') }}</option>
                                 </select>
                                 <input v-if="formTask.titleSelect === 'OTHER'" v-model="formTask.title" type="text" :placeholder="t('enterTaskManually')" class="w-full bg-slate-800 rounded-2xl p-4 text-[15px] text-white outline-none border border-transparent focus:border-brand-500 mb-3">
-                                
-                                <select v-if="formTask.titleSelect === 'OTHER'" v-model="formTask.category" class="w-full bg-slate-800 rounded-2xl p-4 text-[15px] text-white outline-none">
-                                    <option value="">-- Category --</option>
-                                    <option v-for="cat in taskCategories[currentLang]" :key="cat" :value="cat">{{ cat }}</option>
-                                </select>
                             </div>
 
                             <div class="mt-4 border-t border-slate-700/50 pt-4">
@@ -1790,7 +1790,7 @@
                 addProperty: 'Add Property', addTask: 'Add Task', logEvent: 'Log Repair/Event', editLog: 'Edit Record', addContact: 'Add Contact', editContact: 'Edit Contact Details',
                 modalEditProperty: 'Edit Property Details', modalAddProperty: 'Add Property', deleteProperty: 'Delete Property',
                 modalPropName: 'Property Name (e.g. Primary Residence)', modalPropType: 'Property Usage', modalBuildingType: 'Building Type', modalPropAddress: 'Address (Optional)',
-                modalProperty: 'Belongs to', modalZone: 'Zone/Area', modalTaskTitle: 'Task Title', selectCommonTask: 'Select Common Task...', otherManual: 'Other (Manual Entry)', enterTaskManually: 'Enter task manually',
+                modalProperty: 'Belongs to', modalZone: 'Zone/Area', modalCategory: 'Category', selectCategory: 'Select category...', modalTaskTitle: 'Task Title', selectCommonTask: 'Select Common Task...', otherManual: 'Other (Manual Entry)', enterTaskManually: 'Enter task manually',
                 modalRepairTitle: 'Event/Repair Title', selectCommonRepair: 'Select Common Issue...', enterRepairManually: 'Enter event manually',
                 modalCost: 'Cost', modalDate: 'Date', issueDate: 'Issue Date', noIssueDate: 'No issue date', modalStartDate: 'Start Date', modalEndDate: 'End Date', modalContractor: 'Contractor / Pro', modalWarranty: 'Warranty Ends',
                 btnSave: 'Save', back: 'Back', backToProperties: 'Back to Properties', allTime: 'All Time', zoneLayout: 'Space Blueprint',
@@ -1836,7 +1836,7 @@
                 addProperty: '添加房屋', addTask: '添加待办', logEvent: '记录维修/事件', editLog: '编辑维修记录', addContact: '新增联系人', editContact: '编辑联系人资料',
                 modalEditProperty: '编辑房屋信息', modalAddProperty: '添加房屋', deleteProperty: '删除房屋',
                 modalPropName: '房屋名称 (例如: 自住主屋)', modalPropType: '房屋用途/节点类型', modalBuildingType: '建筑类型', modalPropAddress: '详细地址 (可选)',
-                modalProperty: '所属房屋', modalZone: '具体区域', modalTaskTitle: '任务名称', selectCommonTask: '选择常见待办...', otherManual: '其他 (手动输入)', enterTaskManually: '输入具体待办内容',
+                modalProperty: '所属房屋', modalZone: '具体区域', modalCategory: '分类', selectCategory: '选择分类...', modalTaskTitle: '任务名称', selectCommonTask: '选择常见待办...', otherManual: '其他 (手动输入)', enterTaskManually: '输入具体待办内容',
                 modalRepairTitle: '维修/事件名称', selectCommonRepair: '选择常见维修项目...', enterRepairManually: '输入具体维修/事件',
                 modalCost: '花费', modalDate: '日期', issueDate: '发现日期', noIssueDate: '未填发现日期', modalStartDate: '开始日期', modalEndDate: '结束日期', modalContractor: '施工师傅/服务商', modalWarranty: '保修到期日',
                 btnSave: '保存', back: '返回', backToProperties: '返回房屋列表', allTime: '全部历年', zoneLayout: '房屋空间剖面图',
@@ -1933,8 +1933,102 @@
         };
 
         const commonTaskTitles = {
-            en: [{ name: 'Replace Furnace Filter', category: 'HVAC' }, { name: 'Clean Gutters & Downspouts', category: 'Roofing' }, { name: 'Test Smoke/CO Detectors', category: 'Electrical' }, { name: 'Winterize Outdoor Faucets', category: 'Plumbing' }, { name: 'Lawn Fertilization', category: 'Landscaping' }],
-            zh: [{ name: '更换暖炉滤网 (Furnace Filter)', category: '暖通空调' }, { name: '清理屋顶排水沟落叶', category: '屋顶维修' }, { name: '测试烟雾与一氧化碳报警器', category: '电路灯具' }, { name: '入冬前关闭户外水龙头', category: '水电卫浴' }, { name: '草坪施肥与除草', category: '园林庭院' }]
+            en: [
+                { name: 'Dripping faucet / shower', category: 'Plumbing' },
+                { name: 'Running toilet / flapper', category: 'Plumbing' },
+                { name: 'Clogged sink or tub', category: 'Plumbing' },
+                { name: 'Slow floor drain', category: 'Plumbing' },
+                { name: 'No hot water', category: 'Plumbing' },
+                { name: 'Leaking shut-off valve', category: 'Plumbing' },
+                { name: 'Winterize outdoor faucets', category: 'Plumbing' },
+                { name: 'Sump pump alarm / failure', category: 'Plumbing' },
+                { name: 'No heat / furnace lockout', category: 'HVAC' },
+                { name: 'No cooling / AC not starting', category: 'HVAC' },
+                { name: 'Thermostat blank or wrong', category: 'HVAC' },
+                { name: 'Uneven rooms / weak airflow', category: 'HVAC' },
+                { name: 'Furnace or AC unusual noise', category: 'HVAC' },
+                { name: 'Breaker keeps tripping', category: 'Electrical' },
+                { name: 'Dead outlet or switch', category: 'Electrical' },
+                { name: 'Flickering lights', category: 'Electrical' },
+                { name: 'Replace light fixture', category: 'Electrical' },
+                { name: 'Doorbell / intercom dead', category: 'Electrical' },
+                { name: 'Missing or damaged shingles', category: 'Roofing' },
+                { name: 'Ceiling water stain', category: 'Roofing' },
+                { name: 'Ice dam at eaves', category: 'Roofing' },
+                { name: 'Loose or cracked downspout', category: 'Roofing' },
+                { name: 'Loose vinyl / siding corner', category: 'Exterior/Siding' },
+                { name: 'Peeling exterior paint', category: 'Exterior/Siding' },
+                { name: 'Rotting trim or fascia', category: 'Exterior/Siding' },
+                { name: 'Garage door off track', category: 'Exterior/Siding' },
+                { name: 'Broken window pane / screen', category: 'Exterior/Siding' },
+                { name: 'Tree limb over roof / wires', category: 'Landscaping' },
+                { name: 'Yard grading / standing water', category: 'Landscaping' },
+                { name: 'Fence post leaning', category: 'Landscaping' },
+                { name: 'Seasonal fertilize / overseed', category: 'Landscaping' },
+                { name: 'Snow / ice hazard on walk', category: 'Landscaping' },
+                { name: 'Tenant turnover deep clean', category: 'Cleaning' },
+                { name: 'Carpet / upholstery clean', category: 'Cleaning' },
+                { name: 'Interior window wash', category: 'Cleaning' },
+                { name: 'Washer not spinning / leaking', category: 'Appliances' },
+                { name: 'Fridge not cooling', category: 'Appliances' },
+                { name: 'Dishwasher leaking or error', category: 'Appliances' },
+                { name: 'Oven / cooktop not heating', category: 'Appliances' },
+                { name: 'Garbage disposal jammed', category: 'Appliances' },
+                { name: 'Paint a room / patch holes', category: 'Renovation' },
+                { name: 'Replace flooring section', category: 'Renovation' },
+                { name: 'Kitchen backsplash / caulk', category: 'Renovation' },
+                { name: 'Pest sighting / trap', category: 'General/Other' },
+                { name: 'Lock / deadbolt failure', category: 'General/Other' },
+                { name: 'Mailbox / civic number', category: 'General/Other' }
+            ],
+            zh: [
+                { name: '龙头 / 花洒滴水', category: '水电卫浴' },
+                { name: '马桶不停水 / 皮塞老化', category: '水电卫浴' },
+                { name: '洗手盆或浴缸堵塞', category: '水电卫浴' },
+                { name: '地漏下水缓慢', category: '水电卫浴' },
+                { name: '没有热水', category: '水电卫浴' },
+                { name: '角阀或阀门渗漏', category: '水电卫浴' },
+                { name: '入冬关闭户外水龙头', category: '水电卫浴' },
+                { name: '排水泵报警或停转', category: '水电卫浴' },
+                { name: '没有暖气 / 暖炉锁机', category: '暖通空调' },
+                { name: '没有制冷 / 空调不启动', category: '暖通空调' },
+                { name: '温控器黑屏或乱跳', category: '暖通空调' },
+                { name: '房间冷热不均 / 风量弱', category: '暖通空调' },
+                { name: '暖炉或空调异响', category: '暖通空调' },
+                { name: '空开反复跳闸', category: '电路灯具' },
+                { name: '插座或开关没电', category: '电路灯具' },
+                { name: '灯光闪烁', category: '电路灯具' },
+                { name: '更换灯具', category: '电路灯具' },
+                { name: '门铃 / 对讲失灵', category: '电路灯具' },
+                { name: '瓦片缺失或破损', category: '屋顶维修' },
+                { name: '天花板水渍', category: '屋顶维修' },
+                { name: '檐口冰坝', category: '屋顶维修' },
+                { name: '落水管松动或开裂', category: '屋顶维修' },
+                { name: '挂板转角松动', category: '室外建筑/外墙' },
+                { name: '外墙油漆剥落', category: '室外建筑/外墙' },
+                { name: '封边或封檐腐烂', category: '室外建筑/外墙' },
+                { name: '车库门脱轨', category: '室外建筑/外墙' },
+                { name: '玻璃破损 / 窗纱破', category: '室外建筑/外墙' },
+                { name: '树枝压屋顶或电线', category: '园林庭院' },
+                { name: '院子积水 / 排水坡度', category: '园林庭院' },
+                { name: '围栏柱倾斜', category: '园林庭院' },
+                { name: '季节性施肥或补草', category: '园林庭院' },
+                { name: '步道积雪结冰隐患', category: '园林庭院' },
+                { name: '退租深度保洁', category: '家政清洁' },
+                { name: '地毯 / 布艺清洗', category: '家政清洁' },
+                { name: '室内玻璃清洁', category: '家政清洁' },
+                { name: '洗衣机不转或漏水', category: '家电维修' },
+                { name: '冰箱不制冷', category: '家电维修' },
+                { name: '洗碗机漏水或报错', category: '家电维修' },
+                { name: '烤箱 / 炉灶不加热', category: '家电维修' },
+                { name: '垃圾处理器卡死', category: '家电维修' },
+                { name: '房间刷漆 / 补墙洞', category: '装修翻新' },
+                { name: '局部更换地板', category: '装修翻新' },
+                { name: '厨房墙砖 / 填缝', category: '装修翻新' },
+                { name: '发现虫害 / 需设捕器', category: '杂项/其他' },
+                { name: '门锁或死栓故障', category: '杂项/其他' },
+                { name: '信箱 / 门牌号', category: '杂项/其他' }
+            ]
         };
 
         const commonRepairTitles = {
@@ -2510,7 +2604,7 @@
             return { properties, tasks, repairs, contacts, customRoles, userZones: zones };
         }
 
-        const APP_VERSION = '2026.09.06-i';
+        const APP_VERSION = '2026.09.06-j';
 
         const app = createApp({
             data() {
@@ -2643,6 +2737,11 @@
                         routine: 'confirmDeleteRoutineTitle'
                     };
                     return (this.itemToDelete && map[this.itemToDelete.type]) || 'confirmDeleteLogTitle';
+                },
+                filteredCommonTasks() {
+                    const list = this.commonTaskTitles[this.currentLang] || [];
+                    if (!this.formTask.category) return list;
+                    return list.filter(t => t.category === this.formTask.category);
                 },
                 filteredTasks() {
                     return this.tasks
@@ -3255,7 +3354,11 @@
                     if (idx === -1) this.formContact.propertyIds.push(propId); else this.formContact.propertyIds.splice(idx, 1);
                 },
                 closeModal() { this.activeModal = null; this.editingPropertyId = null; this.editingUsageId = null; this.editingTenantSubId = null; this.parentRentalUsage = null; this.editingContactId = null; this.editingTaskId = null; this.editingRepairId = null; this.editingRoutineId = null; this.convertingTaskId = null; this.convertingRoutineId = null; },
-                handleTaskTitleChange() { const found = this.commonTaskTitles[this.currentLang].find(t => t.name === this.formTask.titleSelect); if (found) { this.formTask.title = found.name; this.formTask.category = found.category; } else { this.formTask.title = ''; this.formTask.category = ''; } },
+                handleTaskCategoryChange() {
+                    const stillValid = (this.commonTaskTitles[this.currentLang] || []).some(t => t.name === this.formTask.titleSelect && t.category === this.formTask.category);
+                    if (!stillValid) { this.formTask.titleSelect = ''; this.formTask.title = ''; }
+                },
+                handleTaskTitleChange() { const found = this.commonTaskTitles[this.currentLang].find(t => t.name === this.formTask.titleSelect); if (found) { this.formTask.title = found.name; this.formTask.category = found.category; } else if (this.formTask.titleSelect !== 'OTHER') { this.formTask.title = ''; } },
                 isCommonRepairTitle(name) {
                     return !!(name && (this.commonRepairTitles[this.currentLang] || []).some(r => r.name === name));
                 },
