@@ -498,6 +498,10 @@
                     </div>
 
                     <div class="bg-slate-800/90 rounded-3xl p-5 border border-slate-700/50 shadow-sm">
+                        <h3 class="text-base font-bold text-white flex items-center gap-2 mb-3">
+                            <i class="fa-solid fa-scale-balanced text-emerald-400"></i>
+                            {{ t('propertyLedger') }}
+                        </h3>
                         <div class="flex justify-center" :class="cashflowMode === 'hidden' ? '' : 'mb-4'">
                             <div class="flex bg-slate-900 p-1 rounded-2xl border border-slate-700/70 w-full">
                                 <button type="button" @click="setCashflowMode('owner')" class="flex-1 py-2 rounded-xl text-[11px] font-black transition-all" :class="cashflowMode === 'owner' ? 'bg-brand-500 text-white shadow' : 'text-slate-400'">{{ t('cashflowModeOwner') }}</button>
@@ -506,14 +510,8 @@
                             </div>
                         </div>
                         <div v-if="cashflowMode !== 'hidden'" class="flex items-end justify-between gap-3 mb-4">
-                            <div>
-                                <h3 class="text-base font-bold text-white flex items-center gap-2">
-                                    <i class="fa-solid fa-scale-balanced text-emerald-400"></i>
-                                    {{ t('propertyLedger') }}
-                                </h3>
-                                <p class="text-[11px] text-slate-400 mt-1">{{ cashflowMode === 'rental' ? t('monthlyCashFlow') + ' · ' + t('monthlyCashFlowHint') : t('monthlyExpenses') + ' · ' + t('monthlyExpensesHint') }}</p>
-                            </div>
-                            <p class="text-xl font-black" :class="cashflowMode === 'rental' ? (cashflowNet >= 0 ? 'text-emerald-300' : 'text-rose-300') : 'text-amber-300'">${{ formatMoney(cashflowMode === 'rental' ? cashflowNet : cashflowExpenseTotal) }}</p>
+                            <p class="text-[11px] text-slate-400 leading-relaxed">{{ cashflowMode === 'rental' ? t('monthlyCashFlow') + ' · ' + t('monthlyCashFlowHint') : t('monthlyExpenses') + ' · ' + t('monthlyExpensesHint') }}</p>
+                            <p class="text-xl font-black flex-shrink-0" :class="cashflowMode === 'rental' ? (cashflowNet >= 0 ? 'text-emerald-300' : 'text-rose-300') : 'text-amber-300'">${{ formatMoney(cashflowMode === 'rental' ? cashflowNet : cashflowExpenseTotal) }}</p>
                         </div>
                         <div v-if="cashflowMode !== 'hidden'" class="space-y-2">
                             <div v-for="row in cashflowRows" :key="row.key" class="flex items-center gap-3 bg-slate-900/70 rounded-2xl px-3 py-2.5 border border-slate-700/50">
@@ -2792,7 +2790,7 @@
             return { properties, tasks, repairs, contacts, customRoles, userZones: zones };
         }
 
-        const APP_VERSION = '2026.09.06-w';
+        const APP_VERSION = '2026.09.06-x';
 
         const app = createApp({
             data() {
