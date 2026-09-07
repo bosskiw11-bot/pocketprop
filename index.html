@@ -496,6 +496,33 @@
                             </div>
                         </div>
                     </div>
+
+                    <div class="bg-slate-800/90 rounded-3xl p-5 border border-slate-700/50 shadow-sm">
+                        <div class="flex items-end justify-between gap-3 mb-4">
+                            <div>
+                                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                                    <i class="fa-solid fa-chart-line text-emerald-400"></i>
+                                    {{ t('monthlyCashFlow') }}
+                                </h3>
+                                <p class="text-[11px] text-slate-400 mt-1">{{ t('monthlyCashFlowHint') }}</p>
+                            </div>
+                            <p class="text-xl font-black" :class="cashflowNet >= 0 ? 'text-emerald-300' : 'text-rose-300'">${{ formatMoney(cashflowNet) }}</p>
+                        </div>
+                        <div class="space-y-2">
+                            <div v-for="row in cashflowRows" :key="row.key" class="flex items-center gap-3 bg-slate-900/70 rounded-2xl px-3 py-2.5 border border-slate-700/50">
+                                <span class="text-[13px] font-semibold text-slate-300 min-w-0 flex-1">{{ t(row.labelKey) }}</span>
+                                <div class="relative w-32 flex-shrink-0">
+                                    <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500 text-[13px]">$</span>
+                                    <input v-model="cashflowDraft[row.key]" type="number" inputmode="decimal" class="w-full bg-slate-800 rounded-xl py-2 pl-6 pr-2 text-right text-[14px] font-bold text-white outline-none border border-slate-700 focus:border-brand-500" :class="row.income ? 'text-emerald-300' : 'text-slate-100'">
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3 bg-slate-950 rounded-2xl px-3 py-3 border" :class="cashflowNet >= 0 ? 'border-emerald-500/30' : 'border-rose-500/30'">
+                                <span class="text-[14px] font-black text-white min-w-0 flex-1">{{ t('cashflowNet') }}</span>
+                                <span class="text-[16px] font-black" :class="cashflowNet >= 0 ? 'text-emerald-300' : 'text-rose-300'">${{ formatMoney(cashflowNet) }}</span>
+                            </div>
+                        </div>
+                        <button @click="confirmCashflow" class="w-full mt-3 py-3 rounded-2xl bg-brand-500 hover:bg-brand-600 text-white font-bold text-sm active:scale-[0.99] transition-all">{{ t('confirmCashflow') }}</button>
+                    </div>
                 </div>
 
                 <!-- Zone Detail View -->
@@ -1841,6 +1868,7 @@
                 addRoutine: 'Add Recurring Check', editRoutine: 'Edit Recurring Check', routineCatalog: 'Standard checklist', selectRoutine: 'Pick a standard item...', interval: 'Interval', nextDue: 'Next due', overdue: 'Overdue', dueSoon: 'Due soon', noRoutines: 'No recurring checks yet.', routinesHint: 'These stay on the list. Completing one writes a History record and rolls the next due date forward.', everyMonths: 'Every {n} mo', everyYear: 'Yearly', everyYears: 'Every {n} yr', toastRoutineSaved: 'Recurring check saved', toastRoutineDone: 'Logged and rolled to next due', toastRoutineDeleted: 'Recurring check removed', confirmDeleteRoutineTitle: 'Delete recurring check?', doneToday: 'Done today', toastRoutineAlreadyToday: 'Already logged for today', toastRoutineInFlight: 'Saving this check…', confirmEarlyRoutine: 'Next due is still in the future. Log another completion and roll the date again?',
                 typeDetached: 'Detached', typeSemiDetached: 'Semi-Detached', typeFreeholdTownhouse: 'Freehold Townhouse', typeCondoTownhouse: 'Condo Townhouse', typeCondoApt: 'Condo Apt', typeLink: 'Link', typeMultiplex: 'Multiplex',
                 dashboardTasks: 'Pending Tasks', dashboardLogs: 'Logs & Events', dashboardTotalCost: 'Total Expenses',
+                monthlyCashFlow: 'Monthly Cash Flow', monthlyCashFlowHint: 'Edit monthly figures, then confirm to save on this property.', cashflowRental: 'Rental income', cashflowMortgage: 'Mortgage', cashflowInsurance: 'Insurance', cashflowTax: 'Property tax', cashflowMgmt: 'Property management', cashflowOthers: 'Others total', cashflowNet: 'Net income', confirmCashflow: 'Confirm figures', toastCashflowSaved: 'Monthly cash flow saved',
                 maintenanceTotalCost: 'Maintenance totals', maintenanceTotalHint: 'By year, then with / without receipt', expenseWithReceipt: 'With receipt', expenseNoReceipt: 'No receipt', noneInCategory: 'None', noMaintenanceCost: 'No maintenance spend recorded.', propertyIntro: 'Property overview', propertyIntroPlaceholder: 'Short note: layout, why you bought it, current use…', propertyIntroEmpty: 'No overview yet. Edit the property to add one.',
                 noAddress: 'No Address Set', noProperties: 'No properties added yet.', viewAll: 'View All',
                 allProperties: 'All Properties', noTasks: 'No pending tasks.', btnLogAsRepair: 'Done',
@@ -1887,6 +1915,7 @@
                 addRoutine: '添加周期检查', editRoutine: '编辑周期检查', routineCatalog: '常规检查清单', selectRoutine: '选择常见项目...', interval: '周期', nextDue: '下次日期', overdue: '已过期', dueSoon: '即将到期', noRoutines: '暂无周期检查。', routinesHint: '本栏事项常驻显示。点完成后写入历史记录，并把下次日期按周期后推。', everyMonths: '每{n}个月', everyYear: '每年', everyYears: '每{n}年', toastRoutineSaved: '周期检查已保存', toastRoutineDone: '已记入历史并滚动到下次', toastRoutineDeleted: '周期检查已删除', confirmDeleteRoutineTitle: '删除这项周期检查？', doneToday: '今日已完成', toastRoutineAlreadyToday: '今天已经记过一次', toastRoutineInFlight: '正在保存这次完成…', confirmEarlyRoutine: '下次日期还没到。确认再记一次并重新后推日期？',
                 typeDetached: '独立屋', typeSemiDetached: '半独立屋', typeFreeholdTownhouse: '无物业费联排', typeCondoTownhouse: '有物业费联排', typeCondoApt: '高层公寓', typeLink: '连体住宅', typeMultiplex: '多户住宅',
                 dashboardTasks: '待处理任务', dashboardLogs: '维修与事件', dashboardTotalCost: '累计开销',
+                monthlyCashFlow: 'Monthly Cash Flow', monthlyCashFlowHint: '填写每月金额后点确认，保存到这套房屋。', cashflowRental: 'Rental income', cashflowMortgage: 'Mortgage', cashflowInsurance: 'Insurance', cashflowTax: 'Property tax', cashflowMgmt: 'Property management', cashflowOthers: 'Others total', cashflowNet: 'Net income', confirmCashflow: '确认数字', toastCashflowSaved: '月度现金流已保存',
                 maintenanceTotalCost: '房屋维护累计开销', maintenanceTotalHint: '按年份列出，年内再分有无收据', expenseWithReceipt: '有收据', expenseNoReceipt: '无收据', noneInCategory: '暂无', noMaintenanceCost: '暂无维护开销记录。', propertyIntro: '房屋介绍', propertyIntroPlaceholder: '简要说明户型、购入原因、当前用途等…', propertyIntroEmpty: '还没有介绍。点右上角编辑房屋即可填写。',
                 noAddress: '未填写地址', noProperties: '暂无房屋资产。', viewAll: '查看全部',
                 allProperties: '所有房屋', noTasks: '暂无待办任务。', btnLogAsRepair: '完成',
@@ -2190,6 +2219,7 @@
                     address: '12 rue Principale, Gatineau, QC',
                     lat: 45.3968,
                     lng: -75.8476,
+                    cashflow: { rentalIncome: '', mortgage: '2100', insurance: '145', propertyTax: '380', propertyManagement: '', others: '80' },
                     usages: [
                         { id: 'u_home_buy', usageType: 'purchased', startDate: '2018-06-15', endDate: '', notes: z('Purchase $485,000', '购入价 $485,000'), realtorId: cRealtor, lawyerId: cLawyer },
                         { id: 'u_home_pri', usageType: 'primary', startDate: '2018-06-15', endDate: '', notes: z('Family residence', '家庭自住') }
@@ -2203,6 +2233,7 @@
                     address: '214 Montreal Rd, Ottawa, ON',
                     lat: 45.4321,
                     lng: -75.6594,
+                    cashflow: { rentalIncome: '2800', mortgage: '1650', insurance: '95', propertyTax: '290', propertyManagement: '140', others: '40' },
                     usages: [
                         { id: 'u_semi_buy', usageType: 'purchased', startDate: '2019-05-02', endDate: '', notes: z('Purchase $429,000', '购入价 $429,000'), realtorId: cRealtor, lawyerId: cHart },
                         { id: 'u_semi_pri', usageType: 'primary', startDate: '2019-05-02', endDate: '2022-06-30', notes: z('Owner-occupied both floors', '上下层均自住') },
@@ -2278,6 +2309,7 @@
                     address: '255 Bay Street, Ottawa, ON',
                     lat: 45.4194,
                     lng: -75.7013,
+                    cashflow: { rentalIncome: '1950', mortgage: '1420', insurance: '55', propertyTax: '210', propertyManagement: '80', others: '25' },
                     usages: [
                         { id: 'u_condo_buy', usageType: 'purchased', startDate: '2021-03-01', endDate: '', notes: z('Purchase $389,000', '购入价 $389,000'), realtorId: cRealtor, lawyerId: cHart },
                         { id: 'u_condo_vac', usageType: 'vacant', startDate: '2021-03-01', endDate: '2021-08-31', notes: z('Listed after closing', '交割后空置挂牌') },
@@ -2315,6 +2347,7 @@
                     address: '48 rue Eddy, Gatineau, QC',
                     lat: 45.4291,
                     lng: -75.7128,
+                    cashflow: { rentalIncome: '5200', mortgage: '2100', insurance: '180', propertyTax: '520', propertyManagement: '260', others: '90' },
                     usages: [
                         { id: 'u_multi_buy', usageType: 'purchased', startDate: '2014-09-08', endDate: '', notes: z('Purchase $390,000 as 4-plex', '以四套多户购入 $390,000'), realtorId: cRoy, lawyerId: cNotary },
                         { id: 'u_multi_com', usageType: 'commercial', startDate: '2014-09-08', endDate: '2017-12-31', notes: z('Ground floor was a salon', '一楼曾是美发店') },
@@ -2682,7 +2715,7 @@
             return { properties, tasks, repairs, contacts, customRoles, userZones: zones };
         }
 
-        const APP_VERSION = '2026.09.06-r';
+        const APP_VERSION = '2026.09.06-s';
 
         const app = createApp({
             data() {
@@ -2738,6 +2771,7 @@
                     completingRoutineIds: {},
                     formRoutine: { catalogKey: '', title: '', propertyId: '', zone: '', category: '', intervalMonths: 12, nextDueDate: '', lastDoneDate: '' },
                     
+                    cashflowDraft: { rentalIncome: '', mortgage: '', insurance: '', propertyTax: '', propertyManagement: '', others: '' },
                     formProperty: { name: '', buildingType: 'detached', address: '', intro: '', lat: null, lng: null },
                     formUsage: { id: null, usageType: 'primary', startDate: '', endDate: '', notes: '', realtorId: '', lawyerId: '', managerId: '' },
                     formTenantSub: { id: null, usageId: null, contactId: '', name: '', room: '', rent: '', startDate: '', endDate: '', notes: '' },
@@ -2866,6 +2900,20 @@
                     const years = new Set(this.repairs.filter(r => r.propertyId === this.viewingPropertyId && r.date && typeof r.date === 'string').map(r => r.date.substring(0,4)));
                     years.add(new Date().getFullYear().toString()); 
                     return Array.from(years).sort((a,b) => b - a);
+                },
+                cashflowRows() {
+                    return [
+                        { key: 'rentalIncome', labelKey: 'cashflowRental', income: true },
+                        { key: 'mortgage', labelKey: 'cashflowMortgage', income: false },
+                        { key: 'insurance', labelKey: 'cashflowInsurance', income: false },
+                        { key: 'propertyTax', labelKey: 'cashflowTax', income: false },
+                        { key: 'propertyManagement', labelKey: 'cashflowMgmt', income: false },
+                        { key: 'others', labelKey: 'cashflowOthers', income: false }
+                    ];
+                },
+                cashflowNet() {
+                    const n = (k) => Number(this.cashflowDraft && this.cashflowDraft[k]) || 0;
+                    return n('rentalIncome') - n('mortgage') - n('insurance') - n('propertyTax') - n('propertyManagement') - n('others');
                 },
                 propertyExpenseYears() {
                     if (!this.viewingPropertyId) return [];
@@ -3183,7 +3231,28 @@
                 },
                 navToDashboard() { this.viewingPropertyId = null; this.viewingZone = null; this.currentTab = 'dashboard'; },
                 getProp(id) { return this.properties.find(p => p.id === id); },
-                viewProperty(id) { this.viewingPropertyId = id; this.viewingZone = null; this.selectedExpenseYear = new Date().getFullYear().toString(); },
+                emptyCashflow() {
+                    return { rentalIncome: '', mortgage: '', insurance: '', propertyTax: '', propertyManagement: '', others: '' };
+                },
+                loadCashflowDraft(id) {
+                    const prop = this.getProp(id);
+                    const src = (prop && prop.cashflow) || {};
+                    this.cashflowDraft = { ...this.emptyCashflow(), ...src };
+                },
+                viewProperty(id) {
+                    this.viewingPropertyId = id;
+                    this.viewingZone = null;
+                    this.selectedExpenseYear = new Date().getFullYear().toString();
+                    this.loadCashflowDraft(id);
+                },
+                async confirmCashflow() {
+                    if (!this.viewingPropertyId) return;
+                    const prop = this.getProp(this.viewingPropertyId);
+                    if (!prop) return;
+                    prop.cashflow = { ...this.emptyCashflow(), ...this.cashflowDraft };
+                    await this.saveToStorage();
+                    this.showToast(this.t('toastCashflowSaved'));
+                },
                 viewZone(zone) { this.viewingZone = zone; },
                 toggleDashboardView(mode) {
                     if (this.enabledViews.includes(mode)) {
