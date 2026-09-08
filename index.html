@@ -1844,24 +1844,27 @@
                                 </div>
                             </div>
 
+                            <input v-model="fileSearch" type="search" :placeholder="t('fileSearchPh')" class="w-full bg-slate-900 rounded-xl px-3 py-2 text-[13px] text-white outline-none border border-slate-700">
                             <p v-if="filteredMediaFiles.length === 0" class="text-xs text-slate-500 text-center py-8">{{ t('noMediaFiles') }}</p>
-                            <div class="grid grid-cols-3 gap-2.5 pt-2 max-h-[46vh] overflow-y-auto no-scrollbar pr-1">
-                                <div v-for="item in filteredMediaFiles" :key="item.id" 
-                                     class="relative aspect-square bg-slate-800 rounded-2xl p-1 border border-slate-700/80 flex flex-col items-center justify-center overflow-hidden group shadow-sm">
-                                    
-                                    <template v-if="item.isPdf">
-                                        <div @click="openImageViewer([item.url])" class="flex flex-col items-center justify-center text-red-400 cursor-pointer p-1 text-center w-full h-full">
-                                            <i class="fa-solid fa-file-pdf text-2xl mb-1"></i>
+                            <div class="max-h-[48vh] overflow-y-auto no-scrollbar space-y-4 pr-0.5">
+                                <div v-for="group in mediaTimelineGroups" :key="group.date">
+                                    <p class="text-[11px] font-black text-slate-400 tracking-wide mb-2 px-0.5">{{ group.date }}</p>
+                                    <div class="grid grid-cols-4 gap-2">
+                                        <div v-for="item in group.items" :key="item.id" class="relative aspect-square bg-slate-800 rounded-xl border border-slate-700/80 overflow-hidden">
+                                            <template v-if="item.isPdf">
+                                                <div @click="openLibraryItem(item)" class="w-full h-full flex flex-col items-center justify-center text-red-400 cursor-pointer">
+                                                    <i class="fa-solid fa-file-pdf text-lg"></i>
+                                                </div>
+                                            </template>
+                                            <template v-else>
+                                                <img :src="item.url" @click="openLibraryItem(item)" class="w-full h-full object-cover cursor-pointer">
+                                            </template>
+                                            <span class="absolute left-1 bottom-1 text-[8px] font-bold px-1 py-0.5 rounded bg-black/70 text-white">{{ item.typeLabel }}</span>
+                                            <button @click.stop="promptDeleteMediaFile(item)" type="button" class="absolute top-1 right-1 w-5 h-5 bg-red-500/90 text-white rounded-full flex items-center justify-center text-[9px]">
+                                                <i class="fa-solid fa-xmark"></i>
+                                            </button>
                                         </div>
-                                    </template>
-                                    <template v-else>
-                                        <img :src="item.url" @click="openImageViewer([item.url])" class="max-h-full max-w-full rounded-xl object-contain cursor-pointer">
-                                    </template>
-
-                                    <p class="absolute bottom-0 left-0 right-0 px-1 py-0.5 bg-slate-950/75 text-[9px] text-slate-200 truncate text-center">{{ item.title || item.typeLabel }}</p>
-                                    <button @click.stop="promptDeleteMediaFile(item)" type="button" class="absolute top-1 right-1 w-6 h-6 bg-red-500/90 text-white rounded-full flex items-center justify-center shadow-lg active:scale-90 text-[10px]">
-                                        <i class="fa-solid fa-xmark"></i>
-                                    </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1906,7 +1909,7 @@
 
         <!-- Fullscreen Image Viewer -->
         <transition name="fade">
-            <div v-if="viewingImages.length > 0" class="fixed inset-0 z-[60] bg-black/95 backdrop-blur-md flex flex-col select-none">
+            <div v-if="viewingImages.length > 0" class="fixed inset-0 z-[60] bg-black/95 backdrop-blur-md flex flex-col select-none" @touchstart.passive="onViewerTouchStart" @touchend.passive="onViewerTouchEnd">
                 <div class="h-16 flex items-center justify-between px-5 bg-gradient-to-b from-black/80 to-transparent z-10">
                     <span class="text-xs font-bold text-slate-400"><template v-if="viewingImages.length > 1">{{ currentImageIndex + 1 }} / {{ viewingImages.length }}</template></span>
                     <button @click="closeImageViewer" class="w-10 h-10 rounded-full bg-white/10 text-white flex items-center justify-center active:scale-90"><i class="fa-solid fa-xmark text-xl"></i></button>
@@ -1926,6 +1929,10 @@
                         <img :src="viewingImages[currentImageIndex]" class="max-w-full max-h-full object-contain rounded-xl transition-all duration-200 shadow-2xl">
                     </template>
                     <button v-if="viewingImages.length > 1 && currentImageIndex < viewingImages.length - 1" @click="nextImage" class="absolute right-3 z-20 w-11 h-11 rounded-full bg-slate-800/80 text-white border border-slate-700 flex items-center justify-center active:scale-90 shadow-lg"><i class="fa-solid fa-chevron-right text-sm"></i></button>
+                </div>
+                <div class="px-5 pb-8 pt-2 text-center">
+                    <p v-if="viewingCaption" class="text-[12px] text-slate-300 font-medium">{{ viewingCaption }}</p>
+                    <p v-if="viewingImages.length > 1" class="text-[10px] text-slate-500 mt-1">{{ t('viewerSwipeHint') }}</p>
                 </div>
             </div>
         </transition>
@@ -1982,7 +1989,7 @@
                 settingsContactRoles: 'Contact Category Settings', addRoleCategory: 'Add Category', roleCategoryName: 'Category Name', toastRoleAdded: 'Category added', toastRoleDeleted: 'Category deleted',
                 settingsDataBackup: 'Data Management (Local-First)', exportBackup: 'Export JSON Backup', exportBackupLight: 'Light backup', exportBackupLightDesc: 'Houses, work and ledger only — no photos.', exportBackupFull: 'Full backup', exportBackupFullDesc: 'Includes photos and receipts. File can be large.', importBackup: 'Restore JSON Backup', toastImportSuccess: 'Data restored successfully!', toastImportFailed: 'Invalid backup file format.', confirmImportMsg: 'Restoring from backup will overwrite all existing local data. Continue?',
                 loadDemoData: 'Reset Demo Data', loadDemoDataDesc: 'Overwrites current data with multi-property sample dataset.', confirmDemoDataMsg: 'Are you sure you want to load sample data? Current data will be replaced.', toastDemoLoaded: 'Demo data loaded',
-                settingsFileManager: 'Media & File Storage', fileManagerTitle: 'Repair photos & receipts', filesCount: 'Files', storageUsed: 'Used', btnManageFiles: 'Open Gallery', noMediaFiles: 'No photo or document files match.', toastMediaDeleted: 'File removed from local storage.', fileTypeAll: 'All Files', fileLibraryHint: 'Only before / after / receipt files from work. Keep closing, insurance and leases in your own Files app.', fileLibraryUpload: 'Upload', fileLibraryTitlePh: 'Name (optional)', fileLibraryUploadHint: 'Pick a property above first, then upload. Stored on this phone.', fileCatDeal: 'Closing / title', fileCatInsurance: 'Insurance', fileCatLease: 'Lease', fileCatMaintenance: 'Repairs', fileCatOther: 'Other', toastPickPropertyFirst: 'Choose a property first', toastLibraryUploaded: 'File added',
+                settingsFileManager: 'Media & File Storage', fileManagerTitle: 'Repair photos & receipts', filesCount: 'Files', storageUsed: 'Used', btnManageFiles: 'Open Gallery', noMediaFiles: 'No photo or document files match.', toastMediaDeleted: 'File removed from local storage.', fileTypeAll: 'All Files', fileLibraryHint: 'Grouped by work date. Tap a file, then swipe to browse.', fileSearchPh: 'Search title or property', viewerSwipeHint: 'Swipe left / right to switch', fileLibraryUpload: 'Upload', fileLibraryTitlePh: 'Name (optional)', fileLibraryUploadHint: 'Pick a property above first, then upload. Stored on this phone.', fileCatDeal: 'Closing / title', fileCatInsurance: 'Insurance', fileCatLease: 'Lease', fileCatMaintenance: 'Repairs', fileCatOther: 'Other', toastPickPropertyFirst: 'Choose a property first', toastLibraryUploaded: 'File added',
                 roleTenant: 'Tenant', roleContractor: 'Contractor', roleRealtor: 'Realtor', roleLawyer: 'Lawyer', roleType: 'Contact Role', contactName: 'Full Name', contactTrade: 'Specialty / Trade Title', contactTradeHint: 'e.g. HVAC, Plumbing Specialist', assocProperty: 'Associated Property', assocProperties: 'Associated Properties', contractorNote: 'Contractors are linked through repair logs.', noneGeneral: 'General / Unlinked', searchContact: 'Search contacts...', noContacts: 'No contacts found.',
                 contactPhone: 'Phone', contactWechat: 'WeChat ID', contactEmail: 'Email', contactNotes: 'Private Notes',
                 settingsZones: 'Property Zones & Areas', settingsZonesDesc: 'Customize specific rooms and areas for your properties.', manageCatalog: 'Work catalog', manageCatalogDesc: 'Preset categories and titles for pending, cycles and history.', manageCatalogHint: 'Work forms only use these presets.', manageCashflowLines: 'Cash flow lines', manageCashflowLinesDesc: 'Edit Monthly Cash Flow and Monthly Expenses rows.', manageCashflowLinesHint: 'These labels appear on the property page. Add, rename or delete rows here.', newCashflowLine: 'Line name', cashflowMarkIncome: 'Treat this line as income?', confirmDeleteCashflowLine: 'This line has numbers on {n} properties. Delete it anyway?', catalogNonCycle: 'Non-cycle (Pending + History)', catalogCycle: 'Cycle only', newCategory: 'New category', newPresetName: 'Preset title', confirmDeleteCategory: 'Delete this category and its preset titles?', btnRename: 'Rename', renameTo: 'Rename to', confirmRenameInUse: '"{old}" is already used on {n} record(s). Renaming to "{new}" will update those records too. Continue?', manageZones: 'Manage Zones & Areas',
@@ -2029,7 +2036,7 @@
                 settingsContactRoles: '人员类别设置', addRoleCategory: '新增类别', roleCategoryName: '类别名称', toastRoleAdded: '已新增人员类别', toastRoleDeleted: '已删除人员类别',
                 settingsDataBackup: '数据备份与恢复 (离线)', exportBackup: '导出 JSON 备份文件', exportBackupLight: '轻备份', exportBackupLightDesc: '只含房屋、工作和账本，不含照片。', exportBackupFull: '完整备份', exportBackupFullDesc: '含照片和收据，文件可能很大。', importBackup: '恢复 JSON 备份文件', toastImportSuccess: '数据恢复成功！', toastImportFailed: '恢复失败，文件格式错误。', confirmImportMsg: '导入备份将覆盖当前所有本地数据，确定继续吗？',
                 loadDemoData: '加载示例演示数据', loadDemoDataDesc: '重置并重新加载包含多处房屋资产的完整示例数据。', confirmDemoDataMsg: '确定要重新载入演示数据吗？当前修改将被覆盖。', toastDemoLoaded: '示例数据已加载',
-                settingsFileManager: '文件与媒体存储管理', fileManagerTitle: '维修照片与收据', filesCount: '个文件', storageUsed: '已用容量', btnManageFiles: '进入文件库', noMediaFiles: '未匹配到媒体文件。', toastMediaDeleted: '文件已彻底删除。', fileTypeAll: '全部文件', fileLibraryHint: '只显示工单上的修前、修后和收据。买房、保险、租约请放在系统「文件」里，不必进 App。', fileLibraryUpload: '上传', fileLibraryTitlePh: '名称（可选）', fileLibraryUploadHint: '先点选上方一套房屋，再上传。文件只存在这台手机。', fileCatDeal: '交易产权', fileCatInsurance: '保险', fileCatLease: '租约', fileCatMaintenance: '维修', fileCatOther: '其他', toastPickPropertyFirst: '请先选择一套房屋', toastLibraryUploaded: '文件已加入',
+                settingsFileManager: '文件与媒体存储管理', fileManagerTitle: '维修照片与收据', filesCount: '个文件', storageUsed: '已用容量', btnManageFiles: '进入文件库', noMediaFiles: '未匹配到媒体文件。', toastMediaDeleted: '文件已彻底删除。', fileTypeAll: '全部文件', fileLibraryHint: '按工单日期排列。点开后左右滑动切换。', fileSearchPh: '搜索名称或房屋', viewerSwipeHint: '左右滑动切换文件', fileLibraryUpload: '上传', fileLibraryTitlePh: '名称（可选）', fileLibraryUploadHint: '先点选上方一套房屋，再上传。文件只存在这台手机。', fileCatDeal: '交易产权', fileCatInsurance: '保险', fileCatLease: '租约', fileCatMaintenance: '维修', fileCatOther: '其他', toastPickPropertyFirst: '请先选择一套房屋', toastLibraryUploaded: '文件已加入',
                 roleTenant: '租客', roleContractor: '师傅', roleRealtor: '经纪', roleLawyer: '律师', roleType: '联系人身份角色', contactName: '姓名/称呼', contactTrade: '工种/专长头衔', contactTradeHint: '例如: 暖通水工, 专修屋顶', assocProperty: '关联房屋节点', assocProperties: '关联房屋资产 (支持多选)', contractorNote: '师傅无直接关联房屋，通过修缮病历本自动关联。', noneGeneral: '通用 / 未绑定具体房屋', searchContact: '搜索联系人...', noContacts: '该分类下暂无联系人。',
                 contactPhone: '电话', contactWechat: '微信号', contactEmail: '邮箱', contactNotes: '私密备注',
                 settingsZones: '房屋空间与区域设置', settingsZonesDesc: '自定义房屋内可用的具体房间与区域列表。', manageCatalog: '工作事项目录', manageCatalogDesc: '预设待办、周期和历史的分类与名称。', manageCatalogHint: '工作页只能选择这些预设。', manageCashflowLines: '现金流行项目', manageCashflowLinesDesc: '编辑 Monthly Cash Flow 与 Monthly Expenses 的行。', manageCashflowLinesHint: '这些名称会出现在房屋页。可在此添加、重命名或删除。', newCashflowLine: '行名称', cashflowMarkIncome: '把这一行算作收入？', confirmDeleteCashflowLine: '有 {n} 套房屋填过这一行。仍要删除？', catalogNonCycle: '非周期（待办与历史共用）', catalogCycle: '仅周期', newCategory: '新分类', newPresetName: '预设名称', confirmDeleteCategory: '删除该分类及其预设名称？', btnRename: '重命名', renameTo: '改为', confirmRenameInUse: '“{old}”已被 {n} 条记录使用。改成“{new}”会同时改这些记录里的名称或分类。确认继续？', manageZones: '管理空间与区域',
@@ -2829,7 +2836,7 @@
             return { properties, tasks, repairs, contacts, customRoles, userZones: zones };
         }
 
-        const APP_VERSION = '2026.09.08-c';
+        const APP_VERSION = '2026.09.08-d';
 
         const app = createApp({
             data() {
@@ -2872,6 +2879,9 @@
                     contactSearch: '',
                     fileFilterType: 'ALL',
                     fileFilterProperty: 'ALL',
+                    fileSearch: '',
+                    viewingAlbum: [],
+                    viewerTouchX: null,
                     fileUploadCategory: 'deal',
                     fileUploadTitle: '',
                     propertyDocs: [],
@@ -2925,20 +2935,38 @@
                 },
                 allMediaFiles() {
                     const list = [];
-                    this.tasks.forEach(t => { this.getTaskBeforePhotos(t).forEach((url, idx) => list.push({ id: `t_${t.id}_b_${idx}`, parentId: t.id, parentType: 'task', type: 'before', bucket: 'before', typeLabel: this.t('viewBefore'), url: url, propertyId: t.propertyId, title: t.title, isPdf: this.isPdf(url), index: idx })); });
+                    this.tasks.forEach(t => { this.getTaskBeforePhotos(t).forEach((url, idx) => list.push({ id: `t_${t.id}_b_${idx}`, parentId: t.id, parentType: 'task', type: 'before', bucket: 'before', typeLabel: this.t('viewBefore'), url: url, propertyId: t.propertyId, title: t.title, date: t.issueDate || '', isPdf: this.isPdf(url), index: idx })); });
                     this.repairs.forEach(r => {
-                        this.getRepairBeforePhotos(r).forEach((url, idx) => list.push({ id: `r_${r.id}_b_${idx}`, parentId: r.id, parentType: 'repair', type: 'before', bucket: 'before', typeLabel: this.t('viewBefore'), url: url, propertyId: r.propertyId, title: r.title, isPdf: this.isPdf(url), index: idx }));
-                        this.getRepairAfterPhotos(r).forEach((url, idx) => list.push({ id: `r_${r.id}_a_${idx}`, parentId: r.id, parentType: 'repair', type: 'after', bucket: 'after', typeLabel: this.t('viewAfter'), url: url, propertyId: r.propertyId, title: r.title, isPdf: this.isPdf(url), index: idx }));
-                        this.getRepairReceiptPhotos(r).forEach((url, idx) => list.push({ id: `r_${r.id}_r_${idx}`, parentId: r.id, parentType: 'repair', type: 'receipt', bucket: 'receipt', typeLabel: this.t('viewReceipt'), url: url, propertyId: r.propertyId, title: r.title, isPdf: this.isPdf(url), index: idx }));
+                        this.getRepairBeforePhotos(r).forEach((url, idx) => list.push({ id: `r_${r.id}_b_${idx}`, parentId: r.id, parentType: 'repair', type: 'before', bucket: 'before', typeLabel: this.t('viewBefore'), url: url, propertyId: r.propertyId, title: r.title, date: r.date || '', isPdf: this.isPdf(url), index: idx }));
+                        this.getRepairAfterPhotos(r).forEach((url, idx) => list.push({ id: `r_${r.id}_a_${idx}`, parentId: r.id, parentType: 'repair', type: 'after', bucket: 'after', typeLabel: this.t('viewAfter'), url: url, propertyId: r.propertyId, title: r.title, date: r.date || '', isPdf: this.isPdf(url), index: idx }));
+                        this.getRepairReceiptPhotos(r).forEach((url, idx) => list.push({ id: `r_${r.id}_r_${idx}`, parentId: r.id, parentType: 'repair', type: 'receipt', bucket: 'receipt', typeLabel: this.t('viewReceipt'), url: url, propertyId: r.propertyId, title: r.title, date: r.date || '', isPdf: this.isPdf(url), index: idx }));
                     });
                     return list;
                 },
                 filteredMediaFiles() {
+                    const q = (this.fileSearch || '').toLowerCase().trim();
                     return this.allMediaFiles.filter(item => {
                         const typeOk = this.fileFilterType === 'ALL' || item.bucket === this.fileFilterType || item.type === this.fileFilterType;
                         const propOk = this.fileFilterProperty === 'ALL' || item.propertyId === this.fileFilterProperty;
-                        return typeOk && propOk;
+                        const textOk = !q || (item.title || '').toLowerCase().includes(q) || (item.typeLabel || '').toLowerCase().includes(q) || this.getPropertyName(item.propertyId).toLowerCase().includes(q);
+                        return typeOk && propOk && textOk;
+                    }).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+                },
+                mediaTimelineGroups() {
+                    const groups = [];
+                    const map = {};
+                    this.filteredMediaFiles.forEach(item => {
+                        const key = item.date || this.t('noIssueDate');
+                        if (!map[key]) { map[key] = { date: key, items: [] }; groups.push(map[key]); }
+                        map[key].items.push(item);
                     });
+                    return groups;
+                },
+                viewingCaption() {
+                    const item = (this.viewingAlbum || [])[this.currentImageIndex];
+                    if (!item) return '';
+                    const bits = [item.typeLabel, item.title, item.date].filter(Boolean);
+                    return bits.join(' · ');
                 },
                 estimatedStorageMB() { let totalChars = 0; this.allMediaFiles.forEach(f => { if (typeof f.url === 'string') totalChars += f.url.length; }); const mb = (totalChars * 0.75) / (1024 * 1024); return mb < 0.1 ? (mb > 0 ? '0.1' : '0') : mb.toFixed(1); },
                 
@@ -4088,10 +4116,29 @@
                 },
                 removeTaskBeforePhoto(idx) { this.formTask.beforePhotos.splice(idx, 1); },
                 removeRepairPhoto(type, idx) { const arrKey = type === 'before' ? 'beforePhotos' : (type === 'after' ? 'afterPhotos' : 'receiptPhotos'); if (this.formRepair[arrKey]) this.formRepair[arrKey].splice(idx, 1); },
-                openImageViewer(imgs, initialIndex = 0) { if (!imgs) return; this.viewingImages = Array.isArray(imgs) ? imgs : [imgs]; this.currentImageIndex = initialIndex; },
-                closeImageViewer() { this.viewingImages = []; this.currentImageIndex = 0; },
+                openImageViewer(imgs, initialIndex = 0) {
+                    if (!imgs) return;
+                    const arr = Array.isArray(imgs) ? imgs : [imgs];
+                    this.viewingAlbum = arr.map(x => (x && typeof x === 'object' && x.url) ? x : { url: x });
+                    this.viewingImages = this.viewingAlbum.map(x => x.url);
+                    this.currentImageIndex = Math.min(Math.max(0, initialIndex), Math.max(0, this.viewingImages.length - 1));
+                },
+                openLibraryItem(item) {
+                    const list = this.filteredMediaFiles;
+                    const idx = Math.max(0, list.findIndex(x => x.id === item.id));
+                    this.openImageViewer(list, idx);
+                },
+                closeImageViewer() { this.viewingImages = []; this.viewingAlbum = []; this.currentImageIndex = 0; this.viewerTouchX = null; },
                 prevImage() { if (this.currentImageIndex > 0) this.currentImageIndex--; },
                 nextImage() { if (this.currentImageIndex < this.viewingImages.length - 1) this.currentImageIndex++; },
+                onViewerTouchStart(e) { if (e.changedTouches && e.changedTouches[0]) this.viewerTouchX = e.changedTouches[0].clientX; },
+                onViewerTouchEnd(e) {
+                    if (this.viewerTouchX == null || !e.changedTouches || !e.changedTouches[0]) return;
+                    const dx = e.changedTouches[0].clientX - this.viewerTouchX;
+                    this.viewerTouchX = null;
+                    if (dx > 56) this.prevImage();
+                    else if (dx < -56) this.nextImage();
+                },
 
                 async saveProperty() {
                     if (!this.formProperty.name) return;
