@@ -2836,7 +2836,7 @@
             return { properties, tasks, repairs, contacts, customRoles, userZones: zones };
         }
 
-        const APP_VERSION = '2026.09.08-d';
+        const APP_VERSION = '2026.09.08-e';
 
         const app = createApp({
             data() {
@@ -2965,7 +2965,8 @@
                 viewingCaption() {
                     const item = (this.viewingAlbum || [])[this.currentImageIndex];
                     if (!item) return '';
-                    const bits = [item.typeLabel, item.title, item.date].filter(Boolean);
+                    const prop = item.propertyId ? this.getPropertyName(item.propertyId) : '';
+                    const bits = [prop, item.typeLabel, item.title, item.date].filter(Boolean);
                     return bits.join(' · ');
                 },
                 estimatedStorageMB() { let totalChars = 0; this.allMediaFiles.forEach(f => { if (typeof f.url === 'string') totalChars += f.url.length; }); const mb = (totalChars * 0.75) / (1024 * 1024); return mb < 0.1 ? (mb > 0 ? '0.1' : '0') : mb.toFixed(1); },
