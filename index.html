@@ -634,7 +634,11 @@
 
                     <div class="flex bg-slate-800/80 p-1 rounded-2xl border border-slate-700/50">
                         <button @click="workSubTab = 'routines'" class="flex-1 py-2 text-[11px] font-bold rounded-xl transition-all flex items-center justify-center gap-1" :class="workSubTab === 'routines' ? 'bg-brand-500 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'">
-                            <i class="fa-solid fa-rotate"></i> {{ t('subTabRoutines') }}
+                            <span class="relative inline-flex">
+                                <i class="fa-solid fa-rotate"></i>
+                                <span v-if="showRoutineDots && routineAlertLevel" class="absolute -top-1 -right-1.5 w-1.5 h-1.5 rounded-full" :class="routineAlertLevel === 'overdue' ? 'bg-rose-400' : 'bg-amber-300'"></span>
+                            </span>
+                            {{ t('subTabRoutines') }}
                         </button>
                         <button @click="workSubTab = 'tasks'" class="flex-1 py-2 text-[11px] font-bold rounded-xl transition-all flex items-center justify-center gap-1" :class="workSubTab === 'tasks' ? 'bg-brand-500 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'">
                             <i class="fa-solid fa-clipboard-check"></i> {{ t('subTabTasks') }}
@@ -687,19 +691,16 @@
                     <template v-if="workSubTab === 'routines'">
                         <div class="flex items-start gap-2 px-1">
                             <p class="text-[11px] text-slate-400 leading-relaxed flex-1 min-w-0">{{ t('routinesHint') }}</p>
-                            <button type="button" @click="showRoutineNotifyPanel = !showRoutineNotifyPanel" class="w-7 h-7 flex-shrink-0 rounded-lg flex items-center justify-center" :class="routineNotify === 'off' ? 'text-slate-500' : 'text-sky-300 bg-sky-500/10'">
+                            <button type="button" @click="showRoutineNotifyPanel = !showRoutineNotifyPanel" class="w-7 h-7 flex-shrink-0 rounded-lg flex items-center justify-center" :class="showRoutineDots ? 'text-rose-300 bg-rose-500/10' : 'text-slate-500'">
                                 <i class="fa-solid fa-bell text-[11px]"></i>
                             </button>
                         </div>
                         <div v-if="showRoutineNotifyPanel" class="bg-slate-800/70 rounded-xl p-2.5 border border-slate-700/40 space-y-2">
+                            <p class="text-[11px] text-slate-400">{{ t('routineDotHint') }}</p>
                             <div class="flex gap-1">
-                                <button type="button" @click="setRoutineNotify('off')" class="flex-1 py-1 rounded-lg text-[10px] font-bold" :class="routineNotify === 'off' ? 'bg-slate-600 text-white' : 'text-slate-500'">{{ t('routineNotifyOff') }}</button>
-                                <button type="button" @click="setRoutineNotify('sms')" class="flex-1 py-1 rounded-lg text-[10px] font-bold" :class="routineNotify === 'sms' ? 'bg-brand-500 text-white' : 'text-slate-500'">{{ t('routineNotifySms') }}</button>
-                                <button type="button" @click="setRoutineNotify('email')" class="flex-1 py-1 rounded-lg text-[10px] font-bold" :class="routineNotify === 'email' ? 'bg-brand-500 text-white' : 'text-slate-500'">{{ t('routineNotifyEmail') }}</button>
+                                <button type="button" @click="setRoutineNotify('off')" class="flex-1 py-1.5 rounded-lg text-[10px] font-bold" :class="!showRoutineDots ? 'bg-slate-600 text-white' : 'text-slate-500'">{{ t('routineNotifyOff') }}</button>
+                                <button type="button" @click="setRoutineNotify('on')" class="flex-1 py-1.5 rounded-lg text-[10px] font-bold" :class="showRoutineDots ? 'bg-brand-500 text-white' : 'text-slate-500'">{{ t('routineNotifyDot') }}</button>
                             </div>
-                            <input v-if="routineNotify === 'sms'" v-model="routineNotifyPhone" type="tel" :placeholder="t('routineNotifyPhone')" @change="saveRoutineNotifyTarget" class="w-full bg-slate-900 rounded-lg px-2.5 py-1.5 text-[12px] text-white outline-none border border-slate-700">
-                            <input v-if="routineNotify === 'email'" v-model="routineNotifyEmail" type="email" :placeholder="t('routineNotifyEmailAddr')" @change="saveRoutineNotifyTarget" class="w-full bg-slate-900 rounded-lg px-2.5 py-1.5 text-[12px] text-white outline-none border border-slate-700">
-                            <button v-if="routineNotify !== 'off'" type="button" @click="sendDueRoutineReminders" class="text-[11px] font-bold text-sky-300">{{ t('routineNotifySendDue') }}</button>
                         </div>
                         <div v-for="routine in filteredRoutines" :key="routine.id" class="bg-slate-800 rounded-2xl p-3 border transition-all" :class="isRoutineOverdue(routine) ? 'border-rose-500/40' : (isRoutineDueSoon(routine) ? 'border-amber-500/40' : 'border-slate-700/50')">
                             <div class="flex flex-col gap-2">
@@ -736,7 +737,8 @@
                                     <span class="text-[10px] px-1.5 py-0.5 rounded bg-violet-500/20 text-violet-300 font-medium">{{ formatRoutineInterval(routine.intervalMonths) }}</span>
                                     <span v-if="isRoutineOverdue(routine)" class="text-[10px] px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 font-bold">{{ t('overdue') }}</span>
                                     <span v-else-if="isRoutineDueSoon(routine)" class="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold">{{ t('dueSoon') }}</span>
-                                    <button v-if="routineNotify !== 'off' && (isRoutineOverdue(routine) || isRoutineDueSoon(routine))" type="button" @click="sendRoutineReminder(routine)" class="text-[10px] px-1.5 py-0.5 rounded bg-sky-500/15 text-sky-300 font-bold">{{ t('routineNotifyOne') }}</button>
+
+
                                 </div>
                             </div>
                         </div>
@@ -909,8 +911,11 @@
                 <i class="text-xl mb-1 fa-solid fa-house-chimney"></i>
                 <span class="text-[10px] font-bold">{{ t('navDashboard') }}</span>
             </button>
-            <button @click="currentTab = 'work'; selectedPropertyId = 'ALL'" class="flex flex-col items-center p-2 w-16 transition-colors" :class="currentTab === 'work' ? 'text-brand-400' : 'text-slate-500'">
-                <i class="text-xl mb-1 fa-solid fa-clipboard-list"></i>
+            <button @click="currentTab = 'work'; selectedPropertyId = 'ALL'" class="flex flex-col items-center p-2 w-16 transition-colors relative" :class="currentTab === 'work' ? 'text-brand-400' : 'text-slate-500'">
+                <span class="relative inline-flex">
+                    <i class="text-xl mb-1 fa-solid fa-clipboard-list"></i>
+                    <span v-if="showRoutineDots && routineAlertLevel" class="absolute -top-0.5 -right-1.5 w-2 h-2 rounded-full" :class="routineAlertLevel === 'overdue' ? 'bg-rose-500' : 'bg-amber-400'"></span>
+                </span>
                 <span class="text-[10px] font-bold">{{ t('navWork') }}</span>
             </button>
             <button @click="currentTab = 'crm'" class="flex flex-col items-center p-2 w-16 transition-colors" :class="currentTab === 'crm' ? 'text-brand-400' : 'text-slate-500'">
@@ -1926,7 +1931,7 @@
             en: {
                 navDashboard: 'Home', navWork: 'Work', navTasks: 'Tasks', navRepairs: 'Logs', navCRM: 'CRM',
                 subTabTasks: 'Pending', subTabRoutines: 'Cycles', subTabLogs: 'History',
-                addRoutine: 'Add Recurring Check', editRoutine: 'Edit Recurring Check', routineCatalog: 'Standard checklist', selectRoutine: 'Pick a standard item...', interval: 'Interval', nextDue: 'Next due', overdue: 'Overdue', dueSoon: 'Due soon', noRoutines: 'No recurring checks yet.', routinesHint: 'These stay on the list. Completing one writes a History record and rolls the next due date forward.', routineNotifyTitle: 'Cycle reminders', routineNotifyOff: 'Off', routineNotifySms: 'Text', routineNotifyEmail: 'Email', routineNotifyPhone: 'Phone number for SMS', routineNotifyEmailAddr: 'Email address', routineNotifyHint: 'No server push. Text/Email opens a draft on this phone for items that are due.', routineNotifySendDue: 'Draft reminder for due items', routineNotifyOne: 'Remind', toastNotifyNeedTarget: 'Add a phone or email first', toastNotifyNoneDue: 'Nothing due right now', toastNotifyOpened: 'Draft opened', everyMonths: 'Every {n} mo', everyYear: 'Yearly', everyYears: 'Every {n} yr', toastRoutineSaved: 'Recurring check saved', toastRoutineDone: 'Logged and rolled to next due', toastRoutineDeleted: 'Recurring check removed', confirmDeleteRoutineTitle: 'Delete recurring check?', doneToday: 'Done today', toastRoutineAlreadyToday: 'Already logged for today', toastRoutineInFlight: 'Saving this check…', confirmEarlyRoutine: 'Next due is still in the future. Log another completion and roll the date again?',
+                addRoutine: 'Add Recurring Check', editRoutine: 'Edit Recurring Check', routineCatalog: 'Standard checklist', selectRoutine: 'Pick a standard item...', interval: 'Interval', nextDue: 'Next due', overdue: 'Overdue', dueSoon: 'Due soon', noRoutines: 'No recurring checks yet.', routinesHint: 'These stay on the list. Completing one writes a History record and rolls the next due date forward.', routineNotifyTitle: 'Cycle reminders', routineNotifyOff: 'Off', routineNotifyDot: 'Red dots', routineDotHint: 'Show a badge on Work and Cycles when a check is due soon or overdue. Off by default.', routineNotifySms: 'Text', routineNotifyEmail: 'Email', routineNotifyPhone: 'Phone number for SMS', routineNotifyEmailAddr: 'Email address', routineNotifyHint: 'No server push. Text/Email opens a draft on this phone for items that are due.', routineNotifySendDue: 'Draft reminder for due items', routineNotifyOne: 'Remind', toastNotifyNeedTarget: 'Add a phone or email first', toastNotifyNoneDue: 'Nothing due right now', toastNotifyOpened: 'Draft opened', everyMonths: 'Every {n} mo', everyYear: 'Yearly', everyYears: 'Every {n} yr', toastRoutineSaved: 'Recurring check saved', toastRoutineDone: 'Logged and rolled to next due', toastRoutineDeleted: 'Recurring check removed', confirmDeleteRoutineTitle: 'Delete recurring check?', doneToday: 'Done today', toastRoutineAlreadyToday: 'Already logged for today', toastRoutineInFlight: 'Saving this check…', confirmEarlyRoutine: 'Next due is still in the future. Log another completion and roll the date again?',
                 typeDetached: 'Detached', typeSemiDetached: 'Semi-Detached', typeFreeholdTownhouse: 'Freehold Townhouse', typeCondoTownhouse: 'Condo Townhouse', typeCondoApt: 'Condo Apt', typeLink: 'Link', typeMultiplex: 'Multiplex',
                 dashboardTasks: 'Pending Tasks', dashboardLogs: 'Logs & Events', dashboardTotalCost: 'Total Expenses',
                 propertyLedger: 'Property ledger', monthlyCashFlow: 'Monthly Cash Flow', monthlyCashFlowHint: 'Edit monthly figures, then confirm to save on this property.', monthlyExpenses: 'Monthly Expenses', monthlyExpensesHint: 'Owner-occupied household costs. Confirm to save on this property.', cashflowModeOwner: 'Owner-occupied', cashflowModeRental: 'Rental', cashflowModeHidden: 'Hidden', cashflowRental: 'Rental income', cashflowMortgage: 'Mortgage', cashflowInsurance: 'Insurance', cashflowTax: 'Property tax', cashflowMgmt: 'Property management', cashflowHoa: 'HOA / condo fee', cashflowHydro: 'Electricity', cashflowGas: 'Gas / heat', cashflowWater: 'Water & sewer', cashflowInternet: 'Internet / phone', cashflowGroceries: 'Groceries', cashflowTransit: 'Transit / fuel', cashflowChildcare: 'Childcare', cashflowHealth: 'Healthcare', cashflowSubs: 'Subscriptions', cashflowReserve: 'Home reserve', cashflowOthers: 'Others total', cashflowNet: 'Net income', cashflowExpenseTotal: 'Total', confirmCashflow: 'Confirm figures', toastCashflowSaved: 'Monthly figures saved',
@@ -1973,7 +1978,7 @@
             zh: {
                 navDashboard: '资产', navWork: '工作', navTasks: '待办', navRepairs: '病历本', navCRM: '客户/人脉',
                 subTabTasks: '待办任务', subTabRoutines: '周期', subTabLogs: '历史记录',
-                addRoutine: '添加周期检查', editRoutine: '编辑周期检查', routineCatalog: '常规检查清单', selectRoutine: '选择常见项目...', interval: '周期', nextDue: '下次日期', overdue: '已过期', dueSoon: '即将到期', noRoutines: '暂无周期检查。', routinesHint: '本栏事项常驻显示。点完成后写入历史记录，并把下次日期按周期后推。', routineNotifyTitle: '周期提醒', routineNotifyOff: '不推送', routineNotifySms: '短信', routineNotifyEmail: '邮件', routineNotifyPhone: '接收短信的手机号', routineNotifyEmailAddr: '接收邮箱', routineNotifyHint: '没有服务器推送。选短信/邮件后，到期项会在本机打开草稿。', routineNotifySendDue: '为到期项生成草稿', routineNotifyOne: '提醒', toastNotifyNeedTarget: '请先填写手机号或邮箱', toastNotifyNoneDue: '当前没有到期项', toastNotifyOpened: '已打开草稿', everyMonths: '每{n}个月', everyYear: '每年', everyYears: '每{n}年', toastRoutineSaved: '周期检查已保存', toastRoutineDone: '已记入历史并滚动到下次', toastRoutineDeleted: '周期检查已删除', confirmDeleteRoutineTitle: '删除这项周期检查？', doneToday: '今日已完成', toastRoutineAlreadyToday: '今天已经记过一次', toastRoutineInFlight: '正在保存这次完成…', confirmEarlyRoutine: '下次日期还没到。确认再记一次并重新后推日期？',
+                addRoutine: '添加周期检查', editRoutine: '编辑周期检查', routineCatalog: '常规检查清单', selectRoutine: '选择常见项目...', interval: '周期', nextDue: '下次日期', overdue: '已过期', dueSoon: '即将到期', noRoutines: '暂无周期检查。', routinesHint: '本栏事项常驻显示。点完成后写入历史记录，并把下次日期按周期后推。', routineNotifyTitle: '周期提醒', routineNotifyOff: '关闭', routineNotifyDot: '小红点', routineDotHint: '打开后，快到期或已过期的周期会在「工作」和「周期」图标上显示圆点。默认关闭。', routineNotifySms: '短信', routineNotifyEmail: '邮件', routineNotifyPhone: '接收短信的手机号', routineNotifyEmailAddr: '接收邮箱', routineNotifyHint: '没有服务器推送。选短信/邮件后，到期项会在本机打开草稿。', routineNotifySendDue: '为到期项生成草稿', routineNotifyOne: '提醒', toastNotifyNeedTarget: '请先填写手机号或邮箱', toastNotifyNoneDue: '当前没有到期项', toastNotifyOpened: '已打开草稿', everyMonths: '每{n}个月', everyYear: '每年', everyYears: '每{n}年', toastRoutineSaved: '周期检查已保存', toastRoutineDone: '已记入历史并滚动到下次', toastRoutineDeleted: '周期检查已删除', confirmDeleteRoutineTitle: '删除这项周期检查？', doneToday: '今日已完成', toastRoutineAlreadyToday: '今天已经记过一次', toastRoutineInFlight: '正在保存这次完成…', confirmEarlyRoutine: '下次日期还没到。确认再记一次并重新后推日期？',
                 typeDetached: '独立屋', typeSemiDetached: '半独立屋', typeFreeholdTownhouse: '无物业费联排', typeCondoTownhouse: '有物业费联排', typeCondoApt: '高层公寓', typeLink: '连体住宅', typeMultiplex: '多户住宅',
                 dashboardTasks: '待处理任务', dashboardLogs: '维修与事件', dashboardTotalCost: '累计开销',
                 propertyLedger: '房屋账本', monthlyCashFlow: 'Monthly Cash Flow', monthlyCashFlowHint: '填写每月金额后点确认，保存到这套房屋。', monthlyExpenses: 'Monthly Expenses', monthlyExpensesHint: '自住房日常开销。点确认保存到这套房屋。', cashflowModeOwner: '自住房', cashflowModeRental: '出租房', cashflowModeHidden: '隐藏', cashflowRental: 'Rental income', cashflowMortgage: 'Mortgage', cashflowInsurance: 'Insurance', cashflowTax: 'Property tax', cashflowMgmt: 'Property management', cashflowHoa: 'HOA / condo fee', cashflowHydro: 'Electricity', cashflowGas: 'Gas / heat', cashflowWater: 'Water & sewer', cashflowInternet: 'Internet / phone', cashflowGroceries: 'Groceries', cashflowTransit: 'Transit / fuel', cashflowChildcare: 'Childcare', cashflowHealth: 'Healthcare', cashflowSubs: 'Subscriptions', cashflowReserve: 'Home reserve', cashflowOthers: 'Others total', cashflowNet: 'Net income', cashflowExpenseTotal: 'Total', confirmCashflow: '确认数字', toastCashflowSaved: '月度数字已保存',
@@ -2809,7 +2814,7 @@
             return { properties, tasks, repairs, contacts, customRoles, userZones: zones };
         }
 
-        const APP_VERSION = '2026.09.07-b';
+        const APP_VERSION = '2026.09.07-c';
 
         const app = createApp({
             data() {
@@ -2999,6 +3004,13 @@
                     const years = new Set(this.repairs.filter(r => r.propertyId === this.viewingPropertyId && r.date && typeof r.date === 'string').map(r => r.date.substring(0,4)));
                     years.add(new Date().getFullYear().toString()); 
                     return Array.from(years).sort((a,b) => b - a);
+                },
+                showRoutineDots() { return this.routineNotify === 'on'; },
+                routineAlertLevel() {
+                    const list = this.routines || [];
+                    if (list.some(r => this.isRoutineOverdue(r))) return 'overdue';
+                    if (list.some(r => this.isRoutineDueSoon(r))) return 'soon';
+                    return '';
                 },
                 cashflowRows() {
                     return this.cashflowCatalogGroup(this.cashflowMode === 'owner' ? 'owner' : 'rental').map(item => ({
