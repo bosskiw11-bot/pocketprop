@@ -685,6 +685,18 @@
                     </template>
 
                     <template v-if="workSubTab === 'routines'">
+                        <div class="bg-slate-800/80 rounded-2xl p-3 border border-slate-700/50 space-y-2">
+                            <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{{ t('routineNotifyTitle') }}</p>
+                            <div class="flex bg-slate-900 p-1 rounded-xl border border-slate-700/70">
+                                <button type="button" @click="setRoutineNotify('off')" class="flex-1 py-1.5 rounded-lg text-[11px] font-black transition-all" :class="routineNotify === 'off' ? 'bg-slate-600 text-white' : 'text-slate-400'">{{ t('routineNotifyOff') }}</button>
+                                <button type="button" @click="setRoutineNotify('sms')" class="flex-1 py-1.5 rounded-lg text-[11px] font-black transition-all" :class="routineNotify === 'sms' ? 'bg-brand-500 text-white' : 'text-slate-400'">{{ t('routineNotifySms') }}</button>
+                                <button type="button" @click="setRoutineNotify('email')" class="flex-1 py-1.5 rounded-lg text-[11px] font-black transition-all" :class="routineNotify === 'email' ? 'bg-brand-500 text-white' : 'text-slate-400'">{{ t('routineNotifyEmail') }}</button>
+                            </div>
+                            <input v-if="routineNotify === 'sms'" v-model="routineNotifyPhone" type="tel" :placeholder="t('routineNotifyPhone')" @change="saveRoutineNotifyTarget" class="w-full bg-slate-900 rounded-xl px-3 py-2 text-[13px] text-white outline-none border border-slate-700">
+                            <input v-if="routineNotify === 'email'" v-model="routineNotifyEmail" type="email" :placeholder="t('routineNotifyEmailAddr')" @change="saveRoutineNotifyTarget" class="w-full bg-slate-900 rounded-xl px-3 py-2 text-[13px] text-white outline-none border border-slate-700">
+                            <p class="text-[11px] text-slate-500 leading-relaxed">{{ t('routineNotifyHint') }}</p>
+                            <button v-if="routineNotify !== 'off'" type="button" @click="sendDueRoutineReminders" class="w-full py-2 rounded-xl bg-slate-900 border border-slate-700 text-[12px] font-bold text-slate-200">{{ t('routineNotifySendDue') }}</button>
+                        </div>
                         <p class="text-[11px] text-slate-400 px-1 leading-relaxed">{{ t('routinesHint') }}</p>
                         <div v-for="routine in filteredRoutines" :key="routine.id" class="bg-slate-800 rounded-2xl p-3 border transition-all" :class="isRoutineOverdue(routine) ? 'border-rose-500/40' : (isRoutineDueSoon(routine) ? 'border-amber-500/40' : 'border-slate-700/50')">
                             <div class="flex flex-col gap-2">
@@ -721,6 +733,7 @@
                                     <span class="text-[10px] px-1.5 py-0.5 rounded bg-violet-500/20 text-violet-300 font-medium">{{ formatRoutineInterval(routine.intervalMonths) }}</span>
                                     <span v-if="isRoutineOverdue(routine)" class="text-[10px] px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 font-bold">{{ t('overdue') }}</span>
                                     <span v-else-if="isRoutineDueSoon(routine)" class="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold">{{ t('dueSoon') }}</span>
+                                    <button v-if="routineNotify !== 'off' && (isRoutineOverdue(routine) || isRoutineDueSoon(routine))" type="button" @click="sendRoutineReminder(routine)" class="text-[10px] px-1.5 py-0.5 rounded bg-sky-500/15 text-sky-300 font-bold">{{ t('routineNotifyOne') }}</button>
                                 </div>
                             </div>
                         </div>
@@ -1108,6 +1121,7 @@
                                 <label class="block text-[12px] font-bold text-slate-400 uppercase tracking-wider mb-2 pl-1">{{ t('modalTaskTitle') }}</label>
                                 <select v-model="formTask.titleSelect" @change="handleTaskTitleChange" class="w-full bg-slate-800 rounded-2xl p-4 text-[15px] text-white outline-none">
                                     <option value="">{{ t('selectCommonTask') }}</option>
+                                    <option v-if="formTask.title && !isCommonTaskTitle(formTask.title)" :value="formTask.title">{{ formTask.title }}</option>
                                     <optgroup v-for="group in groupedCommonTasks" :key="group.category" :label="group.category">
                                         <option v-for="t in group.items" :key="t.name" :value="t.name">{{ t.name }}</option>
                                     </optgroup>
@@ -1146,6 +1160,7 @@
                                 <label class="block text-[12px] font-bold text-slate-400 uppercase tracking-wider mb-2 pl-1">{{ t('routineCatalog') }}</label>
                                 <select v-model="formRoutine.catalogKey" @change="applyRoutineCatalog" class="w-full bg-slate-800 rounded-2xl p-4 text-[15px] text-white outline-none">
                                     <option value="">{{ t('selectRoutine') }}</option>
+                                    <option v-if="formRoutine.catalogKey && !isRoutineCatalogKey(formRoutine.catalogKey)" :value="formRoutine.catalogKey">{{ formRoutine.title || formRoutine.catalogKey }}</option>
                                     <optgroup v-for="group in groupedRoutineCatalog" :key="group.category" :label="group.category">
                                         <option v-for="item in group.items" :key="item.key" :value="item.key">{{ item.title }}</option>
                                     </optgroup>
@@ -1220,7 +1235,8 @@
                                         <option v-for="r in group.items" :key="r.name" :value="r.name">{{ r.name }}</option>
                                     </optgroup>
                                 </select>
-                                <p v-if="(formRepair.titleSelect || formRepair.title) && formRepair.category" class="mt-2 text-[13px] font-bold text-white bg-slate-800/80 border border-slate-700 rounded-xl px-3 py-2">{{ formRepair.category }} — {{ formRepair.title || formRepair.titleSelect }}</p>
+
+
                             </div>
 
                             <div class="grid grid-cols-2 gap-4">
@@ -1907,7 +1923,7 @@
             en: {
                 navDashboard: 'Home', navWork: 'Work', navTasks: 'Tasks', navRepairs: 'Logs', navCRM: 'CRM',
                 subTabTasks: 'Pending', subTabRoutines: 'Cycles', subTabLogs: 'History',
-                addRoutine: 'Add Recurring Check', editRoutine: 'Edit Recurring Check', routineCatalog: 'Standard checklist', selectRoutine: 'Pick a standard item...', interval: 'Interval', nextDue: 'Next due', overdue: 'Overdue', dueSoon: 'Due soon', noRoutines: 'No recurring checks yet.', routinesHint: 'These stay on the list. Completing one writes a History record and rolls the next due date forward.', everyMonths: 'Every {n} mo', everyYear: 'Yearly', everyYears: 'Every {n} yr', toastRoutineSaved: 'Recurring check saved', toastRoutineDone: 'Logged and rolled to next due', toastRoutineDeleted: 'Recurring check removed', confirmDeleteRoutineTitle: 'Delete recurring check?', doneToday: 'Done today', toastRoutineAlreadyToday: 'Already logged for today', toastRoutineInFlight: 'Saving this check…', confirmEarlyRoutine: 'Next due is still in the future. Log another completion and roll the date again?',
+                addRoutine: 'Add Recurring Check', editRoutine: 'Edit Recurring Check', routineCatalog: 'Standard checklist', selectRoutine: 'Pick a standard item...', interval: 'Interval', nextDue: 'Next due', overdue: 'Overdue', dueSoon: 'Due soon', noRoutines: 'No recurring checks yet.', routinesHint: 'These stay on the list. Completing one writes a History record and rolls the next due date forward.', routineNotifyTitle: 'Cycle reminders', routineNotifyOff: 'Off', routineNotifySms: 'Text', routineNotifyEmail: 'Email', routineNotifyPhone: 'Phone number for SMS', routineNotifyEmailAddr: 'Email address', routineNotifyHint: 'No server push. Text/Email opens a draft on this phone for items that are due.', routineNotifySendDue: 'Draft reminder for due items', routineNotifyOne: 'Remind', toastNotifyNeedTarget: 'Add a phone or email first', toastNotifyNoneDue: 'Nothing due right now', toastNotifyOpened: 'Draft opened', everyMonths: 'Every {n} mo', everyYear: 'Yearly', everyYears: 'Every {n} yr', toastRoutineSaved: 'Recurring check saved', toastRoutineDone: 'Logged and rolled to next due', toastRoutineDeleted: 'Recurring check removed', confirmDeleteRoutineTitle: 'Delete recurring check?', doneToday: 'Done today', toastRoutineAlreadyToday: 'Already logged for today', toastRoutineInFlight: 'Saving this check…', confirmEarlyRoutine: 'Next due is still in the future. Log another completion and roll the date again?',
                 typeDetached: 'Detached', typeSemiDetached: 'Semi-Detached', typeFreeholdTownhouse: 'Freehold Townhouse', typeCondoTownhouse: 'Condo Townhouse', typeCondoApt: 'Condo Apt', typeLink: 'Link', typeMultiplex: 'Multiplex',
                 dashboardTasks: 'Pending Tasks', dashboardLogs: 'Logs & Events', dashboardTotalCost: 'Total Expenses',
                 propertyLedger: 'Property ledger', monthlyCashFlow: 'Monthly Cash Flow', monthlyCashFlowHint: 'Edit monthly figures, then confirm to save on this property.', monthlyExpenses: 'Monthly Expenses', monthlyExpensesHint: 'Owner-occupied household costs. Confirm to save on this property.', cashflowModeOwner: 'Owner-occupied', cashflowModeRental: 'Rental', cashflowModeHidden: 'Hidden', cashflowRental: 'Rental income', cashflowMortgage: 'Mortgage', cashflowInsurance: 'Insurance', cashflowTax: 'Property tax', cashflowMgmt: 'Property management', cashflowHoa: 'HOA / condo fee', cashflowHydro: 'Electricity', cashflowGas: 'Gas / heat', cashflowWater: 'Water & sewer', cashflowInternet: 'Internet / phone', cashflowGroceries: 'Groceries', cashflowTransit: 'Transit / fuel', cashflowChildcare: 'Childcare', cashflowHealth: 'Healthcare', cashflowSubs: 'Subscriptions', cashflowReserve: 'Home reserve', cashflowOthers: 'Others total', cashflowNet: 'Net income', cashflowExpenseTotal: 'Total', confirmCashflow: 'Confirm figures', toastCashflowSaved: 'Monthly figures saved',
@@ -1954,7 +1970,7 @@
             zh: {
                 navDashboard: '资产', navWork: '工作', navTasks: '待办', navRepairs: '病历本', navCRM: '客户/人脉',
                 subTabTasks: '待办任务', subTabRoutines: '周期', subTabLogs: '历史记录',
-                addRoutine: '添加周期检查', editRoutine: '编辑周期检查', routineCatalog: '常规检查清单', selectRoutine: '选择常见项目...', interval: '周期', nextDue: '下次日期', overdue: '已过期', dueSoon: '即将到期', noRoutines: '暂无周期检查。', routinesHint: '本栏事项常驻显示。点完成后写入历史记录，并把下次日期按周期后推。', everyMonths: '每{n}个月', everyYear: '每年', everyYears: '每{n}年', toastRoutineSaved: '周期检查已保存', toastRoutineDone: '已记入历史并滚动到下次', toastRoutineDeleted: '周期检查已删除', confirmDeleteRoutineTitle: '删除这项周期检查？', doneToday: '今日已完成', toastRoutineAlreadyToday: '今天已经记过一次', toastRoutineInFlight: '正在保存这次完成…', confirmEarlyRoutine: '下次日期还没到。确认再记一次并重新后推日期？',
+                addRoutine: '添加周期检查', editRoutine: '编辑周期检查', routineCatalog: '常规检查清单', selectRoutine: '选择常见项目...', interval: '周期', nextDue: '下次日期', overdue: '已过期', dueSoon: '即将到期', noRoutines: '暂无周期检查。', routinesHint: '本栏事项常驻显示。点完成后写入历史记录，并把下次日期按周期后推。', routineNotifyTitle: '周期提醒', routineNotifyOff: '不推送', routineNotifySms: '短信', routineNotifyEmail: '邮件', routineNotifyPhone: '接收短信的手机号', routineNotifyEmailAddr: '接收邮箱', routineNotifyHint: '没有服务器推送。选短信/邮件后，到期项会在本机打开草稿。', routineNotifySendDue: '为到期项生成草稿', routineNotifyOne: '提醒', toastNotifyNeedTarget: '请先填写手机号或邮箱', toastNotifyNoneDue: '当前没有到期项', toastNotifyOpened: '已打开草稿', everyMonths: '每{n}个月', everyYear: '每年', everyYears: '每{n}年', toastRoutineSaved: '周期检查已保存', toastRoutineDone: '已记入历史并滚动到下次', toastRoutineDeleted: '周期检查已删除', confirmDeleteRoutineTitle: '删除这项周期检查？', doneToday: '今日已完成', toastRoutineAlreadyToday: '今天已经记过一次', toastRoutineInFlight: '正在保存这次完成…', confirmEarlyRoutine: '下次日期还没到。确认再记一次并重新后推日期？',
                 typeDetached: '独立屋', typeSemiDetached: '半独立屋', typeFreeholdTownhouse: '无物业费联排', typeCondoTownhouse: '有物业费联排', typeCondoApt: '高层公寓', typeLink: '连体住宅', typeMultiplex: '多户住宅',
                 dashboardTasks: '待处理任务', dashboardLogs: '维修与事件', dashboardTotalCost: '累计开销',
                 propertyLedger: '房屋账本', monthlyCashFlow: 'Monthly Cash Flow', monthlyCashFlowHint: '填写每月金额后点确认，保存到这套房屋。', monthlyExpenses: 'Monthly Expenses', monthlyExpensesHint: '自住房日常开销。点确认保存到这套房屋。', cashflowModeOwner: '自住房', cashflowModeRental: '出租房', cashflowModeHidden: '隐藏', cashflowRental: 'Rental income', cashflowMortgage: 'Mortgage', cashflowInsurance: 'Insurance', cashflowTax: 'Property tax', cashflowMgmt: 'Property management', cashflowHoa: 'HOA / condo fee', cashflowHydro: 'Electricity', cashflowGas: 'Gas / heat', cashflowWater: 'Water & sewer', cashflowInternet: 'Internet / phone', cashflowGroceries: 'Groceries', cashflowTransit: 'Transit / fuel', cashflowChildcare: 'Childcare', cashflowHealth: 'Healthcare', cashflowSubs: 'Subscriptions', cashflowReserve: 'Home reserve', cashflowOthers: 'Others total', cashflowNet: 'Net income', cashflowExpenseTotal: 'Total', confirmCashflow: '确认数字', toastCashflowSaved: '月度数字已保存',
@@ -2790,7 +2806,7 @@
             return { properties, tasks, repairs, contacts, customRoles, userZones: zones };
         }
 
-        const APP_VERSION = '2026.09.06-x';
+        const APP_VERSION = '2026.09.07-a';
 
         const app = createApp({
             data() {
@@ -2845,6 +2861,9 @@
                     editingRoutineId: null,
                     completingRoutineIds: {},
                     formRoutine: { catalogKey: '', title: '', propertyId: '', zone: '', category: '', intervalMonths: 12, nextDueDate: '', lastDoneDate: '' },
+                    routineNotify: 'off',
+                    routineNotifyPhone: '',
+                    routineNotifyEmail: '',
                     
                     cashflowMode: 'rental',
                     cashflowDraft: { rentalIncome: '', mortgage: '', insurance: '', propertyTax: '', propertyManagement: '', hoa: '', hydro: '', gas: '', water: '', internet: '', groceries: '', transit: '', childcare: '', health: '', subscriptions: '', reserve: '', others: '' },
@@ -3607,7 +3626,7 @@
                 },
                 async saveRoutine() {
                     if (!this.formRoutine.catalogKey) return;
-                    this.applyRoutineCatalog();
+                    if (!this.formRoutine.title) this.applyRoutineCatalog();
                     if (!this.formRoutine.title) return;
                     const payload = {
                         catalogKey: this.formRoutine.catalogKey,
@@ -3628,6 +3647,43 @@
                     await this.saveToStorage();
                     this.closeModal();
                     this.showToast(this.t('toastRoutineSaved'));
+                },
+                async setRoutineNotify(mode) {
+                    this.routineNotify = mode;
+                    await this.saveToStorage();
+                },
+                async saveRoutineNotifyTarget() {
+                    await this.saveToStorage();
+                },
+                routineReminderText(list) {
+                    const lines = list.map(r => `${r.title || ''} · ${this.t('nextDue')} ${r.nextDueDate || '—'}${this.getPropertyName(r.propertyId) ? ' · ' + this.getPropertyName(r.propertyId) : ''}`);
+                    return (this.currentLang === 'zh' ? '口袋屋周期到期：\n' : 'PocketProp cycles due:\n') + lines.join('\n');
+                },
+                openRoutineNotifyDraft(body) {
+                    if (this.routineNotify === 'sms') {
+                        const phone = (this.routineNotifyPhone || '').trim();
+                        if (!phone) { this.showToast(this.t('toastNotifyNeedTarget')); return false; }
+                        window.location.href = `sms:${encodeURIComponent(phone)}?&body=${encodeURIComponent(body)}`;
+                        return true;
+                    }
+                    if (this.routineNotify === 'email') {
+                        const email = (this.routineNotifyEmail || '').trim();
+                        if (!email) { this.showToast(this.t('toastNotifyNeedTarget')); return false; }
+                        const subject = this.currentLang === 'zh' ? '口袋屋周期提醒' : 'PocketProp cycle reminder';
+                        window.location.href = `mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+                        return true;
+                    }
+                    return false;
+                },
+                sendRoutineReminder(routine) {
+                    if (!routine || this.routineNotify === 'off') return;
+                    if (this.openRoutineNotifyDraft(this.routineReminderText([routine]))) this.showToast(this.t('toastNotifyOpened'));
+                },
+                sendDueRoutineReminders() {
+                    if (this.routineNotify === 'off') return;
+                    const due = (this.filteredRoutines || []).filter(r => this.isRoutineOverdue(r) || this.isRoutineDueSoon(r));
+                    if (!due.length) { this.showToast(this.t('toastNotifyNoneDue')); return; }
+                    if (this.openRoutineNotifyDraft(this.routineReminderText(due))) this.showToast(this.t('toastNotifyOpened'));
                 },
                 wasRoutineCompletedToday(routine) {
                     if (!routine) return false;
@@ -3742,11 +3798,11 @@
                         }
                     }
                     if (type === 'task') {
-                        if (item) { this.editingTaskId = item.id; let tSelect = item.titleSelect; if (!tSelect) { const found = this.commonTaskTitles[this.currentLang].find(t => t.name === item.title); tSelect = found ? found.name : 'OTHER'; } this.formTask = { propertyId: item.propertyId || defaultProp, titleSelect: tSelect, title: item.title || '', zone: item.zone || '', category: item.category || '', issueDate: item.issueDate || '', beforePhotos: [...(item.beforePhotos || [])] }; } 
+                        if (item) { this.editingTaskId = item.id; let tSelect = item.titleSelect; if (!tSelect || tSelect === 'OTHER') { const found = (this.commonTaskTitles[this.currentLang] || []).find(t => t.name === item.title); tSelect = found ? found.name : (item.title || ''); } this.formTask = { propertyId: item.propertyId || defaultProp, titleSelect: tSelect, title: item.title || '', zone: item.zone || '', category: item.category || '', issueDate: item.issueDate || '', beforePhotos: [...(item.beforePhotos || [])] }; } 
                         else { this.editingTaskId = null; this.formTask = { propertyId: defaultProp, titleSelect: '', title: '', zone: this.viewingZone || '', category: '', issueDate: new Date().toISOString().split('T')[0], beforePhotos: [] }; }
                     }
                     if (type === 'repair') {
-                        if (item && item.id) { this.editingRepairId = item.id; let rSelect = item.titleSelect; if (!rSelect) { const found = this.commonRepairTitles[this.currentLang].find(r => r.name === item.title); rSelect = found ? found.name : 'OTHER'; } this.formRepair = { propertyId: item.propertyId || defaultProp, titleSelect: rSelect, title: item.title || '', zone: item.zone || '', category: item.category || '', cost: item.cost || '', date: item.date || new Date().toISOString().split('T')[0], warrantyEndDate: item.warrantyEndDate || '', contractorId: item.contractorId || '', hasReceipt: item.hasReceipt !== false, receiptPhotos: Array.isArray(item.receiptPhotos) ? [...item.receiptPhotos] : [], beforePhotos: Array.isArray(item.beforePhotos) ? [...item.beforePhotos] : [], afterPhotos: Array.isArray(item.afterPhotos) ? [...item.afterPhotos] : [] }; } 
+                        if (item && item.id) { this.editingRepairId = item.id; let rSelect = item.titleSelect; if (!rSelect || rSelect === 'OTHER') { const found = (this.commonTaskTitles[this.currentLang] || []).find(r => r.name === item.title); rSelect = found ? found.name : (item.title || ''); } this.formRepair = { propertyId: item.propertyId || defaultProp, titleSelect: rSelect, title: item.title || '', zone: item.zone || '', category: item.category || '', cost: item.cost || '', date: item.date || new Date().toISOString().split('T')[0], warrantyEndDate: item.warrantyEndDate || '', contractorId: item.contractorId || '', hasReceipt: item.hasReceipt !== false, receiptPhotos: Array.isArray(item.receiptPhotos) ? [...item.receiptPhotos] : [], beforePhotos: Array.isArray(item.beforePhotos) ? [...item.beforePhotos] : [], afterPhotos: Array.isArray(item.afterPhotos) ? [...item.afterPhotos] : [] }; } 
                         else if (!this.convertingTaskId && !this.convertingRoutineId) { this.editingRepairId = null; this.formRepair = { propertyId: defaultProp, titleSelect: '', title: '', zone: this.viewingZone || '', category: '', cost: '', date: new Date().toISOString().split('T')[0], warrantyEndDate: '', contractorId: '', hasReceipt: true, receiptPhotos: [], beforePhotos: [], afterPhotos: [] }; }
                         else { this.editingRepairId = null; }
                     }
@@ -3786,6 +3842,13 @@
                         this.formRepair.titleSelect = '';
                         this.formRepair.title = '';
                     }
+                },
+                isCommonTaskTitle(name) {
+                    return !!(name && (this.commonTaskTitles[this.currentLang] || []).some(t => t.name === name));
+                },
+                isRoutineCatalogKey(key) {
+                    if (!key || key === 'OTHER') return false;
+                    return (this.routineCatalog[this.currentLang] || []).some(i => i.key === key);
                 },
                 isCommonRepairTitle(name) {
                     return !!(name && (this.commonTaskTitles[this.currentLang] || []).some(r => r.name === name));
@@ -3953,6 +4016,7 @@
                 },
                 
                 async saveRepair() {
+                    if (this.formRepair.titleSelect && !this.formRepair.title) this.formRepair.title = this.formRepair.titleSelect;
                     if (!this.formRepair.title && !this.formRepair.titleSelect) return;
                     if (this.editingRepairId) {
                         const idx = this.repairs.findIndex(r => r.id === this.editingRepairId);
@@ -4107,7 +4171,7 @@
                     this.routines = [
                         { id: 'rt_demo_filter', catalogKey: 'furnace_filter', title: zh ? '更换暖炉 / 新风滤网' : 'Replace furnace / HRV filter', propertyId: 'p_demo_home', zone: zh ? '暖炉房 / 机房' : 'Furnace Room', category: zh ? '暖通空调' : 'HVAC', intervalMonths: 3, nextDueDate: '2026-09-01', lastDoneDate: '2026-06-01' },
                         { id: 'rt_demo_gutter', catalogKey: 'gutters', title: zh ? '清理排水沟与落水管' : 'Clean gutters & downspouts', propertyId: 'p_demo_home', zone: zh ? '排水沟/落水管' : 'Gutters & Downspouts', category: zh ? '屋顶维修' : 'Roofing', intervalMonths: 6, nextDueDate: '2026-10-15', lastDoneDate: '2026-04-15' },
-                        { id: 'rt_demo_smoke', catalogKey: 'smoke_test', title: zh ? '测试烟雾 / 一氧化碳报警器' : 'Test smoke / CO detectors', propertyId: 'p_demo_condo', zone: zh ? '楼梯间' : 'Hallway', category: zh ? '电路灯具' : 'Electrical', intervalMonths: 1, nextDueDate: '2026-09-20', lastDoneDate: '2026-08-20' },
+                        { id: 'rt_demo_smoke', catalogKey: 'smoke_test', title: zh ? '测试烟雾 / 一氧化碳报警器' : 'Test smoke / CO detectors', propertyId: 'p_demo_condo', zone: zh ? '楼梯间' : 'Hallway', category: zh ? '安防检查' : 'Safety', intervalMonths: 1, nextDueDate: '2026-09-20', lastDoneDate: '2026-08-20' },
                         { id: 'rt_demo_wh', catalogKey: 'wh_flush', title: zh ? '冲洗热水器罐体沉积' : 'Flush water heater tank', propertyId: 'p_demo_semi', zone: zh ? '暖炉房 / 机房' : 'Furnace Room', category: zh ? '水电卫浴' : 'Plumbing', intervalMonths: 12, nextDueDate: '2026-11-01', lastDoneDate: '2025-11-01' },
                         { id: 'rt_demo_dryer', catalogKey: 'dryer_vent', title: zh ? '清理干衣机排风管' : 'Clean dryer vent & lint path', propertyId: 'p_demo_cth', zone: zh ? '洗衣房' : 'Laundry Room', category: zh ? '家电维修' : 'Appliances', intervalMonths: 12, nextDueDate: '2026-08-20', lastDoneDate: '2025-08-20' },
                         { id: 'rt_demo_sump', catalogKey: 'sump', title: zh ? '测试地下室排水泵' : 'Test sump pump', propertyId: 'p_demo_multi', zone: zh ? '地下室' : 'Basement', category: zh ? '水电卫浴' : 'Plumbing', intervalMonths: 3, nextDueDate: '2026-09-10', lastDoneDate: '2026-06-10' },
@@ -4138,7 +4202,10 @@
                             contacts: this.contacts,
                             customRoles: this.customRoles,
                             userZones: this.userZones,
-                            userCatalog: this.userCatalog
+                            userCatalog: this.userCatalog,
+                            routineNotify: this.routineNotify,
+                            routineNotifyPhone: this.routineNotifyPhone,
+                            routineNotifyEmail: this.routineNotifyEmail
                         }));
                         await localforage.setItem('pocket_prop_data', data);
                     }
@@ -4156,6 +4223,9 @@
                             if (data.userCatalog && data.userCatalog.categories) this.userCatalog = data.userCatalog;
                             else this.userCatalog = cloneDefaultCatalog();
                             if (!this.userCatalog.cashflow || !this.userCatalog.cashflow.rental) this.userCatalog.cashflow = JSON.parse(JSON.stringify(defaultCashflowCatalog));
+                            if (data.routineNotify) this.routineNotify = data.routineNotify;
+                            if (data.routineNotifyPhone != null) this.routineNotifyPhone = data.routineNotifyPhone;
+                            if (data.routineNotifyEmail != null) this.routineNotifyEmail = data.routineNotifyEmail;
                             if (data.userZones && data.userZones.length > 0) {
                                 this.userZones = data.userZones;
                             } else {
@@ -4176,7 +4246,10 @@
                         contacts: this.contacts,
                         customRoles: this.customRoles,
                         userZones: this.userZones,
-                        userCatalog: this.userCatalog
+                        userCatalog: this.userCatalog,
+                        routineNotify: this.routineNotify,
+                        routineNotifyPhone: this.routineNotifyPhone,
+                        routineNotifyEmail: this.routineNotifyEmail
                     };
                     const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
                     const url = URL.createObjectURL(blob);
@@ -4208,6 +4281,9 @@
                                 this.contacts = data.contacts || [];
                                 this.customRoles = data.customRoles || [];
                                 this.userZones = data.userZones || getDefaultZones(this.currentLang);
+                                if (data.routineNotify) this.routineNotify = data.routineNotify;
+                                if (data.routineNotifyPhone != null) this.routineNotifyPhone = data.routineNotifyPhone;
+                                if (data.routineNotifyEmail != null) this.routineNotifyEmail = data.routineNotifyEmail;
                                 this.normalizePhotoFields();
                                 await this.saveToStorage();
                                 this.showToast(this.t('toastImportSuccess'));
