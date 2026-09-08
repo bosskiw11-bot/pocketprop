@@ -665,6 +665,7 @@
                                         <p class="text-[11px] font-bold text-slate-300 flex items-center gap-1.5 min-w-0 flex-1 truncate">
                                             <i class="fa-regular fa-calendar text-[10px] text-brand-400"></i>
                                             <span class="truncate">{{ task.issueDate || t('noIssueDate') }}</span>
+                                            <span v-if="task.deadline" class="truncate" :class="isTaskOverdue(task) ? 'text-rose-400' : (isTaskDueSoon(task) ? 'text-amber-300' : 'text-slate-400')">· {{ t('deadline') }} {{ task.deadline }}</span>
                                         </p>
                                         <div class="flex items-center gap-1 flex-shrink-0">
                                             <button v-if="!task.completed" @click="convertTaskToRepair(task)" class="h-7 px-2.5 rounded-lg bg-brand-500 text-white text-[11px] font-bold flex items-center gap-1 shadow-sm shadow-brand-500/30 active:scale-95" :title="t('btnLogAsRepair')">
@@ -697,19 +698,6 @@
                     </template>
 
                     <template v-if="workSubTab === 'routines'">
-                        <div class="flex items-start gap-2 px-1">
-                            <p class="text-[11px] text-slate-400 leading-relaxed flex-1 min-w-0">{{ t('routinesHint') }}</p>
-                            <button type="button" @click="showRoutineNotifyPanel = !showRoutineNotifyPanel" class="w-7 h-7 flex-shrink-0 rounded-lg flex items-center justify-center" :class="showRoutineDots ? 'text-rose-300 bg-rose-500/10' : 'text-slate-500'">
-                                <i class="fa-solid fa-bell text-[11px]"></i>
-                            </button>
-                        </div>
-                        <div v-if="showRoutineNotifyPanel" class="bg-slate-800/70 rounded-xl p-2.5 border border-slate-700/40 space-y-2">
-                            <p class="text-[11px] text-slate-400">{{ t('routineDotHint') }}</p>
-                            <div class="flex gap-1">
-                                <button type="button" @click="setRoutineNotify('off')" class="flex-1 py-1.5 rounded-lg text-[10px] font-bold" :class="!showRoutineDots ? 'bg-slate-600 text-white' : 'text-slate-500'">{{ t('routineNotifyOff') }}</button>
-                                <button type="button" @click="setRoutineNotify('on')" class="flex-1 py-1.5 rounded-lg text-[10px] font-bold" :class="showRoutineDots ? 'bg-brand-500 text-white' : 'text-slate-500'">{{ t('routineNotifyDot') }}</button>
-                            </div>
-                        </div>
                         <div v-for="routine in filteredRoutines" :key="routine.id" class="bg-slate-800 rounded-2xl p-3 border transition-all" :class="isRoutineOverdue(routine) ? 'border-rose-500/40' : (isRoutineDueSoon(routine) ? 'border-amber-500/40' : 'border-slate-700/50')">
                             <div class="flex flex-col gap-2">
                                 <div class="flex items-center gap-2">
@@ -1116,6 +1104,14 @@
                                 <label class="block text-[12px] font-bold text-slate-400 uppercase tracking-wider mb-2 pl-1">{{ t('issueDate') }}</label>
                                 <input v-model="formTask.issueDate" type="date" class="w-full bg-slate-800 rounded-2xl p-4 text-[15px] text-white outline-none border border-transparent focus:border-brand-500">
                             </div>
+                            <div>
+                                <label class="block text-[12px] font-bold text-slate-400 uppercase tracking-wider mb-2 pl-1">{{ t('deadline') }}</label>
+                                <input v-model="formTask.deadline" type="date" class="w-full bg-slate-800 rounded-2xl p-4 text-[15px] text-white outline-none border border-transparent focus:border-brand-500">
+                            </div>
+                            <label class="flex items-center gap-3 bg-slate-800/80 rounded-2xl p-3.5 border border-slate-700/60">
+                                <input type="checkbox" v-model="formTask.alertOn" class="w-4 h-4">
+                                <span class="text-[13px] font-semibold text-slate-200">{{ t('itemAlertOn') }}</span>
+                            </label>
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
                                     <label class="block text-[12px] font-bold text-slate-400 uppercase tracking-wider mb-2 pl-1">{{ t('modalProperty') }}</label>
@@ -1218,6 +1214,10 @@
                                     <input v-model="formRoutine.nextDueDate" type="date" class="w-full bg-slate-800 rounded-2xl p-4 text-[15px] text-white outline-none">
                                 </div>
                             </div>
+                            <label class="flex items-center gap-3 bg-slate-800/80 rounded-2xl p-3.5 border border-slate-700/60">
+                                <input type="checkbox" v-model="formRoutine.alertOn" class="w-4 h-4">
+                                <span class="text-[13px] font-semibold text-slate-200">{{ t('itemAlertOn') }}</span>
+                            </label>
                             <button @click="saveRoutine" class="w-full py-4 mt-2 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-2xl shadow-lg active:scale-95 text-lg">{{ t('btnSave') }}</button>
                         </div>
 
@@ -1599,7 +1599,7 @@
                                         </div>
                                         <div>
                                             <p class="text-sm font-bold text-white">{{ t('settingsLanguage') }}</p>
-                                            <p class="text-[10px] text-slate-500 mt-0.5">{{ t('settingsLangHint') }}</p>
+                                            <p class="text-[10px] text-slate-500 mt-0.5 leading-relaxed">{{ t('settingsLangHint') }}</p>
                                         </div>
                                     </div>
                                     <button @click="toggleLanguage" class="text-xs font-bold px-3 py-1.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-200 border border-slate-600 active:scale-95 transition-transform flex items-center gap-1.5">
@@ -1618,6 +1618,25 @@
                                     <button @click="toggleGPS" class="w-12 h-6 rounded-full p-1 transition-colors relative flex-shrink-0" :class="gpsEnabled ? 'bg-brand-500' : 'bg-slate-700'">
                                         <div class="w-4 h-4 bg-white rounded-full transition-transform transform shadow" :class="gpsEnabled ? 'translate-x-6' : 'translate-x-0'"></div>
                                     </button>
+                                </div>
+                                <div class="bg-slate-800/80 p-4 rounded-2xl border border-slate-700/60 space-y-3">
+                                    <div class="flex justify-between items-center gap-3">
+                                        <div>
+                                            <p class="text-sm font-bold text-white">{{ t('workDotsTitle') }}</p>
+                                            <p class="text-[10px] text-slate-500 mt-0.5">{{ t('workDotsHint') }}</p>
+                                        </div>
+                                        <button @click="workDotsOn = !workDotsOn; saveToStorage()" class="w-12 h-6 rounded-full p-1 transition-colors relative flex-shrink-0" :class="workDotsOn ? 'bg-brand-500' : 'bg-slate-700'">
+                                            <div class="w-4 h-4 bg-white rounded-full transition-transform transform shadow" :class="workDotsOn ? 'translate-x-6' : 'translate-x-0'"></div>
+                                        </button>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-2" v-if="workDotsOn">
+                                        <label class="text-[11px] text-slate-400 font-semibold">{{ t('cycleSoonDays') }}
+                                            <input v-model.number="cycleSoonDays" type="number" min="0" max="90" @change="saveToStorage" class="mt-1 w-full bg-slate-900 rounded-xl px-2 py-2 text-white text-[13px]">
+                                        </label>
+                                        <label class="text-[11px] text-slate-400 font-semibold">{{ t('taskSoonDays') }}
+                                            <input v-model.number="taskSoonDays" type="number" min="0" max="90" @change="saveToStorage" class="mt-1 w-full bg-slate-900 rounded-xl px-2 py-2 text-white text-[13px]">
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
 
@@ -1935,9 +1954,9 @@
         <!-- Fullscreen Image Viewer -->
         <transition name="fade">
             <div v-if="viewingImages.length > 0" class="fixed inset-0 z-[60] bg-black/95 backdrop-blur-md flex flex-col select-none" @touchstart.passive="onViewerTouchStart" @touchend.passive="onViewerTouchEnd">
-                <div class="h-16 flex items-center justify-between px-5 bg-gradient-to-b from-black/80 to-transparent z-10">
+                <div class="flex items-center justify-between px-5 bg-gradient-to-b from-black/80 to-transparent z-10" style="padding-top: max(12px, env(safe-area-inset-top, 0px)); padding-bottom: 10px;">
                     <span class="text-xs font-bold text-slate-400"><template v-if="viewingImages.length > 1">{{ currentImageIndex + 1 }} / {{ viewingImages.length }}</template></span>
-                    <button @click="closeImageViewer" class="w-10 h-10 rounded-full bg-white/10 text-white flex items-center justify-center active:scale-90"><i class="fa-solid fa-xmark text-xl"></i></button>
+                    <button @click="closeImageViewer" class="w-11 h-11 rounded-full bg-white/15 text-white flex items-center justify-center active:scale-90 border border-white/20"><i class="fa-solid fa-xmark text-xl"></i></button>
                 </div>
                 
                 <div class="flex-1 relative flex items-center justify-center p-4 overflow-hidden">
@@ -1962,14 +1981,12 @@
             </div>
         </transition>
 
-        <div v-if="showRoutineDotPrompt" class="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-slate-950/80">
-            <div class="bg-slate-900 border border-slate-700 rounded-3xl p-5 w-full max-w-xs space-y-3 text-center">
-                <p class="text-sm font-bold text-white">{{ t('routineDotPromptTitle') }}</p>
-                <p class="text-[12px] text-slate-400">{{ t('routineDotPromptBody') }}</p>
-                <div class="grid grid-cols-2 gap-2 pt-1">
-                    <button @click="answerRoutineDotPrompt(false)" class="py-2.5 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold">{{ t('routineNotifyOff') }}</button>
-                    <button @click="answerRoutineDotPrompt(true)" class="py-2.5 rounded-xl bg-brand-500 text-white text-xs font-bold">{{ t('routineNotifyDot') }}</button>
-                </div>
+        <div v-if="pendingNextDue" class="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-slate-950/80">
+            <div class="bg-slate-900 border border-slate-700 rounded-3xl p-5 w-full max-w-xs space-y-3">
+                <p class="text-sm font-bold text-white text-center">{{ t('confirmNextDueTitle') }}</p>
+                <p class="text-[12px] text-slate-400 text-center">{{ pendingNextDue.title }}</p>
+                <input v-model="pendingNextDue.nextDueDate" type="date" class="w-full bg-slate-800 rounded-2xl p-3 text-[15px] text-white outline-none">
+                <button @click="confirmPendingNextDue" class="w-full py-3 rounded-2xl bg-brand-500 text-white font-bold text-sm">{{ t('btnSave') }}</button>
             </div>
         </div>
         <!-- Toast Notification -->
@@ -2022,7 +2039,7 @@
                 settingsTitle: 'Settings', settingsPreferences: 'Preferences', settingsLanguage: 'Language', settingsGPS: 'GPS Location Services', settingsGPSDesc: 'Enables automatic geolocation & map positioning.',
                 settingsDashboardViews: 'Dashboard Views', minOneViewRequired: 'At least one view mode must be active.', settingsPropertyOrder: 'Property Reorder',
                 settingsContactRoles: 'Contact Category Settings', addRoleCategory: 'Add Category', roleCategoryName: 'Category Name', toastRoleAdded: 'Category added', toastRoleDeleted: 'Category deleted',
-                settingsDataBackup: 'Data Management (Local-First)', exportBackup: 'Export JSON Backup', exportBackupLight: 'Light backup', exportBackupLightDesc: 'Houses, work and ledger only — no photos.', exportBackupFull: 'Full backup', exportBackupFullDesc: 'Includes photos and receipts. File can be large.', importBackup: 'Restore JSON Backup', toastExportLight: 'Light backup saved (no photos)', toastExportFull: 'Full backup saved', toastImportLightNoPhotos: 'Restored text. Photos live in a full backup.', settingsDaily: 'Everyday', settingsAdvanced: 'Advanced', settingsLangHint: 'Saved task and room names stay as you typed them.', cleanupUnusedPhotos: 'Clear unused photos', cleanupUnusedPhotosDesc: 'Remove photo files no record points to.', toastCleanupDone: 'Cleared {n} unused files', photoInFullBackup: 'In full backup', toastAddPropertyFirst: 'Add a property first', routineDotPromptTitle: 'A cycle is overdue', routineDotPromptBody: 'Show a small red dot on Work when something is due?', toastImportSuccess: 'Data restored successfully!', toastImportFailed: 'Invalid backup file format.', confirmImportMsg: 'Restoring from backup will overwrite all existing local data. Continue?',
+                settingsDataBackup: 'Data Management (Local-First)', exportBackup: 'Export JSON Backup', exportBackupLight: 'Light backup', exportBackupLightDesc: 'Houses, work and ledger only — no photos.', exportBackupFull: 'Full backup', exportBackupFullDesc: 'Includes photos and receipts. File can be large.', importBackup: 'Restore JSON Backup', toastExportLight: 'Light backup saved (no photos)', toastExportFull: 'Full backup saved', toastImportLightNoPhotos: 'Restored text. Photos live in a full backup.', settingsDaily: 'Everyday', settingsAdvanced: 'Advanced', settingsLangHint: 'Switching language changes menus and buttons only. Anything you have added or edited keeps the wording you saved.', deadline: 'Deadline', itemAlertOn: 'Red-dot reminder for this item', workDotsTitle: 'Work red dots', workDotsHint: 'Master switch. Each task or cycle must also enable its own reminder.', cycleSoonDays: 'Cycle: days before due', taskSoonDays: 'Task: days before deadline', confirmNextDueTitle: 'Confirm next due date', cleanupUnusedPhotos: 'Clear unused photos', cleanupUnusedPhotosDesc: 'Remove photo files no record points to.', toastCleanupDone: 'Cleared {n} unused files', photoInFullBackup: 'In full backup', toastAddPropertyFirst: 'Add a property first', routineDotPromptTitle: 'A cycle is overdue', routineDotPromptBody: 'Show a small red dot on Work when something is due?', toastImportSuccess: 'Data restored successfully!', toastImportFailed: 'Invalid backup file format.', confirmImportMsg: 'Restoring from backup will overwrite all existing local data. Continue?',
                 loadDemoData: 'Reset Demo Data', loadDemoDataDesc: 'Overwrites current data with multi-property sample dataset.', confirmDemoDataMsg: 'Are you sure you want to load sample data? Current data will be replaced.', toastDemoLoaded: 'Demo data loaded',
                 settingsFileManager: 'Media & File Storage', fileManagerTitle: 'Repair photos & receipts', filesCount: 'Files', storageUsed: 'Used', btnManageFiles: 'Open Gallery', noMediaFiles: 'No photo or document files match.', toastMediaDeleted: 'File removed from local storage.', fileTypeAll: 'All Files', fileLibraryHint: 'Grouped by work date. Tap a file, then swipe to browse.', fileSearchPh: 'Search title or property', viewerSwipeHint: 'Swipe left / right to switch', fileLibraryUpload: 'Upload', fileLibraryTitlePh: 'Name (optional)', fileLibraryUploadHint: 'Pick a property above first, then upload. Stored on this phone.', fileCatDeal: 'Closing / title', fileCatInsurance: 'Insurance', fileCatLease: 'Lease', fileCatMaintenance: 'Repairs', fileCatOther: 'Other', toastPickPropertyFirst: 'Choose a property first', toastLibraryUploaded: 'File added',
                 roleTenant: 'Tenant', roleContractor: 'Contractor', roleRealtor: 'Realtor', roleLawyer: 'Lawyer', roleType: 'Contact Role', contactName: 'Full Name', contactTrade: 'Specialty / Trade Title', contactTradeHint: 'e.g. HVAC, Plumbing Specialist', assocProperty: 'Associated Property', assocProperties: 'Associated Properties', contractorNote: 'Contractors are linked through repair logs.', noneGeneral: 'General / Unlinked', searchContact: 'Search contacts...', noContacts: 'No contacts found.',
@@ -2069,7 +2086,7 @@
                 settingsTitle: '系统设置', settingsPreferences: '偏好设置', settingsLanguage: '界面语言', settingsGPS: 'GPS 定位服务', settingsGPSDesc: '开启后可在房屋地图中定位当前位置及导航。',
                 settingsDashboardViews: '仪表盘视图设置', minOneViewRequired: '必须至少保留一个视图模式。', settingsPropertyOrder: '房屋卡片排序',
                 settingsContactRoles: '人员类别设置', addRoleCategory: '新增类别', roleCategoryName: '类别名称', toastRoleAdded: '已新增人员类别', toastRoleDeleted: '已删除人员类别',
-                settingsDataBackup: '数据备份与恢复 (离线)', exportBackup: '导出 JSON 备份文件', exportBackupLight: '轻备份', exportBackupLightDesc: '只含房屋、工作和账本，不含照片。', exportBackupFull: '完整备份', exportBackupFullDesc: '含照片和收据，文件可能很大。', importBackup: '恢复 JSON 备份文件', toastExportLight: '已导出轻备份（不含照片）', toastExportFull: '已导出完整备份', toastImportLightNoPhotos: '文字已恢复。照片在完整备份里。', settingsDaily: '日常', settingsAdvanced: '进阶', settingsLangHint: '已经记下的任务名和房间名不会跟着语言变。', cleanupUnusedPhotos: '清理未用照片', cleanupUnusedPhotosDesc: '删掉没有记录再引用的图片文件。', toastCleanupDone: '已清理 {n} 个未用文件', photoInFullBackup: '图在完整备份', toastAddPropertyFirst: '请先添加一套房子', routineDotPromptTitle: '有周期已经过期', routineDotPromptBody: '要不要在工作页用小红点标出到期项？', toastImportSuccess: '数据恢复成功！', toastImportFailed: '恢复失败，文件格式错误。', confirmImportMsg: '导入备份将覆盖当前所有本地数据，确定继续吗？',
+                settingsDataBackup: '数据备份与恢复 (离线)', exportBackup: '导出 JSON 备份文件', exportBackupLight: '轻备份', exportBackupLightDesc: '只含房屋、工作和账本，不含照片。', exportBackupFull: '完整备份', exportBackupFullDesc: '含照片和收据，文件可能很大。', importBackup: '恢复 JSON 备份文件', toastExportLight: '已导出轻备份（不含照片）', toastExportFull: '已导出完整备份', toastImportLightNoPhotos: '文字已恢复。照片在完整备份里。', settingsDaily: '日常', settingsAdvanced: '进阶', settingsLangHint: '切换语言仅更换菜单与按钮。凡自行新增或编辑过的项目，名称与用词均保持原样。', deadline: '截止日期', itemAlertOn: '此项显示小红点', workDotsTitle: '工作小红点', workDotsHint: '总开关。每条待办或周期还需单独打开提醒。', cycleSoonDays: '周期提前几天', taskSoonDays: '待办提前几天', confirmNextDueTitle: '确认下次日期', cleanupUnusedPhotos: '清理未用照片', cleanupUnusedPhotosDesc: '删掉没有记录再引用的图片文件。', toastCleanupDone: '已清理 {n} 个未用文件', photoInFullBackup: '图在完整备份', toastAddPropertyFirst: '请先添加一套房子', routineDotPromptTitle: '有周期已经过期', routineDotPromptBody: '要不要在工作页用小红点标出到期项？', toastImportSuccess: '数据恢复成功！', toastImportFailed: '恢复失败，文件格式错误。', confirmImportMsg: '导入备份将覆盖当前所有本地数据，确定继续吗？',
                 loadDemoData: '加载示例演示数据', loadDemoDataDesc: '重置并重新加载包含多处房屋资产的完整示例数据。', confirmDemoDataMsg: '确定要重新载入演示数据吗？当前修改将被覆盖。', toastDemoLoaded: '示例数据已加载',
                 settingsFileManager: '维修照片与收据', fileManagerTitle: '维修照片与收据', filesCount: '个文件', storageUsed: '已用容量', btnManageFiles: '打开', noMediaFiles: '未匹配到媒体文件。', toastMediaDeleted: '文件已彻底删除。', fileTypeAll: '全部文件', fileLibraryHint: '按工单日期排列。点开后左右滑动切换。', fileSearchPh: '搜索名称或房屋', viewerSwipeHint: '左右滑动切换文件', fileLibraryUpload: '上传', fileLibraryTitlePh: '名称（可选）', fileLibraryUploadHint: '先点选上方一套房屋，再上传。文件只存在这台手机。', fileCatDeal: '交易产权', fileCatInsurance: '保险', fileCatLease: '租约', fileCatMaintenance: '维修', fileCatOther: '其他', toastPickPropertyFirst: '请先选择一套房屋', toastLibraryUploaded: '文件已加入',
                 roleTenant: '租客', roleContractor: '师傅', roleRealtor: '经纪', roleLawyer: '律师', roleType: '联系人身份角色', contactName: '姓名/称呼', contactTrade: '工种/专长头衔', contactTradeHint: '例如: 暖通水工, 专修屋顶', assocProperty: '关联房屋', assocProperties: '关联房屋（可多选）', contractorNote: '师傅不用先绑房子，做完维修记录后会自动对上。', noneGeneral: '通用 / 未绑定具体房屋', searchContact: '搜索联系人...', noContacts: '该分类下暂无联系人。',
@@ -2871,7 +2888,7 @@
             return { properties, tasks, repairs, contacts, customRoles, userZones: zones };
         }
 
-        const APP_VERSION = '2026.09.08-i';
+        const APP_VERSION = '2026.09.08-k';
 
         const app = createApp({
             data() {
@@ -2933,7 +2950,11 @@
                     properties: [], tasks: [], repairs: [], routines: [], contacts: [], customRoles: [],
                     editingRoutineId: null,
                     completingRoutineIds: {},
-                    formRoutine: { catalogKey: '', title: '', propertyId: '', zone: '', category: '', intervalMonths: 12, nextDueDate: '', lastDoneDate: '' },
+                    formRoutine: { catalogKey: '', title: '', propertyId: '', zone: '', category: '', intervalMonths: 12, nextDueDate: '', lastDoneDate: '', alertOn: false },
+                    workDotsOn: false,
+                    cycleSoonDays: 14,
+                    taskSoonDays: 3,
+                    pendingNextDue: null,
                     routineNotify: 'off',
                     routineNotifyPhone: '',
                     routineNotifyEmail: '',
@@ -2945,7 +2966,7 @@
                     formProperty: { name: '', buildingType: 'detached', address: '', intro: '', lat: null, lng: null },
                     formUsage: { id: null, usageType: 'primary', startDate: '', endDate: '', notes: '', realtorId: '', lawyerId: '', managerId: '' },
                     formTenantSub: { id: null, usageId: null, contactId: '', name: '', room: '', rent: '', startDate: '', endDate: '', notes: '' },
-                    formTask: { propertyId: '', titleSelect: '', title: '', zone: '', category: '', issueDate: '', beforePhotos: [] },
+                    formTask: { propertyId: '', titleSelect: '', title: '', zone: '', category: '', issueDate: '', deadline: '', alertOn: false, beforePhotos: [] },
                     formRepair: { propertyId: '', titleSelect: '', title: '', zone: '', category: '', cost: '', date: '', warrantyEndDate: '', contractorId: '', hasReceipt: true, receiptPhotos: [], beforePhotos: [], afterPhotos: [] },
                     formContact: { id: null, role: 'tenant', name: '', trade: '', propertyId: '', propertyIds: [], phone: '', wechat: '', email: '', notes: '' },
                     formNewRole: { name: '' },
@@ -3005,10 +3026,7 @@
                     });
                     return groups;
                 },
-                showRoutineDotPrompt() {
-                    if (this.itemToDelete || this.activeModal || this.routineNotifyAsked || this.showRoutineDots) return false;
-                    return (this.routines || []).some(r => this.isRoutineOverdue(r));
-                },
+                showRoutineDotPrompt() { return false; },
                 viewingCaption() {
                     const item = (this.viewingAlbum || [])[this.currentImageIndex];
                     if (!item) return '';
@@ -3123,11 +3141,13 @@
                     years.add(new Date().getFullYear().toString()); 
                     return Array.from(years).sort((a,b) => b - a);
                 },
-                showRoutineDots() { return this.routineNotify === 'on'; },
+                showRoutineDots() { return this.workDotsOn; },
                 routineAlertLevel() {
-                    const list = this.routines || [];
-                    if (list.some(r => this.isRoutineOverdue(r))) return 'overdue';
-                    if (list.some(r => this.isRoutineDueSoon(r))) return 'soon';
+                    if (!this.workDotsOn) return '';
+                    const routines = (this.routines || []).filter(r => r.alertOn);
+                    const tasks = (this.tasks || []).filter(t => t.alertOn && !t.completed);
+                    if (routines.some(r => this.isRoutineOverdue(r)) || tasks.some(t => this.isTaskOverdue(t))) return 'overdue';
+                    if (routines.some(r => this.isRoutineDueSoon(r)) || tasks.some(t => this.isTaskDueSoon(t))) return 'soon';
                     return '';
                 },
                 cashflowRows() {
@@ -3724,10 +3744,13 @@
                     }
                     else if (this.currentTab === 'crm') this.openModal('contact');
                 },
-                async answerRoutineDotPrompt(enable) {
-                    this.routineNotifyAsked = true;
-                    this.routineNotify = enable ? 'on' : 'off';
-                    await this.saveToStorage();
+                async confirmPendingNextDue() {
+                    if (this.pendingNextDue) {
+                        const rt = this.routines.find(r => r.id === this.pendingNextDue.id);
+                        if (rt && this.pendingNextDue.nextDueDate) rt.nextDueDate = this.pendingNextDue.nextDueDate;
+                        this.pendingNextDue = null;
+                        await this.saveToStorage();
+                    }
                 },
                 todayIso() { return new Date().toISOString().split('T')[0]; },
                 addMonthsToDate(dateStr, months) {
@@ -3751,7 +3774,7 @@
                     if (!routine || !routine.nextDueDate || this.isRoutineOverdue(routine)) return false;
                     const due = new Date(routine.nextDueDate + 'T00:00:00');
                     const limit = new Date();
-                    limit.setDate(limit.getDate() + 14);
+                    limit.setDate(limit.getDate() + (Number(this.cycleSoonDays) || 0));
                     return due <= limit;
                 },
                 applyRoutineCatalog() {
@@ -3778,7 +3801,8 @@
                         category: this.formRoutine.category,
                         intervalMonths: Number(this.formRoutine.intervalMonths) || 12,
                         nextDueDate: this.formRoutine.nextDueDate || this.todayIso(),
-                        lastDoneDate: this.formRoutine.lastDoneDate || ''
+                        lastDoneDate: this.formRoutine.lastDoneDate || '',
+                        alertOn: !!this.formRoutine.alertOn
                     };
                     if (this.editingRoutineId) {
                         const idx = this.routines.findIndex(r => r.id === this.editingRoutineId);
@@ -3827,6 +3851,17 @@
                     const due = (this.filteredRoutines || []).filter(r => this.isRoutineOverdue(r) || this.isRoutineDueSoon(r));
                     if (!due.length) { this.showToast(this.t('toastNotifyNoneDue')); return; }
                     if (this.openRoutineNotifyDraft(this.routineReminderText(due))) this.showToast(this.t('toastNotifyOpened'));
+                },
+                isTaskOverdue(task) {
+                    if (!task || !task.deadline) return false;
+                    return task.deadline < this.todayIso();
+                },
+                isTaskDueSoon(task) {
+                    if (!task || !task.deadline || this.isTaskOverdue(task)) return false;
+                    const due = new Date(task.deadline + 'T00:00:00');
+                    const limit = new Date();
+                    limit.setDate(limit.getDate() + (Number(this.taskSoonDays) || 0));
+                    return due <= limit;
                 },
                 wasRoutineCompletedToday(routine) {
                     if (!routine) return false;
@@ -3934,15 +3969,15 @@
                         const defaultProp = this.viewingPropertyId || (this.properties.length > 0 ? this.properties[0].id : '');
                         if (item) {
                             this.editingRoutineId = item.id;
-                            this.formRoutine = { catalogKey: item.catalogKey || 'OTHER', title: item.title || '', propertyId: item.propertyId || defaultProp, zone: item.zone || '', category: item.category || '', intervalMonths: item.intervalMonths || 12, nextDueDate: item.nextDueDate || this.todayIso(), lastDoneDate: item.lastDoneDate || '' };
+                            this.formRoutine = { catalogKey: item.catalogKey || 'OTHER', title: item.title || '', propertyId: item.propertyId || defaultProp, zone: item.zone || '', category: item.category || '', intervalMonths: item.intervalMonths || 12, nextDueDate: item.nextDueDate || this.todayIso(), lastDoneDate: item.lastDoneDate || '', alertOn: !!item.alertOn };
                         } else {
                             this.editingRoutineId = null;
-                            this.formRoutine = { catalogKey: '', title: '', propertyId: defaultProp, zone: '', category: '', intervalMonths: 12, nextDueDate: this.todayIso(), lastDoneDate: '' };
+                            this.formRoutine = { catalogKey: '', title: '', propertyId: defaultProp, zone: '', category: '', intervalMonths: 12, nextDueDate: this.todayIso(), lastDoneDate: '', alertOn: false };
                         }
                     }
                     if (type === 'task') {
-                        if (item) { this.editingTaskId = item.id; let tSelect = item.titleSelect; if (!tSelect || tSelect === 'OTHER') { const found = (this.commonTaskTitles[this.currentLang] || []).find(t => t.name === item.title); tSelect = found ? found.name : (item.title || ''); } this.formTask = { propertyId: item.propertyId || defaultProp, titleSelect: tSelect, title: item.title || '', zone: item.zone || '', category: item.category || '', issueDate: item.issueDate || '', beforePhotos: [...(item.beforePhotos || [])] }; } 
-                        else { this.editingTaskId = null; this.formTask = { propertyId: defaultProp, titleSelect: '', title: '', zone: this.viewingZone || '', category: '', issueDate: new Date().toISOString().split('T')[0], beforePhotos: [] }; }
+                        if (item) { this.editingTaskId = item.id; let tSelect = item.titleSelect; if (!tSelect || tSelect === 'OTHER') { const found = (this.commonTaskTitles[this.currentLang] || []).find(t => t.name === item.title); tSelect = found ? found.name : (item.title || ''); } this.formTask = { propertyId: item.propertyId || defaultProp, titleSelect: tSelect, title: item.title || '', zone: item.zone || '', category: item.category || '', issueDate: item.issueDate || '', deadline: item.deadline || '', alertOn: !!item.alertOn, beforePhotos: [...(item.beforePhotos || [])] }; } 
+                        else { this.editingTaskId = null; this.formTask = { propertyId: defaultProp, titleSelect: '', title: '', zone: this.viewingZone || '', category: '', issueDate: new Date().toISOString().split('T')[0], deadline: '', alertOn: false, beforePhotos: [] }; }
                     }
                     if (type === 'repair') {
                         if (item && item.id) { this.editingRepairId = item.id; let rSelect = item.titleSelect; if (!rSelect || rSelect === 'OTHER') { const found = (this.commonTaskTitles[this.currentLang] || []).find(r => r.name === item.title); rSelect = found ? found.name : (item.title || ''); } this.formRepair = { propertyId: item.propertyId || defaultProp, titleSelect: rSelect, title: item.title || '', zone: item.zone || '', category: item.category || '', cost: item.cost || '', date: item.date || new Date().toISOString().split('T')[0], warrantyEndDate: item.warrantyEndDate || '', contractorId: item.contractorId || '', hasReceipt: item.hasReceipt !== false, receiptPhotos: Array.isArray(item.receiptPhotos) ? [...item.receiptPhotos] : [], beforePhotos: Array.isArray(item.beforePhotos) ? [...item.beforePhotos] : [], afterPhotos: Array.isArray(item.afterPhotos) ? [...item.afterPhotos] : [] }; } 
@@ -4250,9 +4285,9 @@
                     this.formTask.title = this.formTask.titleSelect;
                     if (this.editingTaskId) {
                         const idx = this.tasks.findIndex(t => t.id === this.editingTaskId);
-                        if (idx !== -1) this.tasks[idx] = { ...this.tasks[idx], propertyId: this.formTask.propertyId, titleSelect: this.formTask.titleSelect, title: this.formTask.title, zone: this.formTask.zone, category: this.formTask.category, issueDate: this.formTask.issueDate || '', beforePhotos: [...this.formTask.beforePhotos] };
+                        if (idx !== -1) this.tasks[idx] = { ...this.tasks[idx], propertyId: this.formTask.propertyId, titleSelect: this.formTask.titleSelect, title: this.formTask.title, zone: this.formTask.zone, category: this.formTask.category, issueDate: this.formTask.issueDate || '', deadline: this.formTask.deadline || '', alertOn: !!this.formTask.alertOn, beforePhotos: [...this.formTask.beforePhotos] };
                     } else {
-                        this.tasks.unshift({ id: 't_' + Date.now(), propertyId: this.formTask.propertyId, titleSelect: this.formTask.titleSelect, title: this.formTask.title, zone: this.formTask.zone, category: this.formTask.category, issueDate: this.formTask.issueDate || new Date().toISOString().split('T')[0], beforePhotos: [...this.formTask.beforePhotos], completed: false });
+                        this.tasks.unshift({ id: 't_' + Date.now(), propertyId: this.formTask.propertyId, titleSelect: this.formTask.titleSelect, title: this.formTask.title, zone: this.formTask.zone, category: this.formTask.category, issueDate: this.formTask.issueDate || new Date().toISOString().split('T')[0], deadline: this.formTask.deadline || '', alertOn: !!this.formTask.alertOn, beforePhotos: [...this.formTask.beforePhotos], completed: false });
                     }
                     await this.saveToStorage(); this.closeModal(); this.showToast(this.t('toastTaskSaved')); if (this.dashboardViewMode === 'map') this.renderMapMarkers();
                 },
@@ -4338,7 +4373,9 @@
                                     this.showToast(this.t('toastRoutineAlreadyToday'));
                                 } else {
                                     rt.lastDoneDate = doneOn;
-                                    rt.nextDueDate = this.nextDueAfterCompletion(rt, doneOn);
+                                    const next = this.nextDueAfterCompletion(rt, doneOn);
+                                    this.pendingNextDue = { id: rt.id, title: rt.title, nextDueDate: next };
+                                    rt.nextDueDate = next;
                                 }
                             }
                             this.convertingRoutineId = null;
@@ -4554,6 +4591,9 @@
                             userCatalog: this.userCatalog,
                             propertyDocs: this.propertyDocs,
                             routineNotify: this.routineNotify,
+                            workDotsOn: this.workDotsOn,
+                            cycleSoonDays: this.cycleSoonDays,
+                            taskSoonDays: this.taskSoonDays,
                             routineNotifyAsked: this.routineNotifyAsked,
                             routineNotifyPhone: this.routineNotifyPhone,
                             routineNotifyEmail: this.routineNotifyEmail
@@ -4576,6 +4616,9 @@
                             else this.userCatalog = cloneDefaultCatalog();
                             if (!this.userCatalog.cashflow || !this.userCatalog.cashflow.rental) this.userCatalog.cashflow = JSON.parse(JSON.stringify(defaultCashflowCatalog));
                             if (data.routineNotify) this.routineNotify = data.routineNotify;
+                            if (data.workDotsOn != null) this.workDotsOn = !!data.workDotsOn;
+                            if (data.cycleSoonDays != null) this.cycleSoonDays = Number(data.cycleSoonDays) || 14;
+                            if (data.taskSoonDays != null) this.taskSoonDays = Number(data.taskSoonDays) || 3;
                             if (data.routineNotifyAsked != null) this.routineNotifyAsked = !!data.routineNotifyAsked;
                             if (data.routineNotifyPhone != null) this.routineNotifyPhone = data.routineNotifyPhone;
                             if (data.routineNotifyEmail != null) this.routineNotifyEmail = data.routineNotifyEmail;
