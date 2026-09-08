@@ -940,7 +940,7 @@
                         <div v-if="activeModal === 'property'" class="space-y-5">
                             <div class="flex justify-between items-center mb-4">
                                 <h3 class="text-2xl font-black text-white">{{ editingPropertyId ? t('modalEditProperty') : t('modalAddProperty') }}</h3>
-                                <button v-if="editingPropertyId" @click="deleteProperty" class="text-red-400 text-sm font-bold bg-red-500/10 px-3 py-1.5 rounded-lg">{{ t('deleteProperty') }}</button>
+                                <button v-if="editingPropertyId" @click="promptDeleteProperty(editingPropertyId)" class="text-red-400 text-sm font-bold bg-red-500/10 px-3 py-1.5 rounded-lg">{{ t('deleteProperty') }}</button>
                             </div>
                             
                             <div>
@@ -1880,6 +1880,7 @@
                         <h4 class="text-lg font-black text-white mb-1">
                             {{ t(deleteConfirmTitleKey) }}
                         </h4>
+                        <p v-if="itemToDelete && itemToDelete.type === 'property' && itemToDelete.summary" class="text-[12px] text-slate-400 leading-relaxed px-1">{{ itemToDelete.summary }}</p>
                     </div>
                     <div class="grid grid-cols-2 gap-3 pt-2">
                         <button @click="cancelDelete" class="py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs border border-slate-700 active:scale-95 transition-all">{{ t('btnCancel') }}</button>
@@ -1947,14 +1948,14 @@
                 modalRepairTitle: 'Event/Repair Title', selectCommonRepair: 'Select Common Issue...', enterRepairManually: 'Enter event manually',
                 modalCost: 'Cost', modalDate: 'Date', issueDate: 'Issue Date', noIssueDate: 'No issue date', modalStartDate: 'Start Date', modalEndDate: 'End Date', modalContractor: 'Contractor / Pro', modalWarranty: 'Warranty Ends',
                 btnSave: 'Save', back: 'Back', backToProperties: 'Back to Properties', allTime: 'All Time', zoneLayout: 'Space Blueprint',
-                toastPropSaved: 'Property saved', toastPropUpdated: 'Property updated', toastTaskSaved: 'Task saved', toastTaskDeleted: 'Task deleted', toastRepairLogged: 'Repair logged', toastRepairDeleted: 'History record deleted', toastContactSaved: 'Contact saved', toastContactDeleted: 'Contact deleted', toastCopied: 'Copied!',
+                toastPropSaved: 'Property saved', toastPropUpdated: 'Property updated', toastPropertyDeleted: 'Property and linked work removed', toastTaskSaved: 'Task saved', toastTaskDeleted: 'Task deleted', toastRepairLogged: 'Repair logged', toastRepairDeleted: 'History record deleted', toastContactSaved: 'Contact saved', toastContactDeleted: 'Contact deleted', toastCopied: 'Copied!',
                 uploadReceipt: 'Receipts (Max 3)', viewReceipt: 'Receipts', remove: 'Remove',
                 uploadBefore: 'Before Photos (Max 3)', uploadAfter: 'After Photos (Max 3)', addPhoto: 'Add Photo', viewBefore: 'Before', viewAfter: 'After',
                 hasReceipt: 'With Receipt', noReceipt: 'No Receipt', noReceiptMsg: 'No receipt will be attached.',
                 viewModeList: 'Cards', viewModeMap: 'Map View', viewModeGrid: 'Grid View', openPropertyDetails: 'Open Blueprint', recenterMap: 'Fit All Pins',
                 btnGeocode: 'Locate Address', geocoding: 'Locating...', geocodeSuccess: 'Address located!', geocodeFailed: 'Address not found',
                 gpsEnabled: 'GPS Enabled', gpsDisabled: 'GPS Disabled', enableGPS: 'Enable GPS', locateMe: 'My Location', gpsOffMsg: 'GPS is disabled',
-                confirmDeleteTitle: 'Delete Task?', confirmDeleteLogTitle: 'Delete History Record?', confirmDeleteContactTitle: 'Delete Contact?', confirmDeleteRoleTitle: 'Delete Category?', confirmDeleteMediaTitle: 'Delete File?', btnCancel: 'Cancel', btnConfirmDelete: 'Delete',
+                confirmDeleteTitle: 'Delete Task?', confirmDeleteLogTitle: 'Delete History Record?', confirmDeletePropertyTitle: 'Delete this property?', confirmDeletePropertyBody: 'Also remove {t} pending, {c} cycles, {h} history items. Contacts stay, but this property is unlinked.', confirmDeleteContactTitle: 'Delete Contact?', confirmDeleteRoleTitle: 'Delete Category?', confirmDeleteMediaTitle: 'Delete File?', btnCancel: 'Cancel', btnConfirmDelete: 'Delete',
                 usageTimeline: 'Usage Timeline', startDate: 'Start Date', endDate: 'End Date', addUsagePeriod: 'Add Event/Period', editUsagePeriod: 'Edit Event/Period', modalAddUsage: 'Add Event or Usage Period', ongoing: 'Present',
                 usageNotes: 'Period Notes / Price / Tenant Info', noUsageHistory: 'No timeline events logged yet.',
                 usageRealtor: 'Realtor', usageLawyer: 'Lawyer', usageManager: 'Property manager', noneAssigned: 'None',
@@ -1994,14 +1995,14 @@
                 modalRepairTitle: '维修/事件名称', selectCommonRepair: '选择常见维修项目...', enterRepairManually: '输入具体维修/事件',
                 modalCost: '花费', modalDate: '日期', issueDate: '发现日期', noIssueDate: '未填发现日期', modalStartDate: '开始日期', modalEndDate: '结束日期', modalContractor: '施工师傅/服务商', modalWarranty: '保修到期日',
                 btnSave: '保存', back: '返回', backToProperties: '返回房屋列表', allTime: '全部历年', zoneLayout: '房屋空间剖面图',
-                toastPropSaved: '房屋已保存', toastPropUpdated: '房屋信息已更新', toastTaskSaved: '待办已保存', toastTaskDeleted: '待办任务已删除', toastRepairLogged: '记录已保存', toastRepairDeleted: '历史记录已删除', toastContactSaved: '联系人已保存', toastContactDeleted: '联系人已删除', toastCopied: '已复制!',
+                toastPropSaved: '房屋已保存', toastPropUpdated: '房屋信息已更新', toastPropertyDeleted: '房屋及关联工作已删除', toastTaskSaved: '待办已保存', toastTaskDeleted: '待办任务已删除', toastRepairLogged: '记录已保存', toastRepairDeleted: '历史记录已删除', toastContactSaved: '联系人已保存', toastContactDeleted: '联系人已删除', toastCopied: '已复制!',
                 uploadReceipt: '票据照片 (最多3张)', viewReceipt: '票据', remove: '移除',
                 uploadBefore: '修前照片 (最多3张)', uploadAfter: '修后照片 (最多3张)', addPhoto: '添加照片', viewBefore: '修前', viewAfter: '修后',
                 hasReceipt: '有票据', noReceipt: '无单据', noReceiptMsg: '本次记录不包含任何票据或发票',
                 viewModeList: '卡片', viewModeMap: '地图模式', viewModeGrid: '网格', openPropertyDetails: '进入剖面图', recenterMap: '全览所有房屋',
                 btnGeocode: '根据地址定位', geocoding: '正在解析地址...', geocodeSuccess: '已成功定位该地址！', geocodeFailed: '未找到该地址',
                 gpsEnabled: 'GPS 定位已开启', gpsDisabled: 'GPS 定位已关闭', enableGPS: '开启 GPS', locateMe: '当前位置', gpsOffMsg: 'GPS 定位功能已关闭',
-                confirmDeleteTitle: '确认删除任务？', confirmDeleteLogTitle: '确认删除历史记录？', confirmDeleteContactTitle: '确认删除联系人？', confirmDeleteRoleTitle: '确认删除人员类别？', confirmDeleteMediaTitle: '确认删除文件？', btnCancel: '取消', btnConfirmDelete: '确认删除',
+                confirmDeleteTitle: '确认删除任务？', confirmDeleteLogTitle: '确认删除历史记录？', confirmDeletePropertyTitle: '删除这套房屋？', confirmDeletePropertyBody: '将同时删除 {t} 条待办、{c} 条周期、{h} 条历史。联系人会保留，只取消与这套房屋的关联。', confirmDeleteContactTitle: '确认删除联系人？', confirmDeleteRoleTitle: '确认删除人员类别？', confirmDeleteMediaTitle: '确认删除文件？', btnCancel: '取消', btnConfirmDelete: '确认删除',
                 usageTimeline: '房屋用途履历', startDate: '开始日期', endDate: '结束日期', addUsagePeriod: '添加时间节点/区间', editUsagePeriod: '编辑履历节点', modalAddUsage: '新增节点或用途时间段', ongoing: '至今',
                 usageNotes: '节点备注 / 买卖价格 / 租客信息', noUsageHistory: '暂无履历记录。',
                 usageRealtor: '经纪', usageLawyer: '律师', usageManager: '托管', noneAssigned: '未指定',
@@ -2814,7 +2815,7 @@
             return { properties, tasks, repairs, contacts, customRoles, userZones: zones };
         }
 
-        const APP_VERSION = '2026.09.07-c';
+        const APP_VERSION = '2026.09.07-d';
 
         const app = createApp({
             data() {
@@ -2951,7 +2952,8 @@
                         role: 'confirmDeleteRoleTitle',
                         mediaFile: 'confirmDeleteMediaTitle',
                         repair: 'confirmDeleteLogTitle',
-                        routine: 'confirmDeleteRoutineTitle'
+                        routine: 'confirmDeleteRoutineTitle',
+                        property: 'confirmDeletePropertyTitle'
                     };
                     return (this.itemToDelete && map[this.itemToDelete.type]) || 'confirmDeleteLogTitle';
                 },
@@ -3955,14 +3957,36 @@
                 async editProperty(prop) { this.openModal('property', prop); },
                 editTask(task) { this.openModal('task', task); },
                 editRepair(repair) { this.openModal('repair', repair); },
+                promptDeleteProperty(id) {
+                    if (!id) return;
+                    const tCount = this.tasks.filter(x => x.propertyId === id).length;
+                    const cCount = this.routines.filter(x => x.propertyId === id).length;
+                    const hCount = this.repairs.filter(x => x.propertyId === id).length;
+                    const summary = this.t('confirmDeletePropertyBody').replace('{t}', tCount).replace('{c}', cCount).replace('{h}', hCount);
+                    this.itemToDelete = { type: 'property', id, summary };
+                },
+                unlinkContactsFromProperty(id) {
+                    this.contacts.forEach(c => {
+                        if (c.propertyId === id) c.propertyId = '';
+                        if (Array.isArray(c.propertyIds)) c.propertyIds = c.propertyIds.filter(pid => pid !== id);
+                    });
+                },
+                async deletePropertyById(id) {
+                    if (!id) return;
+                    this.properties = this.properties.filter(p => p.id !== id);
+                    this.tasks = this.tasks.filter(t => t.propertyId !== id);
+                    this.routines = this.routines.filter(r => r.propertyId !== id);
+                    this.repairs = this.repairs.filter(r => r.propertyId !== id);
+                    this.unlinkContactsFromProperty(id);
+                    if (this.viewingPropertyId === id) { this.viewingPropertyId = null; this.viewingZone = null; }
+                    if (this.selectedPropertyId === id) this.selectedPropertyId = 'ALL';
+                    await this.saveToStorage();
+                    this.closeModal();
+                    this.showToast(this.t('toastPropertyDeleted'));
+                    if (this.dashboardViewMode === 'map') this.renderMapMarkers();
+                },
                 async deleteProperty() {
-                    if (this.editingPropertyId) {
-                        this.properties = this.properties.filter(p => p.id !== this.editingPropertyId);
-                        this.tasks = this.tasks.filter(t => t.propertyId !== this.editingPropertyId);
-                        this.repairs = this.repairs.filter(r => r.propertyId !== this.editingPropertyId);
-                        if (this.viewingPropertyId === this.editingPropertyId) this.viewingPropertyId = null;
-                        await this.saveToStorage(); this.closeModal(); if (this.dashboardViewMode === 'map') this.renderMapMarkers();
-                    }
+                    if (this.editingPropertyId) this.promptDeleteProperty(this.editingPropertyId);
                 },
                 async saveTask() {
                     if (!this.formTask.titleSelect) return;
@@ -3982,7 +4006,10 @@
                 async confirmDelete() {
                     if (!this.itemToDelete) return;
                     
-                    if (this.itemToDelete.type === 'task') { 
+                    if (this.itemToDelete.type === 'property') {
+                        await this.deletePropertyById(this.itemToDelete.id);
+                    }
+                    else if (this.itemToDelete.type === 'task') { 
                         this.tasks = this.tasks.filter(t => t.id !== this.itemToDelete.id); 
                         this.showToast(this.t('toastTaskDeleted')); 
                     }
