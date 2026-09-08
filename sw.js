@@ -1,5 +1,5 @@
 /* PocketProp service worker — keep VERSION in sync with APP_VERSION in index.html */
-const VERSION = '2026.09.08-e';
+const VERSION = '2026.09.08-g';
 const CACHE_NAME = 'pocketprop-shell-' + VERSION;
 
 const PRECACHE_URLS = [
