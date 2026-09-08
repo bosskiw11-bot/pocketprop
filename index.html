@@ -3006,7 +3006,7 @@
                     return groups;
                 },
                 showRoutineDotPrompt() {
-                    if (this.routineNotifyAsked || this.showRoutineDots) return false;
+                    if (this.itemToDelete || this.activeModal || this.routineNotifyAsked || this.showRoutineDots) return false;
                     return (this.routines || []).some(r => this.isRoutineOverdue(r));
                 },
                 viewingCaption() {
