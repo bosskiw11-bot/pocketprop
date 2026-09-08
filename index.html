@@ -121,7 +121,10 @@
                     <div v-if="properties.length === 0" class="flex flex-col items-center justify-center py-14 bg-slate-800/30 rounded-3xl border border-slate-700/30 border-dashed">
                         <div class="w-12 h-12 bg-slate-900 rounded-full flex items-center justify-center text-slate-600 mb-3"><i class="fa-solid fa-house-chimney text-xl"></i></div>
                         <p class="text-xs text-slate-500 font-semibold mb-3">{{ t('noProperties') }}</p>
-                        <button @click="openModal('property')" class="text-[11px] font-bold text-brand-400 bg-brand-500/10 hover:bg-brand-500/20 px-3 py-1.5 rounded-xl border border-brand-500/30">{{ t('addProperty') }}</button>
+                        <div class="flex flex-wrap items-center justify-center gap-2">
+                            <button @click="openModal('property')" class="text-[11px] font-bold text-brand-400 bg-brand-500/10 hover:bg-brand-500/20 px-3 py-1.5 rounded-xl border border-brand-500/30">{{ t('addProperty') }}</button>
+                            <button @click="loadDemoData" class="text-[11px] font-bold text-slate-300 bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-600">{{ t('loadDemoData') }}</button>
+                        </div>
                     </div>
                     <div v-for="prop in properties" 
                          :key="prop.id" 
@@ -208,7 +211,11 @@
 
                     <div v-if="properties.length === 0" class="col-span-2 flex flex-col items-center justify-center py-12 bg-slate-800/30 rounded-3xl border border-slate-700/30 border-dashed mt-2">
                         <div class="w-12 h-12 bg-slate-900 rounded-full flex items-center justify-center text-slate-600 mb-3"><i class="fa-solid fa-table-cells-large text-xl"></i></div>
-                        <p class="text-xs text-slate-500 font-semibold">{{ t('noProperties') }}</p>
+                        <p class="text-xs text-slate-500 font-semibold mb-3">{{ t('noProperties') }}</p>
+                        <div class="flex flex-wrap items-center justify-center gap-2">
+                            <button @click="openModal('property')" class="text-[11px] font-bold text-brand-400 bg-brand-500/10 px-3 py-1.5 rounded-xl border border-brand-500/30">{{ t('addProperty') }}</button>
+                            <button @click="loadDemoData" class="text-[11px] font-bold text-slate-300 bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-600">{{ t('loadDemoData') }}</button>
+                        </div>
                     </div>
                 </div>
 
@@ -1447,8 +1454,12 @@
                                     <i class="fa-solid fa-xmark"></i>
                                 </button>
                             </div>
+                            <div class="flex bg-slate-800 p-1 rounded-2xl border border-slate-700/60">
+                                <button type="button" @click="settingsSection = 'daily'" class="flex-1 py-2 rounded-xl text-[11px] font-bold" :class="settingsSection === 'daily' ? 'bg-brand-500 text-white' : 'text-slate-400'">{{ t('settingsDaily') }}</button>
+                                <button type="button" @click="settingsSection = 'advanced'" class="flex-1 py-2 rounded-xl text-[11px] font-bold" :class="settingsSection === 'advanced' ? 'bg-brand-500 text-white' : 'text-slate-400'">{{ t('settingsAdvanced') }}</button>
+                            </div>
 
-                            <div class="space-y-3">
+                            <div v-show="settingsSection === 'daily'" class="space-y-3">
                                 <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider pl-1">{{ t('settingsFileManager') }}</h4>
                                 <div class="bg-gradient-to-r from-slate-800/90 to-brand-950/40 p-4 rounded-2xl border border-brand-500/30 flex items-center justify-between group active:scale-[0.99] transition-all shadow-sm">
                                     <div class="flex items-center gap-3">
@@ -1467,9 +1478,10 @@
                                     </button>
                                 </div>
                             </div>
+                            </div>
 
                             <!-- NEW: Section - Zone/Area Customization -->
-                            <div class="space-y-3 pt-2 border-t border-slate-800">
+                            <div v-show="settingsSection === 'advanced'" class="space-y-3 pt-2 border-t border-slate-800">
                                 <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider pl-1">{{ t('settingsZones') }}</h4>
                                 <p class="text-[11px] text-slate-400 pl-1 -mt-1">{{ t('settingsZonesDesc') }}</p>
 
@@ -1511,7 +1523,7 @@
                                 </button>
                             </div>
 
-                            <div class="space-y-3 pt-2 border-t border-slate-800">
+                            <div v-show="settingsSection === 'daily'" class="space-y-3 pt-2 border-t border-slate-800">
                                 <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider pl-1">{{ t('settingsDashboardViews') }}</h4>
                                 <div class="grid grid-cols-3 gap-2">
                                     <button @click="toggleDashboardView('list')" class="p-3 rounded-2xl border text-xs font-bold flex flex-col items-center justify-center gap-1.5 transition-all active:scale-95" :class="enabledViews.includes('list') ? 'bg-brand-500/20 text-brand-400 border-brand-500/50 shadow-md shadow-brand-500/10' : 'bg-slate-800 text-slate-500 border-slate-700 hover:text-slate-400'">
@@ -1579,7 +1591,7 @@
                                 </div>
                             </div>
 
-                            <div class="space-y-3 pt-2 border-t border-slate-800">
+                            <div v-show="settingsSection === 'daily'" class="space-y-3 pt-2 border-t border-slate-800">
                                 <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider pl-1">{{ t('settingsPreferences') }}</h4>
                                 <div class="bg-slate-800/80 p-4 rounded-2xl border border-slate-700/60 flex justify-between items-center">
                                     <div class="flex items-center gap-3">
@@ -1588,6 +1600,7 @@
                                         </div>
                                         <div>
                                             <p class="text-sm font-bold text-white">{{ t('settingsLanguage') }}</p>
+                                            <p class="text-[10px] text-slate-500 mt-0.5">{{ t('settingsLangHint') }}</p>
                                         </div>
                                     </div>
                                     <button @click="toggleLanguage" class="text-xs font-bold px-3 py-1.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-200 border border-slate-600 active:scale-95 transition-transform flex items-center gap-1.5">
@@ -1609,7 +1622,7 @@
                                 </div>
                             </div>
 
-                            <div class="space-y-3 pt-2 border-t border-slate-800">
+                            <div v-show="settingsSection === 'daily'" class="space-y-3 pt-2 border-t border-slate-800">
                                 <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider pl-1">{{ t('settingsPwa') }}</h4>
                                 <div class="bg-slate-800/80 p-4 rounded-2xl border border-slate-700/60 space-y-3">
                                     <div class="flex items-center justify-between gap-3">
@@ -1635,7 +1648,7 @@
                                 </div>
                             </div>
 
-                            <div class="space-y-3 pt-2 border-t border-slate-800">
+                            <div v-show="settingsSection === 'daily'" class="space-y-3 pt-2 border-t border-slate-800">
                                 <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider pl-1">{{ t('settingsDataBackup') }}</h4>
                                 <button @click="exportData(false)" class="w-full bg-slate-800/80 hover:bg-slate-800 p-4 rounded-2xl border border-slate-700/60 flex items-center justify-between group active:scale-[0.99] transition-all text-left">
                                     <div class="flex items-center gap-3">
@@ -1662,6 +1675,16 @@
                                         <div class="w-9 h-9 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center"><i class="fa-solid fa-cloud-arrow-up text-base"></i></div>
                                         <div>
                                             <p class="text-sm font-bold text-white group-hover:text-brand-400 transition-colors">{{ t('importBackup') }}</p>
+                                        </div>
+                                    </div>
+                                    <i class="fa-solid fa-chevron-right text-slate-600 text-xs"></i>
+                                </button>
+                                <button @click="cleanupUnusedBlobs" class="w-full bg-slate-800/80 hover:bg-slate-800 p-4 rounded-2xl border border-slate-700/60 flex items-center justify-between group active:scale-[0.99] transition-all text-left">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-9 h-9 rounded-xl bg-slate-700 text-slate-300 flex items-center justify-center"><i class="fa-solid fa-broom text-base"></i></div>
+                                        <div>
+                                            <p class="text-sm font-bold text-white group-hover:text-brand-400 transition-colors">{{ t('cleanupUnusedPhotos') }}</p>
+                                            <p class="text-[11px] text-slate-400 mt-0.5">{{ t('cleanupUnusedPhotosDesc') }}</p>
                                         </div>
                                     </div>
                                     <i class="fa-solid fa-chevron-right text-slate-600 text-xs"></i>
@@ -1851,7 +1874,10 @@
                                     <p class="text-[11px] font-black text-slate-400 tracking-wide mb-2 px-0.5">{{ group.date }}</p>
                                     <div class="grid grid-cols-4 gap-2">
                                         <div v-for="item in group.items" :key="item.id" class="relative aspect-square bg-slate-800 rounded-xl border border-slate-700/80 overflow-hidden">
-                                            <template v-if="item.isPdf">
+                                            <template v-if="item.missing">
+                                                <div class="w-full h-full flex items-center justify-center text-slate-500 text-[8px] font-bold px-1 text-center leading-tight">{{ t('photoInFullBackup') }}</div>
+                                            </template>
+                                            <template v-else-if="item.isPdf">
                                                 <div @click="openLibraryItem(item)" class="w-full h-full flex flex-col items-center justify-center text-red-400 cursor-pointer">
                                                     <i class="fa-solid fa-file-pdf text-lg"></i>
                                                 </div>
@@ -1937,6 +1963,16 @@
             </div>
         </transition>
 
+        <div v-if="showRoutineDotPrompt" class="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-slate-950/80">
+            <div class="bg-slate-900 border border-slate-700 rounded-3xl p-5 w-full max-w-xs space-y-3 text-center">
+                <p class="text-sm font-bold text-white">{{ t('routineDotPromptTitle') }}</p>
+                <p class="text-[12px] text-slate-400">{{ t('routineDotPromptBody') }}</p>
+                <div class="grid grid-cols-2 gap-2 pt-1">
+                    <button @click="answerRoutineDotPrompt(false)" class="py-2.5 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold">{{ t('routineNotifyOff') }}</button>
+                    <button @click="answerRoutineDotPrompt(true)" class="py-2.5 rounded-xl bg-brand-500 text-white text-xs font-bold">{{ t('routineNotifyDot') }}</button>
+                </div>
+            </div>
+        </div>
         <!-- Toast Notification -->
         <transition name="fade">
             <div v-if="toastMessage" class="absolute top-20 left-1/2 -translate-x-1/2 bg-emerald-500 text-white px-5 py-2.5 rounded-full shadow-lg font-bold text-[13px] z-50 flex items-center gap-2 whitespace-nowrap">
@@ -1987,7 +2023,7 @@
                 settingsTitle: 'Settings', settingsPreferences: 'Preferences', settingsLanguage: 'Language', settingsGPS: 'GPS Location Services', settingsGPSDesc: 'Enables automatic geolocation & map positioning.',
                 settingsDashboardViews: 'Dashboard Views', minOneViewRequired: 'At least one view mode must be active.', settingsPropertyOrder: 'Property Reorder',
                 settingsContactRoles: 'Contact Category Settings', addRoleCategory: 'Add Category', roleCategoryName: 'Category Name', toastRoleAdded: 'Category added', toastRoleDeleted: 'Category deleted',
-                settingsDataBackup: 'Data Management (Local-First)', exportBackup: 'Export JSON Backup', exportBackupLight: 'Light backup', exportBackupLightDesc: 'Houses, work and ledger only — no photos.', exportBackupFull: 'Full backup', exportBackupFullDesc: 'Includes photos and receipts. File can be large.', importBackup: 'Restore JSON Backup', toastImportSuccess: 'Data restored successfully!', toastImportFailed: 'Invalid backup file format.', confirmImportMsg: 'Restoring from backup will overwrite all existing local data. Continue?',
+                settingsDataBackup: 'Data Management (Local-First)', exportBackup: 'Export JSON Backup', exportBackupLight: 'Light backup', exportBackupLightDesc: 'Houses, work and ledger only — no photos.', exportBackupFull: 'Full backup', exportBackupFullDesc: 'Includes photos and receipts. File can be large.', importBackup: 'Restore JSON Backup', toastExportLight: 'Light backup saved (no photos)', toastExportFull: 'Full backup saved', toastImportLightNoPhotos: 'Restored text. Photos live in a full backup.', settingsDaily: 'Everyday', settingsAdvanced: 'Advanced', settingsLangHint: 'Saved task and room names stay as you typed them.', cleanupUnusedPhotos: 'Clear unused photos', cleanupUnusedPhotosDesc: 'Remove photo files no record points to.', toastCleanupDone: 'Cleared {n} unused files', photoInFullBackup: 'In full backup', toastAddPropertyFirst: 'Add a property first', routineDotPromptTitle: 'A cycle is overdue', routineDotPromptBody: 'Show a small red dot on Work when something is due?', toastImportSuccess: 'Data restored successfully!', toastImportFailed: 'Invalid backup file format.', confirmImportMsg: 'Restoring from backup will overwrite all existing local data. Continue?',
                 loadDemoData: 'Reset Demo Data', loadDemoDataDesc: 'Overwrites current data with multi-property sample dataset.', confirmDemoDataMsg: 'Are you sure you want to load sample data? Current data will be replaced.', toastDemoLoaded: 'Demo data loaded',
                 settingsFileManager: 'Media & File Storage', fileManagerTitle: 'Repair photos & receipts', filesCount: 'Files', storageUsed: 'Used', btnManageFiles: 'Open Gallery', noMediaFiles: 'No photo or document files match.', toastMediaDeleted: 'File removed from local storage.', fileTypeAll: 'All Files', fileLibraryHint: 'Grouped by work date. Tap a file, then swipe to browse.', fileSearchPh: 'Search title or property', viewerSwipeHint: 'Swipe left / right to switch', fileLibraryUpload: 'Upload', fileLibraryTitlePh: 'Name (optional)', fileLibraryUploadHint: 'Pick a property above first, then upload. Stored on this phone.', fileCatDeal: 'Closing / title', fileCatInsurance: 'Insurance', fileCatLease: 'Lease', fileCatMaintenance: 'Repairs', fileCatOther: 'Other', toastPickPropertyFirst: 'Choose a property first', toastLibraryUploaded: 'File added',
                 roleTenant: 'Tenant', roleContractor: 'Contractor', roleRealtor: 'Realtor', roleLawyer: 'Lawyer', roleType: 'Contact Role', contactName: 'Full Name', contactTrade: 'Specialty / Trade Title', contactTradeHint: 'e.g. HVAC, Plumbing Specialist', assocProperty: 'Associated Property', assocProperties: 'Associated Properties', contractorNote: 'Contractors are linked through repair logs.', noneGeneral: 'General / Unlinked', searchContact: 'Search contacts...', noContacts: 'No contacts found.',
@@ -2034,7 +2070,7 @@
                 settingsTitle: '系统设置', settingsPreferences: '偏好设置', settingsLanguage: '界面语言', settingsGPS: 'GPS 定位服务', settingsGPSDesc: '开启后可在房屋地图中定位当前位置及导航。',
                 settingsDashboardViews: '仪表盘视图设置', minOneViewRequired: '必须至少保留一个视图模式。', settingsPropertyOrder: '房屋卡片排序',
                 settingsContactRoles: '人员类别设置', addRoleCategory: '新增类别', roleCategoryName: '类别名称', toastRoleAdded: '已新增人员类别', toastRoleDeleted: '已删除人员类别',
-                settingsDataBackup: '数据备份与恢复 (离线)', exportBackup: '导出 JSON 备份文件', exportBackupLight: '轻备份', exportBackupLightDesc: '只含房屋、工作和账本，不含照片。', exportBackupFull: '完整备份', exportBackupFullDesc: '含照片和收据，文件可能很大。', importBackup: '恢复 JSON 备份文件', toastImportSuccess: '数据恢复成功！', toastImportFailed: '恢复失败，文件格式错误。', confirmImportMsg: '导入备份将覆盖当前所有本地数据，确定继续吗？',
+                settingsDataBackup: '数据备份与恢复 (离线)', exportBackup: '导出 JSON 备份文件', exportBackupLight: '轻备份', exportBackupLightDesc: '只含房屋、工作和账本，不含照片。', exportBackupFull: '完整备份', exportBackupFullDesc: '含照片和收据，文件可能很大。', importBackup: '恢复 JSON 备份文件', toastExportLight: '已导出轻备份（不含照片）', toastExportFull: '已导出完整备份', toastImportLightNoPhotos: '文字已恢复。照片在完整备份里。', settingsDaily: '日常', settingsAdvanced: '进阶', settingsLangHint: '已经记下的任务名和房间名不会跟着语言变。', cleanupUnusedPhotos: '清理未用照片', cleanupUnusedPhotosDesc: '删掉没有记录再引用的图片文件。', toastCleanupDone: '已清理 {n} 个未用文件', photoInFullBackup: '图在完整备份', toastAddPropertyFirst: '请先添加一套房子', routineDotPromptTitle: '有周期已经过期', routineDotPromptBody: '要不要在工作页用小红点标出到期项？', toastImportSuccess: '数据恢复成功！', toastImportFailed: '恢复失败，文件格式错误。', confirmImportMsg: '导入备份将覆盖当前所有本地数据，确定继续吗？',
                 loadDemoData: '加载示例演示数据', loadDemoDataDesc: '重置并重新加载包含多处房屋资产的完整示例数据。', confirmDemoDataMsg: '确定要重新载入演示数据吗？当前修改将被覆盖。', toastDemoLoaded: '示例数据已加载',
                 settingsFileManager: '维修照片与收据', fileManagerTitle: '维修照片与收据', filesCount: '个文件', storageUsed: '已用容量', btnManageFiles: '打开', noMediaFiles: '未匹配到媒体文件。', toastMediaDeleted: '文件已彻底删除。', fileTypeAll: '全部文件', fileLibraryHint: '按工单日期排列。点开后左右滑动切换。', fileSearchPh: '搜索名称或房屋', viewerSwipeHint: '左右滑动切换文件', fileLibraryUpload: '上传', fileLibraryTitlePh: '名称（可选）', fileLibraryUploadHint: '先点选上方一套房屋，再上传。文件只存在这台手机。', fileCatDeal: '交易产权', fileCatInsurance: '保险', fileCatLease: '租约', fileCatMaintenance: '维修', fileCatOther: '其他', toastPickPropertyFirst: '请先选择一套房屋', toastLibraryUploaded: '文件已加入',
                 roleTenant: '租客', roleContractor: '师傅', roleRealtor: '经纪', roleLawyer: '律师', roleType: '联系人身份角色', contactName: '姓名/称呼', contactTrade: '工种/专长头衔', contactTradeHint: '例如: 暖通水工, 专修屋顶', assocProperty: '关联房屋', assocProperties: '关联房屋（可多选）', contractorNote: '师傅不用先绑房子，做完维修记录后会自动对上。', noneGeneral: '通用 / 未绑定具体房屋', searchContact: '搜索联系人...', noContacts: '该分类下暂无联系人。',
@@ -2836,7 +2872,7 @@
             return { properties, tasks, repairs, contacts, customRoles, userZones: zones };
         }
 
-        const APP_VERSION = '2026.09.08-g';
+        const APP_VERSION = '2026.09.08-h';
 
         const app = createApp({
             data() {
@@ -2880,6 +2916,8 @@
                     fileFilterType: 'ALL',
                     fileFilterProperty: 'ALL',
                     fileSearch: '',
+                    settingsSection: 'daily',
+                    routineNotifyAsked: false,
                     viewingAlbum: [],
                     viewerTouchX: null,
                     fileUploadCategory: 'deal',
@@ -2935,11 +2973,17 @@
                 },
                 allMediaFiles() {
                     const list = [];
-                    this.tasks.forEach(t => { this.getTaskBeforePhotos(t).forEach((url, idx) => list.push({ id: `t_${t.id}_b_${idx}`, parentId: t.id, parentType: 'task', type: 'before', bucket: 'before', typeLabel: this.t('viewBefore'), url: url, propertyId: t.propertyId, title: t.title, date: t.issueDate || '', isPdf: this.isPdf(url), index: idx })); });
+                    const pushRefs = (refs, extra) => {
+                        (refs || []).forEach((ref, idx) => {
+                            const url = this.resolveMediaUrl(ref);
+                            list.push({ ...extra, id: extra.id + idx, url, missing: !url, isPdf: this.isPdf(url), index: idx });
+                        });
+                    };
+                    this.tasks.forEach(t => { pushRefs(t.beforePhotos, { id: `t_${t.id}_b_`, parentId: t.id, parentType: 'task', type: 'before', bucket: 'before', typeLabel: this.t('viewBefore'), propertyId: t.propertyId, title: t.title, date: t.issueDate || '' }); });
                     this.repairs.forEach(r => {
-                        this.getRepairBeforePhotos(r).forEach((url, idx) => list.push({ id: `r_${r.id}_b_${idx}`, parentId: r.id, parentType: 'repair', type: 'before', bucket: 'before', typeLabel: this.t('viewBefore'), url: url, propertyId: r.propertyId, title: r.title, date: r.date || '', isPdf: this.isPdf(url), index: idx }));
-                        this.getRepairAfterPhotos(r).forEach((url, idx) => list.push({ id: `r_${r.id}_a_${idx}`, parentId: r.id, parentType: 'repair', type: 'after', bucket: 'after', typeLabel: this.t('viewAfter'), url: url, propertyId: r.propertyId, title: r.title, date: r.date || '', isPdf: this.isPdf(url), index: idx }));
-                        this.getRepairReceiptPhotos(r).forEach((url, idx) => list.push({ id: `r_${r.id}_r_${idx}`, parentId: r.id, parentType: 'repair', type: 'receipt', bucket: 'receipt', typeLabel: this.t('viewReceipt'), url: url, propertyId: r.propertyId, title: r.title, date: r.date || '', isPdf: this.isPdf(url), index: idx }));
+                        pushRefs(r.beforePhotos, { id: `r_${r.id}_b_`, parentId: r.id, parentType: 'repair', type: 'before', bucket: 'before', typeLabel: this.t('viewBefore'), propertyId: r.propertyId, title: r.title, date: r.date || '' });
+                        pushRefs(r.afterPhotos, { id: `r_${r.id}_a_`, parentId: r.id, parentType: 'repair', type: 'after', bucket: 'after', typeLabel: this.t('viewAfter'), propertyId: r.propertyId, title: r.title, date: r.date || '' });
+                        pushRefs(r.receiptPhotos, { id: `r_${r.id}_r_`, parentId: r.id, parentType: 'repair', type: 'receipt', bucket: 'receipt', typeLabel: this.t('viewReceipt'), propertyId: r.propertyId, title: r.title, date: r.date || '' });
                     });
                     return list;
                 },
@@ -2961,6 +3005,10 @@
                         map[key].items.push(item);
                     });
                     return groups;
+                },
+                showRoutineDotPrompt() {
+                    if (this.routineNotifyAsked || this.showRoutineDots) return false;
+                    return (this.routines || []).some(r => this.isRoutineOverdue(r));
                 },
                 viewingCaption() {
                     const item = (this.viewingAlbum || [])[this.currentImageIndex];
@@ -3671,8 +3719,16 @@
                 },
                 handleFabClick() {
                     if (this.currentTab === 'dashboard') this.openModal(this.viewingPropertyId ? 'task' : 'property');
-                    else if (this.currentTab === 'work') this.openModal(this.workSubTab === 'routines' ? 'routine' : (this.workSubTab === 'repairs' ? 'repair' : 'task'));
+                    else if (this.currentTab === 'work') {
+                        if (!this.properties.length) { this.showToast(this.t('toastAddPropertyFirst')); return; }
+                        this.openModal(this.workSubTab === 'routines' ? 'routine' : (this.workSubTab === 'repairs' ? 'repair' : 'task'));
+                    }
                     else if (this.currentTab === 'crm') this.openModal('contact');
+                },
+                async answerRoutineDotPrompt(enable) {
+                    this.routineNotifyAsked = true;
+                    this.routineNotify = enable ? 'on' : 'off';
+                    await this.saveToStorage();
                 },
                 todayIso() { return new Date().toISOString().split('T')[0]; },
                 addMonthsToDate(dateStr, months) {
@@ -3737,6 +3793,7 @@
                 },
                 async setRoutineNotify(mode) {
                     this.routineNotify = mode;
+                    this.routineNotifyAsked = true;
                     await this.saveToStorage();
                 },
                 async saveRoutineNotifyTarget() {
@@ -4388,6 +4445,7 @@
                 },
                 removeMediaFromParent(item) {
                     if (!item) return;
+                    const refBefore = this.rawPhotoRef(item);
                     const spliceField = (record, arrKey, legacyKey, index) => {
                         if (!record) return;
                         this.ensurePhotoArray(record, arrKey, record[legacyKey]);
@@ -4404,8 +4462,51 @@
                         else if (item.type === 'after') spliceField(r, 'afterPhotos', 'afterBase64', item.index);
                         else if (item.type === 'receipt') spliceField(r, 'receiptPhotos', 'receiptBase64', item.index);
                     } else if (item.parentType === 'doc') {
+                        const doc = (this.propertyDocs || []).find(d => d.id === item.parentId);
+                        if (doc && doc.fileRef) this.deleteBlobRef(doc.fileRef);
                         this.propertyDocs = (this.propertyDocs || []).filter(d => d.id !== item.parentId);
                     }
+                    this.deleteBlobRef(item.fileRef || refBefore);
+                },
+                rawPhotoRef(item) {
+                    if (!item) return '';
+                    let rec = null;
+                    if (item.parentType === 'task') rec = this.tasks.find(x => x.id === item.parentId);
+                    if (item.parentType === 'repair') rec = this.repairs.find(x => x.id === item.parentId);
+                    const key = item.type === 'after' ? 'afterPhotos' : (item.type === 'receipt' ? 'receiptPhotos' : 'beforePhotos');
+                    if (rec && Array.isArray(rec[key]) && rec[key][item.index]) return rec[key][item.index];
+                    return '';
+                },
+                async deleteBlobRef(ref) {
+                    const id = this.fileRefId(ref);
+                    if (!id) return;
+                    delete this.mediaBlobs[id];
+                    const store = this.blobStore();
+                    if (store) { try { await store.removeItem(id); } catch (e) {} }
+                },
+                collectUsedBlobIds() {
+                    const ids = new Set();
+                    const walk = (arr) => { (arr || []).forEach(u => { if (this.isFileRef(u)) ids.add(this.fileRefId(u)); }); };
+                    this.tasks.forEach(t => walk(t.beforePhotos));
+                    this.repairs.forEach(r => { walk(r.beforePhotos); walk(r.afterPhotos); walk(r.receiptPhotos); });
+                    (this.propertyDocs || []).forEach(d => { if (d.fileRef && this.isFileRef(d.fileRef)) ids.add(this.fileRefId(d.fileRef)); });
+                    return ids;
+                },
+                async cleanupUnusedBlobs() {
+                    const used = this.collectUsedBlobIds();
+                    let removed = 0;
+                    Object.keys(this.mediaBlobs || {}).forEach(id => {
+                        if (!used.has(id)) { delete this.mediaBlobs[id]; removed++; }
+                    });
+                    const store = this.blobStore();
+                    if (store) {
+                        const keys = await store.keys();
+                        for (const id of keys) {
+                            if (!used.has(id)) { await store.removeItem(id); removed++; }
+                        }
+                    }
+                    await this.saveToStorage();
+                    this.showToast(this.t('toastCleanupDone').replace('{n}', String(removed)));
                 },
                 async loadDemoData() {
                     if (!confirm(this.t('confirmDemoDataMsg'))) return;
@@ -4454,6 +4555,7 @@
                             userCatalog: this.userCatalog,
                             propertyDocs: this.propertyDocs,
                             routineNotify: this.routineNotify,
+                            routineNotifyAsked: this.routineNotifyAsked,
                             routineNotifyPhone: this.routineNotifyPhone,
                             routineNotifyEmail: this.routineNotifyEmail
                         }));
@@ -4475,6 +4577,7 @@
                             else this.userCatalog = cloneDefaultCatalog();
                             if (!this.userCatalog.cashflow || !this.userCatalog.cashflow.rental) this.userCatalog.cashflow = JSON.parse(JSON.stringify(defaultCashflowCatalog));
                             if (data.routineNotify) this.routineNotify = data.routineNotify;
+                            if (data.routineNotifyAsked != null) this.routineNotifyAsked = !!data.routineNotifyAsked;
                             if (data.routineNotifyPhone != null) this.routineNotifyPhone = data.routineNotifyPhone;
                             if (data.routineNotifyEmail != null) this.routineNotifyEmail = data.routineNotifyEmail;
                             if (data.userZones && data.userZones.length > 0) {
@@ -4504,6 +4607,7 @@
                         userCatalog: this.userCatalog,
                         propertyDocs: this.propertyDocs,
                         routineNotify: this.routineNotify,
+                        routineNotifyAsked: this.routineNotifyAsked,
                         routineNotifyPhone: this.routineNotifyPhone,
                         routineNotifyEmail: this.routineNotifyEmail
                     };
@@ -4515,6 +4619,7 @@
                     a.download = includeBlobs ? `pocketprop_full_${new Date().toISOString().split('T')[0]}.json` : `pocketprop_light_${new Date().toISOString().split('T')[0]}.json`;
                     a.click();
                     URL.revokeObjectURL(url);
+                    this.showToast(includeBlobs ? this.t('toastExportFull') : this.t('toastExportLight'));
                 },
                 triggerImport() {
                     if(confirm(this.t('confirmImportMsg'))) {
@@ -4540,6 +4645,7 @@
                                 this.propertyDocs = data.propertyDocs || [];
                                 this.userZones = data.userZones || getDefaultZones(this.currentLang);
                                 if (data.routineNotify) this.routineNotify = data.routineNotify;
+                                if (data.routineNotifyAsked != null) this.routineNotifyAsked = !!data.routineNotifyAsked;
                                 if (data.routineNotifyPhone != null) this.routineNotifyPhone = data.routineNotifyPhone;
                                 if (data.routineNotifyEmail != null) this.routineNotifyEmail = data.routineNotifyEmail;
                                 this.normalizePhotoFields();
@@ -4547,7 +4653,9 @@
                                 await this.loadMediaBlobs();
                                 this.harvestAllPhotos();
                                 await this.saveToStorage();
-                                this.showToast(this.t('toastImportSuccess'));
+                                const hasFileRefs = JSON.stringify({ t: this.tasks, r: this.repairs }).includes('file:');
+                                if (hasFileRefs && !data.blobs) this.showToast(this.t('toastImportLightNoPhotos'));
+                                else this.showToast(this.t('toastImportSuccess'));
                                 if (this.dashboardViewMode === 'map') this.renderMapMarkers();
                             } else {
                                 this.showToast(this.t('toastImportFailed'));
