@@ -1818,17 +1818,6 @@
                                     <i class="fa-solid fa-arrow-left"></i>
                                 </button>
                             </div>
-                            <div class="bg-slate-800/70 rounded-2xl p-3 border border-slate-700/50 space-y-2">
-                                <div class="flex gap-2">
-                                    <select v-model="fileUploadCategory" class="flex-1 bg-slate-900 rounded-xl px-2.5 py-2 text-[12px] text-white outline-none border border-slate-700">
-                                        <option v-for="opt in fileDocCategories" :key="opt.key" :value="opt.key">{{ opt.label }}</option>
-                                    </select>
-                                    <button type="button" @click="triggerLibraryUpload" class="px-3 py-2 rounded-xl bg-brand-500 text-white text-[12px] font-bold flex-shrink-0">{{ t('fileLibraryUpload') }}</button>
-                                </div>
-                                <input v-model="fileUploadTitle" type="text" :placeholder="t('fileLibraryTitlePh')" class="w-full bg-slate-900 rounded-xl px-2.5 py-2 text-[12px] text-white outline-none border border-slate-700">
-                                <p class="text-[10px] text-slate-500">{{ t('fileLibraryUploadHint') }}</p>
-                            </div>
-                            <input type="file" ref="libraryFileInput" class="hidden" accept="image/*,application/pdf,.pdf" multiple @change="handleLibraryUpload">
 
                             <div class="space-y-2">
                                 <div class="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
@@ -1993,7 +1982,7 @@
                 settingsContactRoles: 'Contact Category Settings', addRoleCategory: 'Add Category', roleCategoryName: 'Category Name', toastRoleAdded: 'Category added', toastRoleDeleted: 'Category deleted',
                 settingsDataBackup: 'Data Management (Local-First)', exportBackup: 'Export JSON Backup', exportBackupLight: 'Light backup', exportBackupLightDesc: 'Houses, work and ledger only — no photos.', exportBackupFull: 'Full backup', exportBackupFullDesc: 'Includes photos and receipts. File can be large.', importBackup: 'Restore JSON Backup', toastImportSuccess: 'Data restored successfully!', toastImportFailed: 'Invalid backup file format.', confirmImportMsg: 'Restoring from backup will overwrite all existing local data. Continue?',
                 loadDemoData: 'Reset Demo Data', loadDemoDataDesc: 'Overwrites current data with multi-property sample dataset.', confirmDemoDataMsg: 'Are you sure you want to load sample data? Current data will be replaced.', toastDemoLoaded: 'Demo data loaded',
-                settingsFileManager: 'Media & File Storage', fileManagerTitle: 'Property files', filesCount: 'Files', storageUsed: 'Used', btnManageFiles: 'Open Gallery', noMediaFiles: 'No photo or document files match.', toastMediaDeleted: 'File removed from local storage.', fileTypeAll: 'All Files', fileLibraryHint: 'Closing packages, insurance, leases, plus repair photos.', fileLibraryUpload: 'Upload', fileLibraryTitlePh: 'Name (optional)', fileLibraryUploadHint: 'Pick a property above first, then upload. Stored on this phone.', fileCatDeal: 'Closing / title', fileCatInsurance: 'Insurance', fileCatLease: 'Lease', fileCatMaintenance: 'Repairs', fileCatOther: 'Other', toastPickPropertyFirst: 'Choose a property first', toastLibraryUploaded: 'File added',
+                settingsFileManager: 'Media & File Storage', fileManagerTitle: 'Repair photos & receipts', filesCount: 'Files', storageUsed: 'Used', btnManageFiles: 'Open Gallery', noMediaFiles: 'No photo or document files match.', toastMediaDeleted: 'File removed from local storage.', fileTypeAll: 'All Files', fileLibraryHint: 'Only before / after / receipt files from work. Keep closing, insurance and leases in your own Files app.', fileLibraryUpload: 'Upload', fileLibraryTitlePh: 'Name (optional)', fileLibraryUploadHint: 'Pick a property above first, then upload. Stored on this phone.', fileCatDeal: 'Closing / title', fileCatInsurance: 'Insurance', fileCatLease: 'Lease', fileCatMaintenance: 'Repairs', fileCatOther: 'Other', toastPickPropertyFirst: 'Choose a property first', toastLibraryUploaded: 'File added',
                 roleTenant: 'Tenant', roleContractor: 'Contractor', roleRealtor: 'Realtor', roleLawyer: 'Lawyer', roleType: 'Contact Role', contactName: 'Full Name', contactTrade: 'Specialty / Trade Title', contactTradeHint: 'e.g. HVAC, Plumbing Specialist', assocProperty: 'Associated Property', assocProperties: 'Associated Properties', contractorNote: 'Contractors are linked through repair logs.', noneGeneral: 'General / Unlinked', searchContact: 'Search contacts...', noContacts: 'No contacts found.',
                 contactPhone: 'Phone', contactWechat: 'WeChat ID', contactEmail: 'Email', contactNotes: 'Private Notes',
                 settingsZones: 'Property Zones & Areas', settingsZonesDesc: 'Customize specific rooms and areas for your properties.', manageCatalog: 'Work catalog', manageCatalogDesc: 'Preset categories and titles for pending, cycles and history.', manageCatalogHint: 'Work forms only use these presets.', manageCashflowLines: 'Cash flow lines', manageCashflowLinesDesc: 'Edit Monthly Cash Flow and Monthly Expenses rows.', manageCashflowLinesHint: 'These labels appear on the property page. Add, rename or delete rows here.', newCashflowLine: 'Line name', cashflowMarkIncome: 'Treat this line as income?', confirmDeleteCashflowLine: 'This line has numbers on {n} properties. Delete it anyway?', catalogNonCycle: 'Non-cycle (Pending + History)', catalogCycle: 'Cycle only', newCategory: 'New category', newPresetName: 'Preset title', confirmDeleteCategory: 'Delete this category and its preset titles?', btnRename: 'Rename', renameTo: 'Rename to', confirmRenameInUse: '"{old}" is already used on {n} record(s). Renaming to "{new}" will update those records too. Continue?', manageZones: 'Manage Zones & Areas',
@@ -2040,7 +2029,7 @@
                 settingsContactRoles: '人员类别设置', addRoleCategory: '新增类别', roleCategoryName: '类别名称', toastRoleAdded: '已新增人员类别', toastRoleDeleted: '已删除人员类别',
                 settingsDataBackup: '数据备份与恢复 (离线)', exportBackup: '导出 JSON 备份文件', exportBackupLight: '轻备份', exportBackupLightDesc: '只含房屋、工作和账本，不含照片。', exportBackupFull: '完整备份', exportBackupFullDesc: '含照片和收据，文件可能很大。', importBackup: '恢复 JSON 备份文件', toastImportSuccess: '数据恢复成功！', toastImportFailed: '恢复失败，文件格式错误。', confirmImportMsg: '导入备份将覆盖当前所有本地数据，确定继续吗？',
                 loadDemoData: '加载示例演示数据', loadDemoDataDesc: '重置并重新加载包含多处房屋资产的完整示例数据。', confirmDemoDataMsg: '确定要重新载入演示数据吗？当前修改将被覆盖。', toastDemoLoaded: '示例数据已加载',
-                settingsFileManager: '文件与媒体存储管理', fileManagerTitle: '房屋文件库', filesCount: '个文件', storageUsed: '已用容量', btnManageFiles: '进入文件库', noMediaFiles: '未匹配到媒体文件。', toastMediaDeleted: '文件已彻底删除。', fileTypeAll: '全部文件', fileLibraryHint: '买房文件、保单、租约，以及维修照片都在这里。', fileLibraryUpload: '上传', fileLibraryTitlePh: '名称（可选）', fileLibraryUploadHint: '先点选上方一套房屋，再上传。文件只存在这台手机。', fileCatDeal: '交易产权', fileCatInsurance: '保险', fileCatLease: '租约', fileCatMaintenance: '维修', fileCatOther: '其他', toastPickPropertyFirst: '请先选择一套房屋', toastLibraryUploaded: '文件已加入',
+                settingsFileManager: '文件与媒体存储管理', fileManagerTitle: '维修照片与收据', filesCount: '个文件', storageUsed: '已用容量', btnManageFiles: '进入文件库', noMediaFiles: '未匹配到媒体文件。', toastMediaDeleted: '文件已彻底删除。', fileTypeAll: '全部文件', fileLibraryHint: '只显示工单上的修前、修后和收据。买房、保险、租约请放在系统「文件」里，不必进 App。', fileLibraryUpload: '上传', fileLibraryTitlePh: '名称（可选）', fileLibraryUploadHint: '先点选上方一套房屋，再上传。文件只存在这台手机。', fileCatDeal: '交易产权', fileCatInsurance: '保险', fileCatLease: '租约', fileCatMaintenance: '维修', fileCatOther: '其他', toastPickPropertyFirst: '请先选择一套房屋', toastLibraryUploaded: '文件已加入',
                 roleTenant: '租客', roleContractor: '师傅', roleRealtor: '经纪', roleLawyer: '律师', roleType: '联系人身份角色', contactName: '姓名/称呼', contactTrade: '工种/专长头衔', contactTradeHint: '例如: 暖通水工, 专修屋顶', assocProperty: '关联房屋节点', assocProperties: '关联房屋资产 (支持多选)', contractorNote: '师傅无直接关联房屋，通过修缮病历本自动关联。', noneGeneral: '通用 / 未绑定具体房屋', searchContact: '搜索联系人...', noContacts: '该分类下暂无联系人。',
                 contactPhone: '电话', contactWechat: '微信号', contactEmail: '邮箱', contactNotes: '私密备注',
                 settingsZones: '房屋空间与区域设置', settingsZonesDesc: '自定义房屋内可用的具体房间与区域列表。', manageCatalog: '工作事项目录', manageCatalogDesc: '预设待办、周期和历史的分类与名称。', manageCatalogHint: '工作页只能选择这些预设。', manageCashflowLines: '现金流行项目', manageCashflowLinesDesc: '编辑 Monthly Cash Flow 与 Monthly Expenses 的行。', manageCashflowLinesHint: '这些名称会出现在房屋页。可在此添加、重命名或删除。', newCashflowLine: '行名称', cashflowMarkIncome: '把这一行算作收入？', confirmDeleteCashflowLine: '有 {n} 套房屋填过这一行。仍要删除？', catalogNonCycle: '非周期（待办与历史共用）', catalogCycle: '仅周期', newCategory: '新分类', newPresetName: '预设名称', confirmDeleteCategory: '删除该分类及其预设名称？', btnRename: '重命名', renameTo: '改为', confirmRenameInUse: '“{old}”已被 {n} 条记录使用。改成“{new}”会同时改这些记录里的名称或分类。确认继续？', manageZones: '管理空间与区域',
@@ -2840,7 +2829,7 @@
             return { properties, tasks, repairs, contacts, customRoles, userZones: zones };
         }
 
-        const APP_VERSION = '2026.09.08-b';
+        const APP_VERSION = '2026.09.08-c';
 
         const app = createApp({
             data() {
@@ -2929,25 +2918,18 @@
                 mediaTypeOptions() {
                     return [
                         { key: 'ALL', label: this.t('fileTypeAll') || 'All Files', icon: 'fa-layer-group' },
-                        { key: 'deal', label: this.t('fileCatDeal'), icon: 'fa-file-signature' },
-                        { key: 'insurance', label: this.t('fileCatInsurance'), icon: 'fa-shield-halved' },
-                        { key: 'lease', label: this.t('fileCatLease'), icon: 'fa-file-contract' },
-                        { key: 'maintenance', label: this.t('fileCatMaintenance'), icon: 'fa-screwdriver-wrench' },
-                        { key: 'other', label: this.t('fileCatOther'), icon: 'fa-folder' }
+                        { key: 'before', label: this.t('viewBefore'), icon: 'fa-camera' },
+                        { key: 'after', label: this.t('viewAfter'), icon: 'fa-image' },
+                        { key: 'receipt', label: this.t('viewReceipt'), icon: 'fa-receipt' }
                     ];
                 },
                 allMediaFiles() {
                     const list = [];
-                    (this.propertyDocs || []).forEach(d => {
-                        const url = this.resolveMediaUrl(d.fileRef);
-                        const bucket = d.category === 'repair_doc' ? 'maintenance' : (d.category || 'other');
-                        list.push({ id: d.id, parentId: d.id, parentType: 'doc', type: d.category || 'other', bucket, typeLabel: this.docCategoryLabel(d.category), url, propertyId: d.propertyId, title: d.title || d.name || this.docCategoryLabel(d.category), isPdf: this.isPdf(url), index: 0 });
-                    });
-                    this.tasks.forEach(t => { this.getTaskBeforePhotos(t).forEach((url, idx) => list.push({ id: `t_${t.id}_b_${idx}`, parentId: t.id, parentType: 'task', type: 'before', bucket: 'maintenance', typeLabel: this.t('viewBefore'), url: url, propertyId: t.propertyId, title: t.title, isPdf: this.isPdf(url), index: idx })); });
+                    this.tasks.forEach(t => { this.getTaskBeforePhotos(t).forEach((url, idx) => list.push({ id: `t_${t.id}_b_${idx}`, parentId: t.id, parentType: 'task', type: 'before', bucket: 'before', typeLabel: this.t('viewBefore'), url: url, propertyId: t.propertyId, title: t.title, isPdf: this.isPdf(url), index: idx })); });
                     this.repairs.forEach(r => {
-                        this.getRepairBeforePhotos(r).forEach((url, idx) => list.push({ id: `r_${r.id}_b_${idx}`, parentId: r.id, parentType: 'repair', type: 'before', bucket: 'maintenance', typeLabel: this.t('viewBefore'), url: url, propertyId: r.propertyId, title: r.title, isPdf: this.isPdf(url), index: idx }));
-                        this.getRepairAfterPhotos(r).forEach((url, idx) => list.push({ id: `r_${r.id}_a_${idx}`, parentId: r.id, parentType: 'repair', type: 'after', bucket: 'maintenance', typeLabel: this.t('viewAfter'), url: url, propertyId: r.propertyId, title: r.title, isPdf: this.isPdf(url), index: idx }));
-                        this.getRepairReceiptPhotos(r).forEach((url, idx) => list.push({ id: `r_${r.id}_r_${idx}`, parentId: r.id, parentType: 'repair', type: 'receipt', bucket: 'maintenance', typeLabel: this.t('viewReceipt'), url: url, propertyId: r.propertyId, title: r.title, isPdf: this.isPdf(url), index: idx }));
+                        this.getRepairBeforePhotos(r).forEach((url, idx) => list.push({ id: `r_${r.id}_b_${idx}`, parentId: r.id, parentType: 'repair', type: 'before', bucket: 'before', typeLabel: this.t('viewBefore'), url: url, propertyId: r.propertyId, title: r.title, isPdf: this.isPdf(url), index: idx }));
+                        this.getRepairAfterPhotos(r).forEach((url, idx) => list.push({ id: `r_${r.id}_a_${idx}`, parentId: r.id, parentType: 'repair', type: 'after', bucket: 'after', typeLabel: this.t('viewAfter'), url: url, propertyId: r.propertyId, title: r.title, isPdf: this.isPdf(url), index: idx }));
+                        this.getRepairReceiptPhotos(r).forEach((url, idx) => list.push({ id: `r_${r.id}_r_${idx}`, parentId: r.id, parentType: 'repair', type: 'receipt', bucket: 'receipt', typeLabel: this.t('viewReceipt'), url: url, propertyId: r.propertyId, title: r.title, isPdf: this.isPdf(url), index: idx }));
                     });
                     return list;
                 },
