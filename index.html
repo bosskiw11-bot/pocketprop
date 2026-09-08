@@ -685,19 +685,22 @@
                     </template>
 
                     <template v-if="workSubTab === 'routines'">
-                        <div class="bg-slate-800/80 rounded-2xl p-3 border border-slate-700/50 space-y-2">
-                            <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{{ t('routineNotifyTitle') }}</p>
-                            <div class="flex bg-slate-900 p-1 rounded-xl border border-slate-700/70">
-                                <button type="button" @click="setRoutineNotify('off')" class="flex-1 py-1.5 rounded-lg text-[11px] font-black transition-all" :class="routineNotify === 'off' ? 'bg-slate-600 text-white' : 'text-slate-400'">{{ t('routineNotifyOff') }}</button>
-                                <button type="button" @click="setRoutineNotify('sms')" class="flex-1 py-1.5 rounded-lg text-[11px] font-black transition-all" :class="routineNotify === 'sms' ? 'bg-brand-500 text-white' : 'text-slate-400'">{{ t('routineNotifySms') }}</button>
-                                <button type="button" @click="setRoutineNotify('email')" class="flex-1 py-1.5 rounded-lg text-[11px] font-black transition-all" :class="routineNotify === 'email' ? 'bg-brand-500 text-white' : 'text-slate-400'">{{ t('routineNotifyEmail') }}</button>
-                            </div>
-                            <input v-if="routineNotify === 'sms'" v-model="routineNotifyPhone" type="tel" :placeholder="t('routineNotifyPhone')" @change="saveRoutineNotifyTarget" class="w-full bg-slate-900 rounded-xl px-3 py-2 text-[13px] text-white outline-none border border-slate-700">
-                            <input v-if="routineNotify === 'email'" v-model="routineNotifyEmail" type="email" :placeholder="t('routineNotifyEmailAddr')" @change="saveRoutineNotifyTarget" class="w-full bg-slate-900 rounded-xl px-3 py-2 text-[13px] text-white outline-none border border-slate-700">
-                            <p class="text-[11px] text-slate-500 leading-relaxed">{{ t('routineNotifyHint') }}</p>
-                            <button v-if="routineNotify !== 'off'" type="button" @click="sendDueRoutineReminders" class="w-full py-2 rounded-xl bg-slate-900 border border-slate-700 text-[12px] font-bold text-slate-200">{{ t('routineNotifySendDue') }}</button>
+                        <div class="flex items-start gap-2 px-1">
+                            <p class="text-[11px] text-slate-400 leading-relaxed flex-1 min-w-0">{{ t('routinesHint') }}</p>
+                            <button type="button" @click="showRoutineNotifyPanel = !showRoutineNotifyPanel" class="w-7 h-7 flex-shrink-0 rounded-lg flex items-center justify-center" :class="routineNotify === 'off' ? 'text-slate-500' : 'text-sky-300 bg-sky-500/10'">
+                                <i class="fa-solid fa-bell text-[11px]"></i>
+                            </button>
                         </div>
-                        <p class="text-[11px] text-slate-400 px-1 leading-relaxed">{{ t('routinesHint') }}</p>
+                        <div v-if="showRoutineNotifyPanel" class="bg-slate-800/70 rounded-xl p-2.5 border border-slate-700/40 space-y-2">
+                            <div class="flex gap-1">
+                                <button type="button" @click="setRoutineNotify('off')" class="flex-1 py-1 rounded-lg text-[10px] font-bold" :class="routineNotify === 'off' ? 'bg-slate-600 text-white' : 'text-slate-500'">{{ t('routineNotifyOff') }}</button>
+                                <button type="button" @click="setRoutineNotify('sms')" class="flex-1 py-1 rounded-lg text-[10px] font-bold" :class="routineNotify === 'sms' ? 'bg-brand-500 text-white' : 'text-slate-500'">{{ t('routineNotifySms') }}</button>
+                                <button type="button" @click="setRoutineNotify('email')" class="flex-1 py-1 rounded-lg text-[10px] font-bold" :class="routineNotify === 'email' ? 'bg-brand-500 text-white' : 'text-slate-500'">{{ t('routineNotifyEmail') }}</button>
+                            </div>
+                            <input v-if="routineNotify === 'sms'" v-model="routineNotifyPhone" type="tel" :placeholder="t('routineNotifyPhone')" @change="saveRoutineNotifyTarget" class="w-full bg-slate-900 rounded-lg px-2.5 py-1.5 text-[12px] text-white outline-none border border-slate-700">
+                            <input v-if="routineNotify === 'email'" v-model="routineNotifyEmail" type="email" :placeholder="t('routineNotifyEmailAddr')" @change="saveRoutineNotifyTarget" class="w-full bg-slate-900 rounded-lg px-2.5 py-1.5 text-[12px] text-white outline-none border border-slate-700">
+                            <button v-if="routineNotify !== 'off'" type="button" @click="sendDueRoutineReminders" class="text-[11px] font-bold text-sky-300">{{ t('routineNotifySendDue') }}</button>
+                        </div>
                         <div v-for="routine in filteredRoutines" :key="routine.id" class="bg-slate-800 rounded-2xl p-3 border transition-all" :class="isRoutineOverdue(routine) ? 'border-rose-500/40' : (isRoutineDueSoon(routine) ? 'border-amber-500/40' : 'border-slate-700/50')">
                             <div class="flex flex-col gap-2">
                                 <div class="flex items-center gap-2">
@@ -2806,7 +2809,7 @@
             return { properties, tasks, repairs, contacts, customRoles, userZones: zones };
         }
 
-        const APP_VERSION = '2026.09.07-a';
+        const APP_VERSION = '2026.09.07-b';
 
         const app = createApp({
             data() {
@@ -2864,6 +2867,7 @@
                     routineNotify: 'off',
                     routineNotifyPhone: '',
                     routineNotifyEmail: '',
+                    showRoutineNotifyPanel: false,
                     
                     cashflowMode: 'rental',
                     cashflowDraft: { rentalIncome: '', mortgage: '', insurance: '', propertyTax: '', propertyManagement: '', hoa: '', hydro: '', gas: '', water: '', internet: '', groceries: '', transit: '', childcare: '', health: '', subscriptions: '', reserve: '', others: '' },
