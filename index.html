@@ -66,21 +66,30 @@
         #app > header { padding-top: max(3rem, calc(env(safe-area-inset-top, 0px) + 0.75rem)); }
         nav.pb-safe { padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px)); }
         .tax-sheet-table { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 11px; }
-        .tax-sheet-table th, .tax-sheet-table td { vertical-align: top; padding: 6px 8px 6px 0; }
+        .tax-sheet-table th, .tax-sheet-table td { vertical-align: top; padding: 5px 6px 5px 0; }
         .tax-sheet-table .col-date { width: 22%; }
-        .tax-sheet-table .col-title { width: 58%; }
-        .tax-sheet-table .col-amt { width: 20%; text-align: right; }
+        .tax-sheet-table .col-title { width: 56%; }
+        .tax-sheet-table .col-amt { width: 22%; text-align: right; }
+        .tax-print-body { background: #e2e8f0; }
+        .tax-a4 {
+            width: 210mm;
+            max-width: 100%;
+            min-height: 297mm;
+            margin: 16px auto;
+            background: #fff;
+            color: #111;
+            padding: 16mm 16mm 18mm;
+            box-shadow: 0 10px 40px rgba(15, 23, 42, 0.18);
+            box-sizing: border-box;
+        }
+        @page { size: A4 portrait; margin: 12mm; }
         @media print {
             body { background: #fff !important; }
             #app > :not(.tax-print-sheet) { display: none !important; }
-            .tax-print-sheet { position: static !important; inset: auto !important; width: 100% !important; height: auto !important; max-width: none !important; background: #fff !important; color: #111 !important; overflow: visible !important; }
+            .tax-print-sheet { position: static !important; inset: auto !important; width: auto !important; height: auto !important; background: #fff !important; color: #111 !important; overflow: visible !important; display: block !important; }
             .tax-print-actions { display: none !important; }
-            .tax-print-body { padding: 0 !important; }
-            .tax-sheet-table { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 11px; }
-            .tax-sheet-table th, .tax-sheet-table td { vertical-align: top; padding: 6px 8px 6px 0; }
-            .tax-sheet-table .col-date { width: 22%; }
-            .tax-sheet-table .col-title { width: 58%; }
-            .tax-sheet-table .col-amt { width: 20%; text-align: right; }
+            .tax-print-body { background: #fff !important; padding: 0 !important; overflow: visible !important; }
+            .tax-a4 { width: auto; min-height: 0; margin: 0; padding: 0; box-shadow: none; }
         }
     </style>
     <script>
@@ -2045,7 +2054,8 @@
                     </select>
                 </label>
             </div>
-            <div class="tax-print-body flex-1 overflow-y-auto bg-white text-slate-900 px-5 py-5">
+            <div class="tax-print-body flex-1 overflow-y-auto">
+            <div class="tax-a4 text-slate-900">
                 <p class="text-[11px] font-bold tracking-widest uppercase text-slate-500">PocketProp</p>
                 <h2 class="text-xl font-black mt-1">{{ t('exportTaxTitle') }}</h2>
                 <p class="text-[12px] text-slate-600 mt-1">{{ taxExportRangeLabel }} · {{ t('exportTaxGenerated') }} {{ todayIso() }}</p>
@@ -2059,8 +2069,10 @@
                 </table>
                 <div v-if="taxExportPack.groups.length === 0" class="text-[13px] text-slate-500 text-center py-10">{{ t('exportTaxEmpty') }}</div>
                 <div v-for="group in taxExportPack.groups" :key="group.id" class="mt-6">
-                    <h3 class="text-[15px] font-black">{{ group.name }}</h3>
-                    <p v-if="group.address" class="text-[11px] text-slate-500 mt-1">{{ group.address }}</p>
+                    <div class="flex items-baseline justify-between gap-3">
+                        <h3 class="text-[15px] font-black min-w-0 truncate">{{ group.name }}</h3>
+                        <p v-if="group.address" class="text-[11px] text-slate-500 text-right min-w-0 truncate">{{ group.address }}</p>
+                    </div>
                     <table class="tax-sheet-table mt-2">
                         <colgroup><col class="col-date"><col class="col-title"><col class="col-amt"></colgroup>
                         <thead><tr class="text-slate-500 border-b border-slate-200"><th class="text-left">{{ t('modalDate') }}</th><th class="text-left">{{ t('modalRepairTitle') }}</th><th class="col-amt">$</th></tr></thead>
@@ -2081,6 +2093,7 @@
                     </table>
                 </div>
                 <p class="text-[10px] text-slate-400 mt-8">{{ t('exportTaxFooter') }}</p>
+            </div>
             </div>
         </div>
         <div v-if="pendingNextDue" class="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-slate-950/80">
