@@ -1141,7 +1141,7 @@
                             <div class="mt-4 border-t border-slate-700/50 pt-4">
                                 <div class="flex justify-between items-center mb-2 pl-1">
                                     <label class="text-[12px] font-bold text-slate-400 uppercase tracking-wider">{{ t('uploadBefore') }}</label>
-                                    <span class="text-[11px] font-bold text-brand-400">{{ formTask.beforePhotos.length }} / 3</span>
+                                    <span class="text-[11px] font-bold text-brand-400">{{ formTask.beforePhotos.length }} / {{ photoMax }}</span>
                                 </div>
 
                                 <div class="grid grid-cols-3 gap-3">
@@ -1152,7 +1152,7 @@
                                         </button>
                                     </div>
 
-                                    <div v-if="formTask.beforePhotos.length < 3" @click="triggerFileInput('before', true)" class="aspect-square bg-slate-800/50 border-2 border-dashed border-slate-600 rounded-2xl flex flex-col items-center justify-center text-slate-400 cursor-pointer active:bg-slate-800 transition-colors p-1 text-center">
+                                    <div v-if="formTask.beforePhotos.length < photoMax" @click="triggerFileInput('before', true)" class="aspect-square bg-slate-800/50 border-2 border-dashed border-slate-600 rounded-2xl flex flex-col items-center justify-center text-slate-400 cursor-pointer active:bg-slate-800 transition-colors p-1 text-center">
                                         <i class="fa-solid fa-camera text-xl mb-1 text-brand-400"></i>
                                         <span class="text-[10px] font-bold leading-tight">{{ t('addPhoto') }}</span>
                                     </div>
@@ -1280,7 +1280,7 @@
                                 <div>
                                     <div class="flex justify-between items-center mb-2 pl-1">
                                         <label class="text-[12px] font-bold text-slate-400 uppercase tracking-wider">{{ t('uploadBefore') }}</label>
-                                        <span class="text-[11px] font-bold text-brand-400">{{ formRepair.beforePhotos.length }} / 3</span>
+                                        <span class="text-[11px] font-bold text-brand-400">{{ formRepair.beforePhotos.length }} / {{ photoMax }}</span>
                                     </div>
                                     <div class="grid grid-cols-3 gap-3">
                                         <div v-for="(photo, idx) in formRepair.beforePhotos" :key="'b_'+idx" class="relative aspect-square bg-slate-800 rounded-2xl p-1 border border-slate-700 flex items-center justify-center overflow-hidden">
@@ -1289,7 +1289,7 @@
                                                 <i class="fa-solid fa-xmark"></i>
                                             </button>
                                         </div>
-                                        <div v-if="formRepair.beforePhotos.length < 3" @click="triggerFileInput('before', true)" class="aspect-square bg-slate-800/50 border-2 border-dashed border-slate-600 rounded-2xl flex flex-col items-center justify-center text-slate-400 cursor-pointer active:bg-slate-800 transition-colors p-1 text-center">
+                                        <div v-if="formRepair.beforePhotos.length < photoMax" @click="triggerFileInput('before', true)" class="aspect-square bg-slate-800/50 border-2 border-dashed border-slate-600 rounded-2xl flex flex-col items-center justify-center text-slate-400 cursor-pointer active:bg-slate-800 transition-colors p-1 text-center">
                                             <i class="fa-solid fa-camera text-xl mb-1 text-brand-400"></i>
                                             <span class="text-[10px] font-bold leading-tight">{{ t('addPhoto') }}</span>
                                         </div>
@@ -1299,7 +1299,7 @@
                                 <div>
                                     <div class="flex justify-between items-center mb-2 pl-1">
                                         <label class="text-[12px] font-bold text-slate-400 uppercase tracking-wider">{{ t('uploadAfter') }}</label>
-                                        <span class="text-[11px] font-bold text-emerald-400">{{ formRepair.afterPhotos.length }} / 3</span>
+                                        <span class="text-[11px] font-bold text-emerald-400">{{ formRepair.afterPhotos.length }} / {{ photoMax }}</span>
                                     </div>
                                     <div class="grid grid-cols-3 gap-3">
                                         <div v-for="(photo, idx) in formRepair.afterPhotos" :key="'a_'+idx" class="relative aspect-square bg-slate-800 rounded-2xl p-1 border border-slate-700 flex items-center justify-center overflow-hidden">
@@ -1308,7 +1308,7 @@
                                                 <i class="fa-solid fa-xmark"></i>
                                             </button>
                                         </div>
-                                        <div v-if="formRepair.afterPhotos.length < 3" @click="triggerFileInput('after', true)" class="aspect-square bg-slate-800/50 border-2 border-dashed border-slate-600 rounded-2xl flex flex-col items-center justify-center text-slate-400 cursor-pointer active:bg-slate-800 transition-colors p-1 text-center">
+                                        <div v-if="formRepair.afterPhotos.length < photoMax" @click="triggerFileInput('after', true)" class="aspect-square bg-slate-800/50 border-2 border-dashed border-slate-600 rounded-2xl flex flex-col items-center justify-center text-slate-400 cursor-pointer active:bg-slate-800 transition-colors p-1 text-center">
                                             <i class="fa-solid fa-camera text-xl mb-1 text-emerald-400"></i>
                                             <span class="text-[10px] font-bold leading-tight">{{ t('addPhoto') }}</span>
                                         </div>
@@ -1319,7 +1319,7 @@
                                     <div class="flex justify-between items-center mb-2 pl-1">
                                         <div class="flex items-center gap-2">
                                             <label class="text-[12px] font-bold text-slate-400 uppercase tracking-wider">{{ t('uploadReceipt') }}</label>
-                                            <span v-if="formRepair.hasReceipt" class="text-[11px] font-bold text-amber-400">{{ formRepair.receiptPhotos.length }} / 3</span>
+                                            <span v-if="formRepair.hasReceipt" class="text-[11px] font-bold text-amber-400">{{ formRepair.receiptPhotos.length }} / {{ photoMax }}</span>
                                         </div>
                                         <div class="flex bg-slate-900 rounded-lg p-0.5 border border-slate-700 shadow-inner">
                                             <button type="button" @click="formRepair.hasReceipt = true" class="px-2.5 py-1 text-[10px] font-bold rounded-md transition-all" :class="formRepair.hasReceipt ? 'bg-amber-500 text-white shadow' : 'text-slate-500 hover:text-slate-300'">{{ t('hasReceipt') }}</button>
@@ -1341,7 +1341,7 @@
                                                 <i class="fa-solid fa-xmark"></i>
                                             </button>
                                         </div>
-                                        <div v-if="formRepair.receiptPhotos.length < 3" @click="triggerFileInput('receipt', true)" class="aspect-square bg-slate-800/50 border-2 border-dashed border-slate-600 rounded-2xl flex flex-col items-center justify-center text-slate-400 cursor-pointer active:bg-slate-800 transition-colors p-1 text-center">
+                                        <div v-if="formRepair.receiptPhotos.length < photoMax" @click="triggerFileInput('receipt', true)" class="aspect-square bg-slate-800/50 border-2 border-dashed border-slate-600 rounded-2xl flex flex-col items-center justify-center text-slate-400 cursor-pointer active:bg-slate-800 transition-colors p-1 text-center">
                                             <i class="fa-solid fa-file-circle-plus text-xl mb-1 text-amber-400"></i>
                                             <span class="text-[10px] font-bold leading-tight">{{ t('addPhoto') }} / PDF</span>
                                         </div>
@@ -1462,6 +1462,7 @@
                                             <p class="text-sm font-black text-white group-hover:text-brand-400 transition-colors">{{ t('fileManagerTitle') }}</p>
                                             <p class="text-[11px] font-semibold text-slate-400 mt-0.5">
                                                 {{ allMediaFiles.length }} {{ t('filesCount') }} · ~{{ estimatedStorageMB }} MB {{ t('storageUsed') }}
+                                                <span v-if="Number(estimatedStorageMB) >= 200" class="block text-amber-400 mt-1">{{ t('storageWarn') }}</span>
                                             </p>
                                         </div>
                                     </div>
@@ -2024,8 +2025,8 @@
                 modalCost: 'Cost', modalDate: 'Date', issueDate: 'Issue Date', noIssueDate: 'No issue date', modalStartDate: 'Start Date', modalEndDate: 'End Date', modalContractor: 'Contractor / Pro', modalWarranty: 'Warranty Ends',
                 btnSave: 'Save', back: 'Back', backToProperties: 'Back to Properties', allTime: 'All Time', zoneLayout: 'Space Blueprint',
                 toastPropSaved: 'Property saved', toastPropUpdated: 'Property updated', toastPropertyDeleted: 'Property and linked work removed', toastTaskSaved: 'Task saved', toastTaskDeleted: 'Task deleted', toastRepairLogged: 'Repair logged', toastRepairDeleted: 'History record deleted', toastContactSaved: 'Contact saved', toastContactDeleted: 'Contact deleted', toastCopied: 'Copied!',
-                uploadReceipt: 'Receipts (Max 3)', viewReceipt: 'Receipts', remove: 'Remove',
-                uploadBefore: 'Before Photos (Max 3)', uploadAfter: 'After Photos (Max 3)', addPhoto: 'Add Photo', viewBefore: 'Before', viewAfter: 'After',
+                uploadReceipt: 'Receipts (Max 6)', viewReceipt: 'Receipts', remove: 'Remove', toastFileTooLarge: 'File over 20 MB, skipped', storageWarn: 'Local photos are getting large. Export a full backup or remove unused files.',
+                uploadBefore: 'Before Photos (Max 6)', uploadAfter: 'After Photos (Max 6)', addPhoto: 'Add Photo', viewBefore: 'Before', viewAfter: 'After',
                 hasReceipt: 'With Receipt', noReceipt: 'No Receipt', noReceiptMsg: 'No receipt will be attached.',
                 viewModeList: 'Cards', viewModeMap: 'Map View', viewModeGrid: 'Grid View', openPropertyDetails: 'Open Blueprint', recenterMap: 'Fit All Pins',
                 btnGeocode: 'Locate Address', geocoding: 'Locating...', geocodeSuccess: 'Address located!', geocodeFailed: 'Address not found',
@@ -2071,8 +2072,8 @@
                 modalCost: '花费', modalDate: '日期', issueDate: '发现日期', noIssueDate: '未填发现日期', modalStartDate: '开始日期', modalEndDate: '结束日期', modalContractor: '施工师傅/服务商', modalWarranty: '保修到期日',
                 btnSave: '保存', back: '返回', backToProperties: '返回房屋列表', allTime: '全部历年', zoneLayout: '房间与区域',
                 toastPropSaved: '房屋已保存', toastPropUpdated: '房屋信息已更新', toastPropertyDeleted: '房屋及关联工作已删除', toastTaskSaved: '待办已保存', toastTaskDeleted: '待办任务已删除', toastRepairLogged: '记录已保存', toastRepairDeleted: '历史记录已删除', toastContactSaved: '联系人已保存', toastContactDeleted: '联系人已删除', toastCopied: '已复制!',
-                uploadReceipt: '票据照片 (最多3张)', viewReceipt: '票据', remove: '移除',
-                uploadBefore: '修前照片 (最多3张)', uploadAfter: '修后照片 (最多3张)', addPhoto: '添加照片', viewBefore: '修前', viewAfter: '修后',
+                uploadReceipt: '票据照片 (最多6张)', viewReceipt: '票据', remove: '移除', toastFileTooLarge: '超过 20MB，已跳过', storageWarn: '本机照片较多。建议导出完整备份或清理未用文件。',
+                uploadBefore: '修前照片 (最多6张)', uploadAfter: '修后照片 (最多6张)', toastFileTooLarge: '超过 20MB，已跳过', storageWarn: '本机照片较多。建议导出完整备份或清理未用文件。', addPhoto: '添加照片', viewBefore: '修前', viewAfter: '修后',
                 hasReceipt: '有票据', noReceipt: '无单据', noReceiptMsg: '本次记录不包含任何票据或发票',
                 viewModeList: '卡片', viewModeMap: '地图模式', viewModeGrid: '网格', openPropertyDetails: '查看房间', recenterMap: '全览所有房屋',
                 btnGeocode: '根据地址定位', geocoding: '正在解析地址...', geocodeSuccess: '已成功定位该地址！', geocodeFailed: '未找到该地址',
@@ -2890,7 +2891,7 @@
             return { properties, tasks, repairs, contacts, customRoles, userZones: zones };
         }
 
-        const APP_VERSION = '2026.09.08-k';
+        const APP_VERSION = '2026.09.08-l';
 
         const app = createApp({
             data() {
@@ -2953,6 +2954,8 @@
                     editingRoutineId: null,
                     completingRoutineIds: {},
                     formRoutine: { catalogKey: '', title: '', propertyId: '', zone: '', category: '', intervalMonths: 12, nextDueDate: '', lastDoneDate: '', alertOn: false },
+                    photoMax: 6,
+                    maxFileBytes: 20 * 1024 * 1024,
                     workDotsOn: false,
                     dotCycleOverdue: true,
                     dotCycleSoon: true,
@@ -4082,16 +4085,23 @@
                 },
                 async handleFileUpload(event) {
                     const files = Array.from(event.target.files || []); if (!files.length) return;
+                    const maxBytes = this.maxFileBytes || 20 * 1024 * 1024;
+                    const accepted = [];
+                    for (const file of files) {
+                        if (file.size > maxBytes) this.showToast(this.t('toastFileTooLarge'));
+                        else accepted.push(file);
+                    }
+                    if (!accepted.length) { event.target.value = ''; return; }
                     if (this.activeModal === 'task') {
-                        const availableSlots = 3 - this.formTask.beforePhotos.length; const filesToProcess = files.slice(0, availableSlots);
-                        for (const file of filesToProcess) { const dataUrl = await this.compressImage(file); if (dataUrl && this.formTask.beforePhotos.length < 3) this.formTask.beforePhotos.push(dataUrl); }
+                        const availableSlots = this.photoMax - this.formTask.beforePhotos.length; const filesToProcess = accepted.slice(0, availableSlots);
+                        for (const file of filesToProcess) { const dataUrl = await this.compressImage(file); if (dataUrl && this.formTask.beforePhotos.length < this.photoMax) this.formTask.beforePhotos.push(dataUrl); }
                     } else if (this.activeModal === 'repair') {
                         const arrKey = this.currentUploadType === 'before' ? 'beforePhotos' : (this.currentUploadType === 'after' ? 'afterPhotos' : 'receiptPhotos');
                         if (!Array.isArray(this.formRepair[arrKey])) this.formRepair[arrKey] = [];
-                        const availableSlots = 3 - this.formRepair[arrKey].length; const filesToProcess = files.slice(0, availableSlots);
+                        const availableSlots = this.photoMax - this.formRepair[arrKey].length; const filesToProcess = accepted.slice(0, availableSlots);
                         for (const file of filesToProcess) {
-                            if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) { const dataUrl = await this.readFileAsDataUrl(file); if (dataUrl && this.formRepair[arrKey].length < 3) this.formRepair[arrKey].push(dataUrl); } 
-                            else { const dataUrl = await this.compressImage(file); if (dataUrl && this.formRepair[arrKey].length < 3) this.formRepair[arrKey].push(dataUrl); }
+                            if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) { const dataUrl = await this.readFileAsDataUrl(file); if (dataUrl && this.formRepair[arrKey].length < this.photoMax) this.formRepair[arrKey].push(dataUrl); } 
+                            else { const dataUrl = await this.compressImage(file); if (dataUrl && this.formRepair[arrKey].length < this.photoMax) this.formRepair[arrKey].push(dataUrl); }
                         }
                     }
                     event.target.value = '';
