@@ -65,12 +65,22 @@
         .marker-pulse-ring { animation: pulse-ring 2s infinite ease-in-out; }
         #app > header { padding-top: max(3rem, calc(env(safe-area-inset-top, 0px) + 0.75rem)); }
         nav.pb-safe { padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px)); }
+        .tax-sheet-table { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 11px; }
+        .tax-sheet-table th, .tax-sheet-table td { vertical-align: top; padding: 6px 8px 6px 0; }
+        .tax-sheet-table .col-date { width: 22%; }
+        .tax-sheet-table .col-title { width: 58%; }
+        .tax-sheet-table .col-amt { width: 20%; text-align: right; }
         @media print {
             body { background: #fff !important; }
             #app > :not(.tax-print-sheet) { display: none !important; }
             .tax-print-sheet { position: static !important; inset: auto !important; width: 100% !important; height: auto !important; max-width: none !important; background: #fff !important; color: #111 !important; overflow: visible !important; }
             .tax-print-actions { display: none !important; }
             .tax-print-body { padding: 0 !important; }
+            .tax-sheet-table { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 11px; }
+            .tax-sheet-table th, .tax-sheet-table td { vertical-align: top; padding: 6px 8px 6px 0; }
+            .tax-sheet-table .col-date { width: 22%; }
+            .tax-sheet-table .col-title { width: 58%; }
+            .tax-sheet-table .col-amt { width: 20%; text-align: right; }
         }
     </style>
     <script>
@@ -2055,29 +2065,29 @@
                     <h3 class="text-[15px] font-black border-b border-slate-200 pb-1">{{ group.name }}</h3>
                     <p v-if="group.address" class="text-[11px] text-slate-500 mt-1">{{ group.address }}</p>
                     <p class="text-[12px] font-bold mt-3">{{ t('taxOperating') }} · ${{ formatMoney(group.operatingTotal) }}</p>
-                    <table class="w-full text-[11px] mt-1">
-                        <thead><tr class="text-left text-slate-500"><th class="py-1 pr-2">{{ t('modalDate') }}</th><th class="py-1 pr-2">{{ t('modalRepairTitle') }}</th><th class="py-1 pr-2">{{ t('hasReceipt') }}</th><th class="py-1 text-right">$</th></tr></thead>
+                    <table class="tax-sheet-table mt-1">
+                        <colgroup><col class="col-date"><col class="col-title"><col class="col-amt"></colgroup>
+                        <thead><tr class="text-slate-500"><th class="text-left">{{ t('modalDate') }}</th><th class="text-left">{{ t('modalRepairTitle') }}</th><th class="col-amt">$</th></tr></thead>
                         <tbody>
-                            <tr v-for="row in group.operating" :key="row.id" class="border-t border-slate-100 align-top">
-                                <td class="py-1 pr-2 whitespace-nowrap">{{ row.date || '—' }}</td>
-                                <td class="py-1 pr-2">{{ row.title }}<span v-if="row.category" class="block text-slate-400">{{ row.category }}</span></td>
-                                <td class="py-1 pr-2">{{ row.hasReceipt ? t('hasReceipt') : t('noReceipt') }}</td>
-                                <td class="py-1 text-right whitespace-nowrap">{{ formatMoney(row.cost) }}</td>
+                            <tr v-for="row in group.operating" :key="row.id" class="border-t border-slate-100">
+                                <td>{{ row.date || '—' }}</td>
+                                <td>{{ row.title }}<span v-if="row.category" class="block text-slate-400">{{ row.category }}</span></td>
+                                <td class="col-amt">{{ formatMoney(row.cost) }}</td>
                             </tr>
-                            <tr v-if="group.operating.length === 0"><td colspan="4" class="py-2 text-slate-400">{{ t('noneInCategory') }}</td></tr>
+                            <tr v-if="group.operating.length === 0"><td colspan="3" class="text-slate-400">{{ t('noneInCategory') }}</td></tr>
                         </tbody>
                     </table>
                     <p class="text-[12px] font-bold mt-4">{{ t('taxCapital') }} · ${{ formatMoney(group.capitalTotal) }}</p>
-                    <table class="w-full text-[11px] mt-1">
-                        <thead><tr class="text-left text-slate-500"><th class="py-1 pr-2">{{ t('modalDate') }}</th><th class="py-1 pr-2">{{ t('modalRepairTitle') }}</th><th class="py-1 pr-2">{{ t('hasReceipt') }}</th><th class="py-1 text-right">$</th></tr></thead>
+                    <table class="tax-sheet-table mt-1">
+                        <colgroup><col class="col-date"><col class="col-title"><col class="col-amt"></colgroup>
+                        <thead><tr class="text-slate-500"><th class="text-left">{{ t('modalDate') }}</th><th class="text-left">{{ t('modalRepairTitle') }}</th><th class="col-amt">$</th></tr></thead>
                         <tbody>
-                            <tr v-for="row in group.capital" :key="row.id" class="border-t border-slate-100 align-top">
-                                <td class="py-1 pr-2 whitespace-nowrap">{{ row.date || '—' }}</td>
-                                <td class="py-1 pr-2">{{ row.title }}<span v-if="row.category" class="block text-slate-400">{{ row.category }}</span></td>
-                                <td class="py-1 pr-2">{{ row.hasReceipt ? t('hasReceipt') : t('noReceipt') }}</td>
-                                <td class="py-1 text-right whitespace-nowrap">{{ formatMoney(row.cost) }}</td>
+                            <tr v-for="row in group.capital" :key="row.id" class="border-t border-slate-100">
+                                <td>{{ row.date || '—' }}</td>
+                                <td>{{ row.title }}<span v-if="row.category" class="block text-slate-400">{{ row.category }}</span></td>
+                                <td class="col-amt">{{ formatMoney(row.cost) }}</td>
                             </tr>
-                            <tr v-if="group.capital.length === 0"><td colspan="4" class="py-2 text-slate-400">{{ t('noneInCategory') }}</td></tr>
+                            <tr v-if="group.capital.length === 0"><td colspan="3" class="text-slate-400">{{ t('noneInCategory') }}</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -2142,7 +2152,7 @@
                 settingsTitle: 'Settings', settingsPreferences: 'Preferences', settingsLanguage: 'Language', settingsGPS: 'GPS Location Services', settingsGPSDesc: 'Enables automatic geolocation & map positioning.',
                 settingsDashboardViews: 'Dashboard Views', minOneViewRequired: 'At least one view mode must be active.', settingsPropertyOrder: 'Property Reorder',
                 settingsContactRoles: 'Contact Category Settings', addRoleCategory: 'Add Category', roleCategoryName: 'Category Name', toastRoleAdded: 'Category added', toastRoleDeleted: 'Category deleted',
-                settingsDataBackup: 'Data Management (Local-First)', exportBackup: 'Export JSON Backup', exportBackupLight: 'Light backup', exportBackupLightDesc: 'Houses, work and ledger only — no photos.', exportBackupFull: 'Full backup', exportBackupFullDesc: 'Includes photos and receipts. File can be large.', exportTaxPdf: 'Tax worksheet (PDF)', exportTaxPdfDesc: 'Operating vs capital repairs for a year. Print or Save as PDF.', exportTaxPrint: 'Print / Save PDF', exportTaxYear: 'Year', exportTaxTitle: 'Repair tax worksheet', exportTaxGenerated: 'Prepared', exportTaxDisclaimer: 'This is a local worksheet from PocketProp. It is not a CRA T776 and not tax advice. Give it to your accountant together with receipts.', exportTaxEmpty: 'No repair records in this filter.', exportTaxFooter: 'Capital cost allowance class is not assigned yet. Receipt images stay in the app.', importBackup: 'Restore JSON Backup', toastExportLight: 'Light backup saved (no photos)', toastExportFull: 'Full backup saved', toastImportLightNoPhotos: 'Restored text. Photos live in a full backup.', settingsDaily: 'Everyday', settingsAdvanced: 'Advanced', settingsLangHint: 'Switching language updates built-in system text only. Items you added or edited are not translated.', deadline: 'Deadline', itemAlertOn: 'Red-dot reminder for this item', workDotsTitle: 'Work red dots', workDotsHint: 'Turn on, then choose red for overdue and yellow for coming due.', cycleSoonDays: 'Days before cycle due', taskSoonDays: 'Days before task deadline', dotOverdueRed: 'Overdue: red dot', dotSoonYellow: 'Coming due: yellow dot', confirmNextDueTitle: 'Confirm next due date', cleanupUnusedPhotos: 'Clear unused photos', cleanupUnusedPhotosDesc: 'Remove photo files no record points to.', toastCleanupDone: 'Cleared {n} unused files', photoInFullBackup: 'In full backup', toastAddPropertyFirst: 'Add a property first', routineDotPromptTitle: 'A cycle is overdue', routineDotPromptBody: 'Show a small red dot on Work when something is due?', toastImportSuccess: 'Data restored successfully!', toastImportFailed: 'Invalid backup file format.', confirmImportMsg: 'Restoring from backup will overwrite all existing local data. Continue?',
+                settingsDataBackup: 'Data Management (Local-First)', exportBackup: 'Export JSON Backup', exportBackupLight: 'Light backup', exportBackupLightDesc: 'Houses, work and ledger only — no photos.', exportBackupFull: 'Full backup', exportBackupFullDesc: 'Includes photos and receipts. File can be large.', exportTaxPdf: 'Tax worksheet (PDF)', exportTaxPdfDesc: 'Receipted operating vs capital repairs. Print or Save as PDF.', exportTaxPrint: 'Print / Save PDF', exportTaxYear: 'Year', exportTaxTitle: 'Repair tax worksheet', exportTaxGenerated: 'Prepared', exportTaxDisclaimer: 'This is a local worksheet from PocketProp. It is not a CRA T776 and not tax advice. Only records with a receipt are listed.', exportTaxEmpty: 'No receipted repair records in this filter.', exportTaxFooter: 'Capital cost allowance class is not assigned yet. Receipt images stay in the app.', importBackup: 'Restore JSON Backup', toastExportLight: 'Light backup saved (no photos)', toastExportFull: 'Full backup saved', toastImportLightNoPhotos: 'Restored text. Photos live in a full backup.', settingsDaily: 'Everyday', settingsAdvanced: 'Advanced', settingsLangHint: 'Switching language updates built-in system text only. Items you added or edited are not translated.', deadline: 'Deadline', itemAlertOn: 'Red-dot reminder for this item', workDotsTitle: 'Work red dots', workDotsHint: 'Turn on, then choose red for overdue and yellow for coming due.', cycleSoonDays: 'Days before cycle due', taskSoonDays: 'Days before task deadline', dotOverdueRed: 'Overdue: red dot', dotSoonYellow: 'Coming due: yellow dot', confirmNextDueTitle: 'Confirm next due date', cleanupUnusedPhotos: 'Clear unused photos', cleanupUnusedPhotosDesc: 'Remove photo files no record points to.', toastCleanupDone: 'Cleared {n} unused files', photoInFullBackup: 'In full backup', toastAddPropertyFirst: 'Add a property first', routineDotPromptTitle: 'A cycle is overdue', routineDotPromptBody: 'Show a small red dot on Work when something is due?', toastImportSuccess: 'Data restored successfully!', toastImportFailed: 'Invalid backup file format.', confirmImportMsg: 'Restoring from backup will overwrite all existing local data. Continue?',
                 loadDemoData: 'Reset Demo Data', loadDemoDataDesc: 'Overwrites current data with multi-property sample dataset.', confirmDemoDataMsg: 'Are you sure you want to load sample data? Current data will be replaced.', toastDemoLoaded: 'Demo data loaded',
                 settingsFileManager: 'Media & File Storage', fileManagerTitle: 'Repair photos & receipts', filesCount: 'Files', storageUsed: 'Used', btnManageFiles: 'Open Gallery', noMediaFiles: 'No photo or document files match.', toastMediaDeleted: 'File removed from local storage.', fileTypeAll: 'All Files', fileLibraryHint: 'Grouped by work date. Tap a file, then swipe to browse.', fileSearchPh: 'Search title or property', viewerSwipeHint: 'Swipe left / right to switch', fileLibraryUpload: 'Upload', fileLibraryTitlePh: 'Name (optional)', fileLibraryUploadHint: 'Pick a property above first, then upload. Stored on this phone.', fileCatDeal: 'Closing / title', fileCatInsurance: 'Insurance', fileCatLease: 'Lease', fileCatMaintenance: 'Repairs', fileCatOther: 'Other', toastPickPropertyFirst: 'Choose a property first', toastLibraryUploaded: 'File added',
                 roleTenant: 'Tenant', roleContractor: 'Contractor', roleRealtor: 'Realtor', roleLawyer: 'Lawyer', roleType: 'Contact Role', contactName: 'Full Name', contactTrade: 'Specialty / Trade Title', contactTradeHint: 'e.g. HVAC, Plumbing Specialist', assocProperty: 'Associated Property', assocProperties: 'Associated Properties', contractorNote: 'Contractors are linked through repair logs.', noneGeneral: 'General / Unlinked', searchContact: 'Search contacts...', noContacts: 'No contacts found.',
@@ -2189,7 +2199,7 @@
                 settingsTitle: '系统设置', settingsPreferences: '偏好设置', settingsLanguage: '界面语言', settingsGPS: 'GPS 定位服务', settingsGPSDesc: '开启后可在房屋地图中定位当前位置及导航。',
                 settingsDashboardViews: '仪表盘视图设置', minOneViewRequired: '必须至少保留一个视图模式。', settingsPropertyOrder: '房屋卡片排序',
                 settingsContactRoles: '人员类别设置', addRoleCategory: '新增类别', roleCategoryName: '类别名称', toastRoleAdded: '已新增人员类别', toastRoleDeleted: '已删除人员类别',
-                settingsDataBackup: '数据备份与恢复 (离线)', exportBackup: '导出 JSON 备份文件', exportBackupLight: '轻备份', exportBackupLightDesc: '只含房屋、工作和账本，不含照片。', exportBackupFull: '完整备份', exportBackupFullDesc: '含照片和收据，文件可能很大。', exportTaxPdf: '税务备查 PDF', exportTaxPdfDesc: '按年汇总维修保养与资产改良。用系统打印或存储为 PDF。', exportTaxPrint: '打印 / 存 PDF', exportTaxYear: '年份', exportTaxTitle: '维修税务备查表', exportTaxGenerated: '生成日期', exportTaxDisclaimer: '本表由口袋屋在本机生成，不是 CRA T776，也不是税务意见。请连同收据交给会计核对。', exportTaxEmpty: '当前筛选没有维修记录。', exportTaxFooter: '尚未标注 CCA 类别。收据原件仍在 App 里。', importBackup: '恢复 JSON 备份文件', toastExportLight: '已导出轻备份（不含照片）', toastExportFull: '已导出完整备份', toastImportLightNoPhotos: '文字已恢复。照片在完整备份里。', settingsDaily: '日常', settingsAdvanced: '进阶', settingsLangHint: '切换语言仅更换系统预设内容。凡自行新增或编辑过的项目，系统不会主动翻译。', deadline: '截止日期', itemAlertOn: '此项显示小红点', workDotsTitle: '工作小红点', workDotsHint: '打开后，再分别选择过期红点和快到期黄点。', cycleSoonDays: '周期提前几天', taskSoonDays: '待办提前几天', dotOverdueRed: '过期：红点', dotSoonYellow: '快到期：黄点', confirmNextDueTitle: '确认下次日期', cleanupUnusedPhotos: '清理未用照片', cleanupUnusedPhotosDesc: '删掉没有记录再引用的图片文件。', toastCleanupDone: '已清理 {n} 个未用文件', photoInFullBackup: '图在完整备份', toastAddPropertyFirst: '请先添加一套房子', routineDotPromptTitle: '有周期已经过期', routineDotPromptBody: '要不要在工作页用小红点标出到期项？', toastImportSuccess: '数据恢复成功！', toastImportFailed: '恢复失败，文件格式错误。', confirmImportMsg: '导入备份将覆盖当前所有本地数据，确定继续吗？',
+                settingsDataBackup: '数据备份与恢复 (离线)', exportBackup: '导出 JSON 备份文件', exportBackupLight: '轻备份', exportBackupLightDesc: '只含房屋、工作和账本，不含照片。', exportBackupFull: '完整备份', exportBackupFullDesc: '含照片和收据，文件可能很大。', exportTaxPdf: '税务备查 PDF', exportTaxPdfDesc: '只汇总有收据的维修保养与资产改良。用系统打印或存储为 PDF。', exportTaxPrint: '打印 / 存 PDF', exportTaxYear: '年份', exportTaxTitle: '维修税务备查表', exportTaxGenerated: '生成日期', exportTaxDisclaimer: '本表由口袋屋在本机生成，不是 CRA T776，也不是税务意见。仅列入有收据的记录。', exportTaxEmpty: '当前筛选没有带收据的维修记录。', exportTaxFooter: '尚未标注 CCA 类别。收据原件仍在 App 里。', importBackup: '恢复 JSON 备份文件', toastExportLight: '已导出轻备份（不含照片）', toastExportFull: '已导出完整备份', toastImportLightNoPhotos: '文字已恢复。照片在完整备份里。', settingsDaily: '日常', settingsAdvanced: '进阶', settingsLangHint: '切换语言仅更换系统预设内容。凡自行新增或编辑过的项目，系统不会主动翻译。', deadline: '截止日期', itemAlertOn: '此项显示小红点', workDotsTitle: '工作小红点', workDotsHint: '打开后，再分别选择过期红点和快到期黄点。', cycleSoonDays: '周期提前几天', taskSoonDays: '待办提前几天', dotOverdueRed: '过期：红点', dotSoonYellow: '快到期：黄点', confirmNextDueTitle: '确认下次日期', cleanupUnusedPhotos: '清理未用照片', cleanupUnusedPhotosDesc: '删掉没有记录再引用的图片文件。', toastCleanupDone: '已清理 {n} 个未用文件', photoInFullBackup: '图在完整备份', toastAddPropertyFirst: '请先添加一套房子', routineDotPromptTitle: '有周期已经过期', routineDotPromptBody: '要不要在工作页用小红点标出到期项？', toastImportSuccess: '数据恢复成功！', toastImportFailed: '恢复失败，文件格式错误。', confirmImportMsg: '导入备份将覆盖当前所有本地数据，确定继续吗？',
                 loadDemoData: '加载示例演示数据', loadDemoDataDesc: '重置并重新加载包含多处房屋资产的完整示例数据。', confirmDemoDataMsg: '确定要重新载入演示数据吗？当前修改将被覆盖。', toastDemoLoaded: '示例数据已加载',
                 settingsFileManager: '维修照片与收据', fileManagerTitle: '维修照片与收据', filesCount: '个文件', storageUsed: '已用容量', btnManageFiles: '打开', noMediaFiles: '未匹配到媒体文件。', toastMediaDeleted: '文件已彻底删除。', fileTypeAll: '全部文件', fileLibraryHint: '按工单日期排列。点开后左右滑动切换。', fileSearchPh: '搜索名称或房屋', viewerSwipeHint: '左右滑动切换文件', fileLibraryUpload: '上传', fileLibraryTitlePh: '名称（可选）', fileLibraryUploadHint: '先点选上方一套房屋，再上传。文件只存在这台手机。', fileCatDeal: '交易产权', fileCatInsurance: '保险', fileCatLease: '租约', fileCatMaintenance: '维修', fileCatOther: '其他', toastPickPropertyFirst: '请先选择一套房屋', toastLibraryUploaded: '文件已加入',
                 roleTenant: '租客', roleContractor: '师傅', roleRealtor: '经纪', roleLawyer: '律师', roleType: '联系人身份角色', contactName: '姓名/称呼', contactTrade: '工种/专长头衔', contactTradeHint: '例如: 暖通水工, 专修屋顶', assocProperty: '关联房屋', assocProperties: '关联房屋（可多选）', contractorNote: '师傅不用先绑房子，做完维修记录后会自动对上。', noneGeneral: '通用 / 未绑定具体房屋', searchContact: '搜索联系人...', noContacts: '该分类下暂无联系人。',
@@ -3269,6 +3279,7 @@
                     const rows = (this.repairs || []).filter(r => {
                         if (propId !== 'ALL' && r.propertyId !== propId) return false;
                         if (year !== 'ALL' && String(r.date || '').slice(0, 4) !== year) return false;
+                        if (!this.repairHasReceipt(r)) return false;
                         return true;
                     }).slice().sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
                     const byProp = {};
