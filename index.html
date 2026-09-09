@@ -480,7 +480,7 @@
                                         <div v-if="yearBlock.withReceipt.items.length === 0" class="text-[11px] text-slate-500">{{ t('noneInCategory') }}</div>
                                         <div v-else class="space-y-1">
                                             <div v-for="item in yearBlock.withReceipt.items" :key="item.id" class="flex items-start justify-between gap-2 text-[11px]">
-                                                <span class="text-slate-300 min-w-0 truncate">{{ item.title }}</span>
+                                                <span class="text-slate-300 min-w-0 truncate"><span class="text-[9px] font-black mr-1" :class="item.taxKind === 'capital' ? 'text-amber-300' : 'text-sky-300'">{{ item.taxKind === 'capital' ? t('taxCapitalShort') : t('taxOperatingShort') }}</span>{{ item.title }}</span>
                                                 <span class="text-slate-400 flex-shrink-0">${{ formatMoney(item.cost) }}</span>
                                             </div>
                                         </div>
@@ -2041,7 +2041,7 @@
                 toastPropSaved: 'Property saved', toastPropUpdated: 'Property updated', toastPropertyDeleted: 'Property and linked work removed', toastTaskSaved: 'Task saved', toastTaskDeleted: 'Task deleted', toastRepairLogged: 'Repair logged', toastRepairDeleted: 'History record deleted', toastContactSaved: 'Contact saved', toastContactDeleted: 'Contact deleted', toastCopied: 'Copied!',
                 uploadReceipt: 'Receipts (Max 6)', viewReceipt: 'Receipts', remove: 'Remove', toastFileTooLarge: 'File over 20 MB, skipped', storageWarn: 'Local photos are getting large. Export a full backup or remove unused files.',
                 uploadBefore: 'Before Photos (Max 6)', uploadAfter: 'After Photos (Max 6)', addPhoto: 'Add Photo', viewBefore: 'Before', viewAfter: 'After',
-                taxKind: 'Tax treatment', taxOperating: 'Repair this year', taxCapital: 'Capital improvement', taxCapitalHint: 'This looks like a larger upgrade. Switch to capital improvement if it replaces a system or adds value.', hasReceipt: 'With Receipt', noReceipt: 'No Receipt', noReceiptMsg: 'No receipt will be attached.',
+                taxKind: 'Tax treatment', taxOperating: 'Repair this year', taxCapital: 'Capital improvement', taxOperatingShort: 'Repair', taxCapitalShort: 'Capital', taxCapitalHint: 'This looks like a larger upgrade. Switch to capital improvement if it replaces a system or adds value.', hasReceipt: 'With Receipt', noReceipt: 'No Receipt', noReceiptMsg: 'No receipt will be attached.',
                 viewModeList: 'Cards', viewModeMap: 'Map View', viewModeGrid: 'Grid View', openPropertyDetails: 'Open Blueprint', recenterMap: 'Fit All Pins',
                 btnGeocode: 'Locate Address', geocoding: 'Locating...', geocodeSuccess: 'Address located!', geocodeFailed: 'Address not found',
                 gpsEnabled: 'GPS Enabled', gpsDisabled: 'GPS Disabled', enableGPS: 'Enable GPS', locateMe: 'My Location', gpsOffMsg: 'GPS is disabled',
@@ -2088,7 +2088,7 @@
                 toastPropSaved: '房屋已保存', toastPropUpdated: '房屋信息已更新', toastPropertyDeleted: '房屋及关联工作已删除', toastTaskSaved: '待办已保存', toastTaskDeleted: '待办任务已删除', toastRepairLogged: '记录已保存', toastRepairDeleted: '历史记录已删除', toastContactSaved: '联系人已保存', toastContactDeleted: '联系人已删除', toastCopied: '已复制!',
                 uploadReceipt: '票据照片 (最多6张)', viewReceipt: '票据', remove: '移除', toastFileTooLarge: '超过 20MB，已跳过', storageWarn: '本机照片较多。建议导出完整备份或清理未用文件。',
                 uploadBefore: '修前照片 (最多6张)', uploadAfter: '修后照片 (最多6张)', toastFileTooLarge: '超过 20MB，已跳过', storageWarn: '本机照片较多。建议导出完整备份或清理未用文件。', addPhoto: '添加照片', viewBefore: '修前', viewAfter: '修后',
-                taxKind: '税务分类', taxOperating: '维修保养（当年）', taxCapital: '资产改良（需折旧）', taxCapitalHint: '金额或工程看起来比较大。若是整项更换或明显增值，请改选资产改良。', hasReceipt: '有票据', noReceipt: '无单据', noReceiptMsg: '本次记录不包含任何票据或发票',
+                taxKind: '税务分类', taxOperating: '维修保养（当年）', taxCapital: '资产改良（需折旧）', taxOperatingShort: '维修保养', taxCapitalShort: '资产改良', taxCapitalHint: '金额或工程看起来比较大。若是整项更换或明显增值，请改选资产改良。', hasReceipt: '有票据', noReceipt: '无单据', noReceiptMsg: '本次记录不包含任何票据或发票',
                 viewModeList: '卡片', viewModeMap: '地图模式', viewModeGrid: '网格', openPropertyDetails: '查看房间', recenterMap: '全览所有房屋',
                 btnGeocode: '根据地址定位', geocoding: '正在解析地址...', geocodeSuccess: '已成功定位该地址！', geocodeFailed: '未找到该地址',
                 gpsEnabled: 'GPS 定位已开启', gpsDisabled: 'GPS 定位已关闭', enableGPS: '开启 GPS', locateMe: '当前位置', gpsOffMsg: 'GPS 定位功能已关闭',
@@ -3212,7 +3212,7 @@
                         const year = (r.date && String(r.date).substring(0, 4)) || '—';
                         if (!groups[year]) groups[year] = { year, total: 0, withReceipt: { total: 0, items: [] }, withoutReceipt: { total: 0, items: [] } };
                         const cost = Number(r.cost) || 0;
-                        const item = { id: r.id, title: r.title || '—', cost, date: r.date || '' };
+                        const item = { id: r.id, title: r.title || '—', cost, date: r.date || '', taxKind: r.taxKind === 'capital' ? 'capital' : 'operating' };
                         const bucket = this.repairHasReceipt(r) ? groups[year].withReceipt : groups[year].withoutReceipt;
                         bucket.total += cost;
                         bucket.items.push(item);
