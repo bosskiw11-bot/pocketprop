@@ -761,6 +761,7 @@
                                             <div class="flex items-center gap-1.5 mb-0.5 flex-wrap">
                                                 <p v-if="repair.category" class="text-[11px] font-bold text-brand-400 uppercase tracking-wide">{{ repair.category }}</p>
                                                 <span v-if="repair.fromRoutineId" class="text-[9px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded bg-violet-500/20 text-violet-300 border border-violet-500/30">{{ t('subTabRoutines') }}</span>
+                                                <span class="text-[9px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded border" :class="repair.taxKind === 'capital' ? 'bg-amber-500/15 text-amber-300 border-amber-500/30' : 'bg-slate-700/80 text-slate-300 border-slate-600'">{{ repair.taxKind === 'capital' ? t('taxCapital') : t('taxOperating') }}</span>
                                             </div>
                                             <p class="text-[16px] font-bold text-white leading-tight truncate">{{ repair.title }}</p>
                                         </div>
@@ -1263,6 +1264,15 @@
                                     <label class="block text-[12px] font-bold text-slate-400 uppercase tracking-wider mb-2 pl-1">{{ t('modalDate') }}</label>
                                     <input v-model="formRepair.date" type="date" class="w-full bg-slate-800 rounded-2xl p-4 text-[15px] text-white outline-none">
                                 </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-[12px] font-bold text-slate-400 uppercase tracking-wider mb-2 pl-1">{{ t('taxKind') }}</label>
+                                <div class="flex bg-slate-800 rounded-2xl p-1 border border-slate-700/60">
+                                    <button type="button" @click="formRepair.taxKind = 'operating'" class="flex-1 py-2.5 text-[12px] font-bold rounded-xl" :class="formRepair.taxKind !== 'capital' ? 'bg-brand-500 text-white' : 'text-slate-400'">{{ t('taxOperating') }}</button>
+                                    <button type="button" @click="formRepair.taxKind = 'capital'" class="flex-1 py-2.5 text-[12px] font-bold rounded-xl" :class="formRepair.taxKind === 'capital' ? 'bg-amber-500 text-slate-900' : 'text-slate-400'">{{ t('taxCapital') }}</button>
+                                </div>
+                                <p v-if="showTaxCapitalHint && formRepair.taxKind !== 'capital'" class="text-[11px] text-amber-300/90 mt-2 leading-relaxed">{{ t('taxCapitalHint') }}</p>
                             </div>
 
                             <div class="grid grid-cols-2 gap-4">
@@ -2031,7 +2041,7 @@
                 toastPropSaved: 'Property saved', toastPropUpdated: 'Property updated', toastPropertyDeleted: 'Property and linked work removed', toastTaskSaved: 'Task saved', toastTaskDeleted: 'Task deleted', toastRepairLogged: 'Repair logged', toastRepairDeleted: 'History record deleted', toastContactSaved: 'Contact saved', toastContactDeleted: 'Contact deleted', toastCopied: 'Copied!',
                 uploadReceipt: 'Receipts (Max 6)', viewReceipt: 'Receipts', remove: 'Remove', toastFileTooLarge: 'File over 20 MB, skipped', storageWarn: 'Local photos are getting large. Export a full backup or remove unused files.',
                 uploadBefore: 'Before Photos (Max 6)', uploadAfter: 'After Photos (Max 6)', addPhoto: 'Add Photo', viewBefore: 'Before', viewAfter: 'After',
-                hasReceipt: 'With Receipt', noReceipt: 'No Receipt', noReceiptMsg: 'No receipt will be attached.',
+                taxKind: 'Tax treatment', taxOperating: 'Repair this year', taxCapital: 'Capital improvement', taxCapitalHint: 'This looks like a larger upgrade. Switch to capital improvement if it replaces a system or adds value.', hasReceipt: 'With Receipt', noReceipt: 'No Receipt', noReceiptMsg: 'No receipt will be attached.',
                 viewModeList: 'Cards', viewModeMap: 'Map View', viewModeGrid: 'Grid View', openPropertyDetails: 'Open Blueprint', recenterMap: 'Fit All Pins',
                 btnGeocode: 'Locate Address', geocoding: 'Locating...', geocodeSuccess: 'Address located!', geocodeFailed: 'Address not found',
                 gpsEnabled: 'GPS Enabled', gpsDisabled: 'GPS Disabled', enableGPS: 'Enable GPS', locateMe: 'My Location', gpsOffMsg: 'GPS is disabled',
@@ -2078,7 +2088,7 @@
                 toastPropSaved: '房屋已保存', toastPropUpdated: '房屋信息已更新', toastPropertyDeleted: '房屋及关联工作已删除', toastTaskSaved: '待办已保存', toastTaskDeleted: '待办任务已删除', toastRepairLogged: '记录已保存', toastRepairDeleted: '历史记录已删除', toastContactSaved: '联系人已保存', toastContactDeleted: '联系人已删除', toastCopied: '已复制!',
                 uploadReceipt: '票据照片 (最多6张)', viewReceipt: '票据', remove: '移除', toastFileTooLarge: '超过 20MB，已跳过', storageWarn: '本机照片较多。建议导出完整备份或清理未用文件。',
                 uploadBefore: '修前照片 (最多6张)', uploadAfter: '修后照片 (最多6张)', toastFileTooLarge: '超过 20MB，已跳过', storageWarn: '本机照片较多。建议导出完整备份或清理未用文件。', addPhoto: '添加照片', viewBefore: '修前', viewAfter: '修后',
-                hasReceipt: '有票据', noReceipt: '无单据', noReceiptMsg: '本次记录不包含任何票据或发票',
+                taxKind: '税务分类', taxOperating: '维修保养（当年）', taxCapital: '资产改良（需折旧）', taxCapitalHint: '金额或工程看起来比较大。若是整项更换或明显增值，请改选资产改良。', hasReceipt: '有票据', noReceipt: '无单据', noReceiptMsg: '本次记录不包含任何票据或发票',
                 viewModeList: '卡片', viewModeMap: '地图模式', viewModeGrid: '网格', openPropertyDetails: '查看房间', recenterMap: '全览所有房屋',
                 btnGeocode: '根据地址定位', geocoding: '正在解析地址...', geocodeSuccess: '已成功定位该地址！', geocodeFailed: '未找到该地址',
                 gpsEnabled: 'GPS 定位已开启', gpsDisabled: 'GPS 定位已关闭', enableGPS: '开启 GPS', locateMe: '当前位置', gpsOffMsg: 'GPS 定位功能已关闭',
@@ -2895,7 +2905,7 @@
             return { properties, tasks, repairs, contacts, customRoles, userZones: zones };
         }
 
-        const APP_VERSION = '2026.09.08-l';
+        const APP_VERSION = '2026.09.08-n';
 
         const app = createApp({
             data() {
@@ -2980,7 +2990,7 @@
                     formUsage: { id: null, usageType: 'primary', startDate: '', endDate: '', notes: '', realtorId: '', lawyerId: '', managerId: '' },
                     formTenantSub: { id: null, usageId: null, contactId: '', name: '', room: '', rent: '', startDate: '', endDate: '', notes: '' },
                     formTask: { propertyId: '', titleSelect: '', title: '', zone: '', category: '', issueDate: '', deadline: '', alertOn: false, beforePhotos: [] },
-                    formRepair: { propertyId: '', titleSelect: '', title: '', zone: '', category: '', cost: '', date: '', warrantyEndDate: '', contractorId: '', hasReceipt: true, receiptPhotos: [], beforePhotos: [], afterPhotos: [] },
+                    formRepair: { propertyId: '', titleSelect: '', title: '', zone: '', category: '', cost: '', date: '', warrantyEndDate: '', contractorId: '', taxKind: 'operating', hasReceipt: true, receiptPhotos: [], beforePhotos: [], afterPhotos: [] },
                     formContact: { id: null, role: 'tenant', name: '', trade: '', propertyId: '', propertyIds: [], phone: '', wechat: '', email: '', notes: '' },
                     formNewRole: { name: '' },
                     formZoneCategoryHint: ''
@@ -3153,6 +3163,11 @@
                     const years = new Set(this.repairs.filter(r => r.propertyId === this.viewingPropertyId && r.date && typeof r.date === 'string').map(r => r.date.substring(0,4)));
                     years.add(new Date().getFullYear().toString()); 
                     return Array.from(years).sort((a,b) => b - a);
+                },
+                showTaxCapitalHint() {
+                    const cost = Number(this.formRepair && this.formRepair.cost) || 0;
+                    const cat = String((this.formRepair && this.formRepair.category) || '');
+                    return cost >= 2000 || /翻新|Renovation/i.test(cat);
                 },
                 showRoutineDots() { return this.workDotsOn; },
                 cycleAlertLevel() {
@@ -3624,7 +3639,7 @@
                 getCurrentUsageType(prop) {
                     if (!prop || !prop.usages || prop.usages.length === 0) return 'primary';
                     const sorted = [...prop.usages].sort((a, b) => (b.startDate || '').localeCompare(a.startDate || ''));
-                    const today = new Date().toISOString().split('T')[0];
+                    const today = this.todayIso();
                     const active = sorted.find(u => u.usageType !== 'purchased' && (!u.endDate || u.endDate >= today));
                     return active ? active.usageType : sorted[0].usageType;
                 },
@@ -3638,7 +3653,7 @@
                         return (typeWeight[b.usageType] ?? 1) - (typeWeight[a.usageType] ?? 1);
                     });
                 },
-                isTenantActive(tenant) { if (!tenant || !tenant.endDate) return true; return tenant.endDate >= new Date().toISOString().split('T')[0]; },
+                isTenantActive(tenant) { if (!tenant || !tenant.endDate) return true; return tenant.endDate >= this.todayIso(); },
                 getGroupedTenantsByRoom(tenants) {
                     if (!tenants || !Array.isArray(tenants)) return {};
                     const groups = {};
@@ -3649,7 +3664,7 @@
                     const sortedGroups = {}; sortedRoomKeys.forEach(rk => sortedGroups[rk] = groups[rk]);
                     return sortedGroups;
                 },
-                addDaysToDateStr(dateStr, days = 1) { if (!dateStr) return ''; const d = new Date(dateStr + 'T00:00:00'); if (isNaN(d.getTime())) return dateStr; d.setDate(d.getDate() + days); return d.toISOString().split('T')[0]; },
+                addDaysToDateStr(dateStr, days = 1) { if (!dateStr) return ''; const d = new Date(dateStr + 'T00:00:00'); if (isNaN(d.getTime())) return dateStr; d.setDate(d.getDate() + days); return this.formatLocalDate(d); },
                 syncUsageTimelineDates(prop) {
                     if (!prop || !prop.usages || prop.usages.length === 0) return;
                     let purchased = prop.usages.find(u => u.usageType === 'purchased');
@@ -3776,13 +3791,20 @@
                         await this.saveToStorage();
                     }
                 },
-                todayIso() { return new Date().toISOString().split('T')[0]; },
+                formatLocalDate(d) {
+                    if (!(d instanceof Date) || isNaN(d.getTime())) return '';
+                    const y = d.getFullYear();
+                    const m = String(d.getMonth() + 1).padStart(2, '0');
+                    const day = String(d.getDate()).padStart(2, '0');
+                    return `${y}-${m}-${day}`;
+                },
+                todayIso() { return this.formatLocalDate(new Date()); },
                 addMonthsToDate(dateStr, months) {
                     const base = dateStr || this.todayIso();
                     const d = new Date(base + 'T00:00:00');
                     if (isNaN(d.getTime())) return base;
                     d.setMonth(d.getMonth() + Number(months || 0));
-                    return d.toISOString().split('T')[0];
+                    return this.formatLocalDate(d);
                 },
                 formatRoutineInterval(months) {
                     const n = Number(months) || 0;
@@ -3931,6 +3953,7 @@
                         date: doneOn,
                         warrantyEndDate: '',
                         contractorId: '',
+                        taxKind: 'operating',
                         hasReceipt: false,
                         receiptPhotos: [],
                         beforePhotos: [],
@@ -3951,12 +3974,12 @@
                 autoFillModalDates() {
                     if (!this.viewingPropertyId) return; const prop = this.getProp(this.viewingPropertyId); if (!prop) return;
                     const usages = prop.usages || []; const purchased = usages.find(u => u.usageType === 'purchased'); const periods = usages.filter(u => u.usageType !== 'purchased' && u.usageType !== 'sold');
-                    if (this.formUsage.usageType === 'purchased') { if (!this.formUsage.startDate) this.formUsage.startDate = new Date().toISOString().split('T')[0]; this.formUsage.endDate = ''; }
+                    if (this.formUsage.usageType === 'purchased') { if (!this.formUsage.startDate) this.formUsage.startDate = this.todayIso(); this.formUsage.endDate = ''; }
                     else if (this.formUsage.usageType === 'sold') { this.formUsage.endDate = ''; if (periods.length > 0) { const lastP = periods[periods.length - 1]; if (lastP.endDate) this.formUsage.startDate = lastP.endDate; } }
                     else {
                         if (periods.length === 0 || (this.editingUsageId && usages.findIndex(u => u.id === this.editingUsageId) === (purchased ? 1 : 0))) { if (purchased && purchased.startDate) this.formUsage.startDate = purchased.startDate; } 
                         else { const lastP = periods[periods.length - 1]; if (lastP.endDate && (!this.editingUsageId || this.editingUsageId === lastP.id)) this.formUsage.startDate = this.addDaysToDateStr(lastP.endDate, 1); }
-                        if (!this.formUsage.startDate) this.formUsage.startDate = new Date().toISOString().split('T')[0];
+                        if (!this.formUsage.startDate) this.formUsage.startDate = this.todayIso();
                     }
                 },
                 async saveUsage() {
@@ -3974,7 +3997,7 @@
                 openTenantModal(parentUsage, tenantItem = null) {
                     this.parentRentalUsage = parentUsage; this.activeModal = 'tenantSub';
                     if (tenantItem) { this.editingTenantSubId = tenantItem.id; this.formTenantSub = { ...tenantItem }; } 
-                    else { this.editingTenantSubId = null; this.formTenantSub = { id: 'ut_' + Date.now(), usageId: parentUsage.id, contactId: '', name: '', room: '', rent: '', startDate: parentUsage.startDate || new Date().toISOString().split('T')[0], endDate: '', notes: '' }; }
+                    else { this.editingTenantSubId = null; this.formTenantSub = { id: 'ut_' + Date.now(), usageId: parentUsage.id, contactId: '', name: '', room: '', rent: '', startDate: parentUsage.startDate || this.todayIso(), endDate: '', notes: '' }; }
                 },
                 onCrmTenantSelectChange() { if (this.formTenantSub.contactId) { const found = this.contacts.find(c => c.id === this.formTenantSub.contactId); if (found) this.formTenantSub.name = found.name; } },
                 async saveTenantSub() {
@@ -3986,7 +4009,7 @@
                 },
                 async deleteTenantSub(parentUsage, tenantId) { if (!parentUsage || !parentUsage.tenants) return; parentUsage.tenants = parentUsage.tenants.filter(t => t.id !== tenantId); await this.saveToStorage(); this.showToast(this.t('toastTenantSubDeleted')); },
                 openModal(type, item = null) {
-                    if (type === 'repair' && !item && !this.convertingTaskId && !this.convertingRoutineId) { this.formRepair = { propertyId: this.viewingPropertyId || (this.properties.length > 0 ? this.properties[0].id : ''), titleSelect: '', title: '', zone: this.viewingZone || '', category: '', cost: '', date: new Date().toISOString().split('T')[0], warrantyEndDate: '', contractorId: '', hasReceipt: true, receiptPhotos: [], beforePhotos: [], afterPhotos: [] }; }
+                    if (type === 'repair' && !item && !this.convertingTaskId && !this.convertingRoutineId) { this.formRepair = { propertyId: this.viewingPropertyId || (this.properties.length > 0 ? this.properties[0].id : ''), titleSelect: '', title: '', zone: this.viewingZone || '', category: '', cost: '', date: this.todayIso(), warrantyEndDate: '', contractorId: '', taxKind: 'operating', hasReceipt: true, receiptPhotos: [], beforePhotos: [], afterPhotos: [] }; }
                     this.activeModal = type; const defaultProp = this.viewingPropertyId || (this.properties.length > 0 ? this.properties[0].id : '');
                     if (type === 'property') { if (item) { this.editingPropertyId = item.id; this.formProperty = { name: item.name, buildingType: item.buildingType, address: item.address, intro: item.intro || '', lat: item.lat, lng: item.lng }; } else { this.editingPropertyId = null; this.formProperty = { name: '', buildingType: 'detached', address: '', intro: '', lat: null, lng: null }; } }
                     if (type === 'routine') {
@@ -4001,11 +4024,11 @@
                     }
                     if (type === 'task') {
                         if (item) { this.editingTaskId = item.id; let tSelect = item.titleSelect; if (!tSelect || tSelect === 'OTHER') { const found = (this.commonTaskTitles[this.currentLang] || []).find(t => t.name === item.title); tSelect = found ? found.name : (item.title || ''); } this.formTask = { propertyId: item.propertyId || defaultProp, titleSelect: tSelect, title: item.title || '', zone: item.zone || '', category: item.category || '', issueDate: item.issueDate || '', deadline: item.deadline || '', alertOn: !!item.alertOn, beforePhotos: [...(item.beforePhotos || [])] }; } 
-                        else { this.editingTaskId = null; this.formTask = { propertyId: defaultProp, titleSelect: '', title: '', zone: this.viewingZone || '', category: '', issueDate: new Date().toISOString().split('T')[0], deadline: '', alertOn: false, beforePhotos: [] }; }
+                        else { this.editingTaskId = null; this.formTask = { propertyId: defaultProp, titleSelect: '', title: '', zone: this.viewingZone || '', category: '', issueDate: this.todayIso(), deadline: '', alertOn: false, beforePhotos: [] }; }
                     }
                     if (type === 'repair') {
-                        if (item && item.id) { this.editingRepairId = item.id; let rSelect = item.titleSelect; if (!rSelect || rSelect === 'OTHER') { const found = (this.commonTaskTitles[this.currentLang] || []).find(r => r.name === item.title); rSelect = found ? found.name : (item.title || ''); } this.formRepair = { propertyId: item.propertyId || defaultProp, titleSelect: rSelect, title: item.title || '', zone: item.zone || '', category: item.category || '', cost: item.cost || '', date: item.date || new Date().toISOString().split('T')[0], warrantyEndDate: item.warrantyEndDate || '', contractorId: item.contractorId || '', hasReceipt: item.hasReceipt !== false, receiptPhotos: Array.isArray(item.receiptPhotos) ? [...item.receiptPhotos] : [], beforePhotos: Array.isArray(item.beforePhotos) ? [...item.beforePhotos] : [], afterPhotos: Array.isArray(item.afterPhotos) ? [...item.afterPhotos] : [] }; } 
-                        else if (!this.convertingTaskId && !this.convertingRoutineId) { this.editingRepairId = null; this.formRepair = { propertyId: defaultProp, titleSelect: '', title: '', zone: this.viewingZone || '', category: '', cost: '', date: new Date().toISOString().split('T')[0], warrantyEndDate: '', contractorId: '', hasReceipt: true, receiptPhotos: [], beforePhotos: [], afterPhotos: [] }; }
+                        if (item && item.id) { this.editingRepairId = item.id; let rSelect = item.titleSelect; if (!rSelect || rSelect === 'OTHER') { const found = (this.commonTaskTitles[this.currentLang] || []).find(r => r.name === item.title); rSelect = found ? found.name : (item.title || ''); } this.formRepair = { propertyId: item.propertyId || defaultProp, titleSelect: rSelect, title: item.title || '', zone: item.zone || '', category: item.category || '', cost: item.cost || '', date: item.date || this.todayIso(), warrantyEndDate: item.warrantyEndDate || '', contractorId: item.contractorId || '', hasReceipt: item.hasReceipt !== false, taxKind: item.taxKind === 'capital' ? 'capital' : 'operating', receiptPhotos: Array.isArray(item.receiptPhotos) ? [...item.receiptPhotos] : [], beforePhotos: Array.isArray(item.beforePhotos) ? [...item.beforePhotos] : [], afterPhotos: Array.isArray(item.afterPhotos) ? [...item.afterPhotos] : [] }; } 
+                        else if (!this.convertingTaskId && !this.convertingRoutineId) { this.editingRepairId = null; this.formRepair = { propertyId: defaultProp, titleSelect: '', title: '', zone: this.viewingZone || '', category: '', cost: '', date: this.todayIso(), warrantyEndDate: '', contractorId: '', taxKind: 'operating', hasReceipt: true, receiptPhotos: [], beforePhotos: [], afterPhotos: [] }; }
                         else { this.editingRepairId = null; }
                     }
                     if (type === 'contact') {
@@ -4188,7 +4211,7 @@
                             title: (this.fileUploadTitle || '').trim() || (file.name || this.docCategoryLabel(cat)),
                             name: file.name || '',
                             fileRef: ref,
-                            addedAt: new Date().toISOString().split('T')[0]
+                            addedAt: this.todayIso()
                         });
                     }
                     this.fileUploadTitle = '';
@@ -4271,7 +4294,7 @@
                         if (index !== -1) this.properties[index] = { ...this.properties[index], ...this.formProperty };
                         this.showToast(this.t('toastPropUpdated'));
                     } else {
-                        this.properties.push({ id: 'p_' + Date.now(), usages: [{ id: 'u_' + Date.now(), usageType: 'purchased', startDate: new Date().toISOString().split('T')[0], endDate: '', notes: 'Property Purchase' }, { id: 'u_' + (Date.now() + 1), usageType: 'primary', startDate: new Date().toISOString().split('T')[0], endDate: '', notes: '' }], ...this.formProperty });
+                        this.properties.push({ id: 'p_' + Date.now(), usages: [{ id: 'u_' + Date.now(), usageType: 'purchased', startDate: this.todayIso(), endDate: '', notes: 'Property Purchase' }, { id: 'u_' + (Date.now() + 1), usageType: 'primary', startDate: this.todayIso(), endDate: '', notes: '' }], ...this.formProperty });
                         this.showToast(this.t('toastPropSaved'));
                     }
                     await this.saveToStorage(); this.closeModal(); if (this.dashboardViewMode === 'map') this.renderMapMarkers();
@@ -4318,7 +4341,7 @@
                         const idx = this.tasks.findIndex(t => t.id === this.editingTaskId);
                         if (idx !== -1) this.tasks[idx] = { ...this.tasks[idx], propertyId: this.formTask.propertyId, titleSelect: this.formTask.titleSelect, title: this.formTask.title, zone: this.formTask.zone, category: this.formTask.category, issueDate: this.formTask.issueDate || '', deadline: this.formTask.deadline || '', alertOn: !!this.formTask.alertOn, beforePhotos: [...this.formTask.beforePhotos] };
                     } else {
-                        this.tasks.unshift({ id: 't_' + Date.now(), propertyId: this.formTask.propertyId, titleSelect: this.formTask.titleSelect, title: this.formTask.title, zone: this.formTask.zone, category: this.formTask.category, issueDate: this.formTask.issueDate || new Date().toISOString().split('T')[0], deadline: this.formTask.deadline || '', alertOn: !!this.formTask.alertOn, beforePhotos: [...this.formTask.beforePhotos], completed: false });
+                        this.tasks.unshift({ id: 't_' + Date.now(), propertyId: this.formTask.propertyId, titleSelect: this.formTask.titleSelect, title: this.formTask.title, zone: this.formTask.zone, category: this.formTask.category, issueDate: this.formTask.issueDate || this.todayIso(), deadline: this.formTask.deadline || '', alertOn: !!this.formTask.alertOn, beforePhotos: [...this.formTask.beforePhotos], completed: false });
                     }
                     await this.saveToStorage(); this.closeModal(); this.showToast(this.t('toastTaskSaved')); if (this.dashboardViewMode === 'map') this.renderMapMarkers();
                 },
@@ -4370,9 +4393,10 @@
                         zone: task.zone,
                         category: task.category,
                         cost: '',
-                        date: new Date().toISOString().split('T')[0],
+                        date: this.todayIso(),
                         warrantyEndDate: '',
                         contractorId: '',
+                        taxKind: 'operating',
                         hasReceipt: false,
                         receiptPhotos: [],
                         beforePhotos: [...(task.beforePhotos || [])],
@@ -4391,7 +4415,7 @@
                         this.repairs.unshift({ id: 'r_' + Date.now(), ...this.formRepair });
                         if (this.convertingTaskId) {
                             const tIdx = this.tasks.findIndex(t => t.id === this.convertingTaskId);
-                            if (tIdx !== -1) this.tasks[tIdx].completed = true;
+                            if (tIdx !== -1) this.tasks = this.tasks.filter(t => t.id !== this.convertingTaskId);
                             this.convertingTaskId = null;
                         }
                         if (this.convertingRoutineId) {
@@ -4474,7 +4498,7 @@
                 },
                 isWarrantyActive(dateStr) {
                     if (!dateStr) return false;
-                    return dateStr >= new Date().toISOString().split('T')[0];
+                    return dateStr >= this.todayIso();
                 },
                 showToast(msg) {
                     this.toastMessage = msg;
@@ -4697,7 +4721,7 @@
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = includeBlobs ? `pocketprop_full_${new Date().toISOString().split('T')[0]}.json` : `pocketprop_light_${new Date().toISOString().split('T')[0]}.json`;
+                    a.download = includeBlobs ? `pocketprop_full_${this.todayIso()}.json` : `pocketprop_light_${this.todayIso()}.json`;
                     a.click();
                     URL.revokeObjectURL(url);
                     this.showToast(includeBlobs ? this.t('toastExportFull') : this.t('toastExportLight'));
