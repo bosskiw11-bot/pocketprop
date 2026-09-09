@@ -644,12 +644,16 @@
                         <button @click="workSubTab = 'routines'" class="flex-1 py-2 text-[11px] font-bold rounded-xl transition-all flex items-center justify-center gap-1" :class="workSubTab === 'routines' ? 'bg-brand-500 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'">
                             <span class="relative inline-flex">
                                 <i class="fa-solid fa-rotate"></i>
-                                <span v-if="showRoutineDots && routineAlertLevel" class="absolute -top-1 -right-1.5 w-1.5 h-1.5 rounded-full" :class="routineAlertLevel === 'overdue' ? 'bg-rose-400' : 'bg-amber-300'"></span>
+                                <span v-if="showRoutineDots && cycleAlertLevel" class="absolute -top-1 -right-1.5 w-1.5 h-1.5 rounded-full" :class="cycleAlertLevel === 'overdue' ? 'bg-rose-400' : 'bg-amber-300'"></span>
                             </span>
                             {{ t('subTabRoutines') }}
                         </button>
                         <button @click="workSubTab = 'tasks'" class="flex-1 py-2 text-[11px] font-bold rounded-xl transition-all flex items-center justify-center gap-1" :class="workSubTab === 'tasks' ? 'bg-brand-500 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'">
-                            <i class="fa-solid fa-clipboard-check"></i> {{ t('subTabTasks') }}
+                            <span class="relative inline-flex">
+                                <i class="fa-solid fa-clipboard-check"></i>
+                                <span v-if="showRoutineDots && taskAlertLevel" class="absolute -top-1 -right-1.5 w-1.5 h-1.5 rounded-full" :class="taskAlertLevel === 'overdue' ? 'bg-rose-400' : 'bg-amber-300'"></span>
+                            </span>
+                            {{ t('subTabTasks') }}
                         </button>
                         <button @click="workSubTab = 'repairs'" class="flex-1 py-2 text-[11px] font-bold rounded-xl transition-all flex items-center justify-center gap-1" :class="workSubTab === 'repairs' ? 'bg-brand-500 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'">
                             <i class="fa-solid fa-clock-rotate-left"></i> {{ t('subTabLogs') }}
@@ -3151,12 +3155,23 @@
                     return Array.from(years).sort((a,b) => b - a);
                 },
                 showRoutineDots() { return this.workDotsOn; },
-                routineAlertLevel() {
+                cycleAlertLevel() {
                     if (!this.workDotsOn) return '';
                     const routines = this.routines || [];
+                    if (this.dotCycleOverdue && routines.some(r => this.isRoutineOverdue(r))) return 'overdue';
+                    if (this.dotCycleSoon && routines.some(r => this.isRoutineDueSoon(r))) return 'soon';
+                    return '';
+                },
+                taskAlertLevel() {
+                    if (!this.workDotsOn) return '';
                     const tasks = (this.tasks || []).filter(t => !t.completed);
-                    if ((this.dotCycleOverdue && routines.some(r => this.isRoutineOverdue(r))) || (this.dotTaskOverdue && tasks.some(t => this.isTaskOverdue(t)))) return 'overdue';
-                    if ((this.dotCycleSoon && routines.some(r => this.isRoutineDueSoon(r))) || (this.dotTaskSoon && tasks.some(t => this.isTaskDueSoon(t)))) return 'soon';
+                    if (this.dotTaskOverdue && tasks.some(t => this.isTaskOverdue(t))) return 'overdue';
+                    if (this.dotTaskSoon && tasks.some(t => this.isTaskDueSoon(t))) return 'soon';
+                    return '';
+                },
+                routineAlertLevel() {
+                    if (this.cycleAlertLevel === 'overdue' || this.taskAlertLevel === 'overdue') return 'overdue';
+                    if (this.cycleAlertLevel || this.taskAlertLevel) return 'soon';
                     return '';
                 },
                 cashflowRows() {
