@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="sky">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -32,6 +32,21 @@
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+        :root, [data-theme="sky"] {
+            --brand-400: #38bdf8;
+            --brand-500: #0ea5e9;
+            --brand-600: #0284c7;
+        }
+        [data-theme="cedar"] {
+            --brand-400: #fbbf24;
+            --brand-500: #d97706;
+            --brand-600: #b45309;
+        }
+        [data-theme="pine"] {
+            --brand-400: #34d399;
+            --brand-500: #059669;
+            --brand-600: #047857;
+        }
         body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; -webkit-tap-highlight-color: transparent; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -67,9 +82,9 @@
         nav.pb-safe { padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px)); }
         .tax-sheet-table { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 11px; }
         .tax-sheet-table th, .tax-sheet-table td { vertical-align: top; padding: 5px 6px 5px 0; }
-        .tax-sheet-table .col-date { width: 22%; }
-        .tax-sheet-table .col-title { width: 56%; }
-        .tax-sheet-table .col-amt { width: 22%; text-align: right; }
+        .tax-sheet-table .col-date { width: 34%; white-space: nowrap; }
+        .tax-sheet-table .col-title { width: 46%; }
+        .tax-sheet-table .col-amt { width: 20%; text-align: right; white-space: nowrap; }
         .tax-print-body { background: #e2e8f0; }
         .tax-a4 {
             width: 210mm;
@@ -81,6 +96,9 @@
             padding: 16mm 16mm 18mm;
             box-shadow: 0 10px 40px rgba(15, 23, 42, 0.18);
             box-sizing: border-box;
+        }
+        @media (max-width: 480px) {
+            .tax-a4 { padding: 18px 12px 24px; min-height: 0; margin: 8px auto; }
         }
         @page { size: A4 portrait; margin: 12mm; }
         @media print {
@@ -94,7 +112,7 @@
     </style>
     <script>
         tailwind.config = {
-            theme: { extend: { colors: { brand: { 400: '#38bdf8', 500: '#0ea5e9', 600: '#0284c7' } } } }
+            theme: { extend: { colors: { brand: { 400: 'var(--brand-400)', 500: 'var(--brand-500)', 600: 'var(--brand-600)' } } } }
         };
         if (typeof localforage !== 'undefined') {
             try {
@@ -119,6 +137,9 @@
             </div>
             <!-- Settings Button -->
             <div class="flex items-center gap-2">
+                <button @click="toggleLanguage" class="h-9 px-2.5 flex items-center justify-center rounded-full bg-slate-800/80 hover:bg-slate-800 text-slate-200 border border-slate-700/80 active:scale-95 transition-all shadow-sm text-[11px] font-bold tracking-wide" :title="t('settingsLanguage')">
+                    {{ currentLang === 'en' ? '中文' : 'EN' }}
+                </button>
                 <button @click="openModal('settings')" class="w-9 h-9 flex items-center justify-center rounded-full bg-slate-800/80 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/80 active:scale-95 transition-all shadow-sm" :title="t('settingsTitle')">
                     <i class="fa-solid fa-gear text-base"></i>
                 </button>
@@ -1625,19 +1646,17 @@
 
                             <div v-show="settingsSection === 'daily'" class="space-y-3 pt-2 border-t border-slate-800">
                                 <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider pl-1">{{ t('settingsPreferences') }}</h4>
-                                <div class="bg-slate-800/80 p-4 rounded-2xl border border-slate-700/60 flex justify-between items-center">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-9 h-9 rounded-xl bg-brand-500/10 text-brand-400 flex items-center justify-center">
-                                            <i class="fa-solid fa-language text-base"></i>
-                                        </div>
-                                        <div>
-                                            <p class="text-sm font-bold text-white">{{ t('settingsLanguage') }}</p>
-                                            <p class="text-[10px] text-slate-500 mt-0.5 leading-relaxed">{{ t('settingsLangHint') }}</p>
-                                        </div>
+                                <p class="text-[11px] text-slate-500 leading-relaxed px-1">{{ t('settingsLangHint') }}</p>
+                                <div class="bg-slate-800/80 p-4 rounded-2xl border border-slate-700/60 flex justify-between items-center gap-3">
+                                    <div>
+                                        <p class="text-sm font-bold text-white">{{ t('settingsTheme') }}</p>
+                                        <p class="text-[10px] text-slate-500 mt-0.5">{{ t('settingsThemeHint') }}</p>
                                     </div>
-                                    <button @click="toggleLanguage" class="text-xs font-bold px-3 py-1.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-200 border border-slate-600 active:scale-95 transition-transform flex items-center gap-1.5">
-                                        <i class="fa-solid fa-repeat text-[10px]"></i> {{ currentLang === 'en' ? '中文' : 'English' }}
-                                    </button>
+                                    <div class="flex items-center gap-2">
+                                        <button type="button" @click="setTheme('sky')" class="w-8 h-8 rounded-full border-2 bg-sky-500" :class="colorTheme === 'sky' ? 'border-white scale-110' : 'border-slate-600'" :title="t('themeSky')"></button>
+                                        <button type="button" @click="setTheme('cedar')" class="w-8 h-8 rounded-full border-2 bg-amber-500" :class="colorTheme === 'cedar' ? 'border-white scale-110' : 'border-slate-600'" :title="t('themeCedar')"></button>
+                                        <button type="button" @click="setTheme('pine')" class="w-8 h-8 rounded-full border-2 bg-emerald-600" :class="colorTheme === 'pine' ? 'border-white scale-110' : 'border-slate-600'" :title="t('themePine')"></button>
+                                    </div>
                                 </div>
                                 <div class="bg-slate-800/80 p-4 rounded-2xl border border-slate-700/60 flex justify-between items-center">
                                     <div class="flex items-center gap-3">
@@ -2081,18 +2100,18 @@
                     </div>
                     <table class="tax-sheet-table mt-2">
                         <colgroup><col class="col-date"><col class="col-title"><col class="col-amt"></colgroup>
-                        <thead><tr class="text-slate-500 border-b border-slate-200"><th class="text-left">{{ tTax('modalDate') }}</th><th class="text-left">{{ tTax('modalRepairTitle') }}</th><th class="col-amt">$</th></tr></thead>
+                        <thead><tr class="text-slate-500 border-b border-slate-200"><th class="text-left col-date">{{ tTax('modalDate') }}</th><th class="text-left col-title">{{ tTax('modalRepairTitle') }}</th><th class="col-amt">$</th></tr></thead>
                         <tbody>
                             <tr v-if="group.operating.length" class="border-t border-slate-200"><td colspan="2" class="font-bold pt-3">{{ tTax('taxOperating') }}</td><td class="col-amt font-bold pt-3">${{ formatMoney(group.operatingTotal) }}</td></tr>
                             <tr v-for="row in group.operating" :key="row.id" class="border-t border-slate-100">
-                                <td>{{ row.date || '—' }}</td>
-                                <td><span v-if="row.category" class="text-slate-500">{{ row.category }} · </span>{{ row.title }}</td>
+                                <td class="col-date">{{ row.date || '—' }}</td>
+                                <td class="col-title"><span v-if="row.category" class="text-slate-500">{{ row.category }} · </span>{{ row.title }}</td>
                                 <td class="col-amt">{{ formatMoney(row.cost) }}</td>
                             </tr>
                             <tr v-if="group.capital.length" class="border-t border-slate-200"><td colspan="2" class="font-bold pt-3">{{ tTax('taxCapital') }}</td><td class="col-amt font-bold pt-3">${{ formatMoney(group.capitalTotal) }}</td></tr>
                             <tr v-for="row in group.capital" :key="'c'+row.id" class="border-t border-slate-100">
-                                <td>{{ row.date || '—' }}</td>
-                                <td><span v-if="row.category" class="text-slate-500">{{ row.category }} · </span>{{ row.title }}</td>
+                                <td class="col-date">{{ row.date || '—' }}</td>
+                                <td class="col-title"><span v-if="row.category" class="text-slate-500">{{ row.category }} · </span>{{ row.title }}</td>
                                 <td class="col-amt">{{ formatMoney(row.cost) }}</td>
                             </tr>
                         </tbody>
@@ -2124,43 +2143,43 @@
 
         const locales = {
             en: {
-                navDashboard: 'Home', navWork: 'Work', navTasks: 'Tasks', navRepairs: 'Records', navCRM: 'People',
+                navDashboard: 'Properties', navWork: 'Work', navTasks: 'Tasks', navRepairs: 'Records', navCRM: 'People',
                 subTabTasks: 'Pending', subTabRoutines: 'Cycles', subTabLogs: 'History',
                 addRoutine: 'Add Recurring Check', editRoutine: 'Edit Recurring Check', routineCatalog: 'Standard checklist', selectRoutine: 'Pick a standard item...', interval: 'Interval', nextDue: 'Next due', overdue: 'Overdue', dueSoon: 'Due soon', noRoutines: 'No recurring checks yet.', routinesHint: 'These stay on the list. Completing one writes a History record and rolls the next due date forward.', routineNotifyTitle: 'Cycle reminders', routineNotifyOff: 'Off', routineNotifyDot: 'Red dots', routineDotHint: 'Show a badge on Work and Cycles when a check is due soon or overdue. Off by default.', routineNotifySms: 'Text', routineNotifyEmail: 'Email', routineNotifyPhone: 'Phone number for SMS', routineNotifyEmailAddr: 'Email address', routineNotifyHint: 'No server push. Text/Email opens a draft on this phone for items that are due.', routineNotifySendDue: 'Draft reminder for due items', routineNotifyOne: 'Remind', toastNotifyNeedTarget: 'Add a phone or email first', toastNotifyNoneDue: 'Nothing due right now', toastNotifyOpened: 'Draft opened', everyMonths: 'Every {n} mo', everyYear: 'Yearly', everyYears: 'Every {n} yr', toastRoutineSaved: 'Recurring check saved', toastRoutineDone: 'Logged and rolled to next due', toastRoutineDeleted: 'Recurring check removed', confirmDeleteRoutineTitle: 'Delete recurring check?', doneToday: 'Done today', toastRoutineAlreadyToday: 'Already logged for today', toastRoutineInFlight: 'Saving this check…', confirmEarlyRoutine: 'Next due is still in the future. Log another completion and roll the date again?',
-                typeDetached: 'Detached', typeSemiDetached: 'Semi-Detached', typeFreeholdTownhouse: 'Freehold Townhouse', typeCondoTownhouse: 'Condo Townhouse', typeCondoApt: 'Condo Apt', typeLink: 'Link', typeMultiplex: 'Multiplex',
-                dashboardTasks: 'Pending Tasks', dashboardLogs: 'Logs & Events', dashboardTotalCost: 'Total Expenses',
-                propertyLedger: 'Property ledger', monthlyCashFlow: 'Monthly Cash Flow', monthlyCashFlowHint: 'Edit monthly figures, then confirm to save on this property.', monthlyExpenses: 'Monthly Expenses', monthlyExpensesHint: 'Owner-occupied household costs. Confirm to save on this property.', cashflowModeOwner: 'Owner-occupied', cashflowModeRental: 'Rental', cashflowModeHidden: 'Hidden', cashflowRental: 'Rental income', cashflowMortgage: 'Mortgage', cashflowInsurance: 'Insurance', cashflowTax: 'Property tax', cashflowMgmt: 'Property management', cashflowHoa: 'HOA / condo fee', cashflowHydro: 'Electricity', cashflowGas: 'Gas / heat', cashflowWater: 'Water & sewer', cashflowInternet: 'Internet / phone', cashflowGroceries: 'Groceries', cashflowTransit: 'Transit / fuel', cashflowChildcare: 'Childcare', cashflowHealth: 'Healthcare', cashflowSubs: 'Subscriptions', cashflowReserve: 'Home reserve', cashflowOthers: 'Others total', cashflowNet: 'Net income', cashflowExpenseTotal: 'Total', confirmCashflow: 'Confirm figures', toastCashflowSaved: 'Monthly figures saved',
+                typeDetached: 'Detached', typeSemiDetached: 'Semi-detached', typeFreeholdTownhouse: 'Freehold townhouse', typeCondoTownhouse: 'Condo townhouse', typeCondoApt: 'Condo apartment', typeLink: 'Link home', typeMultiplex: 'Multiplex',
+                dashboardTasks: 'Open tasks', dashboardLogs: 'Work history', dashboardTotalCost: 'Total spend',
+                propertyLedger: 'Property ledger', monthlyCashFlow: 'Monthly cash flow', monthlyCashFlowHint: 'Enter typical monthly amounts, then confirm to save them on this property.', monthlyExpenses: 'Monthly expenses', monthlyExpensesHint: 'Typical owner-occupied household costs. Confirm to save them on this property.', cashflowModeOwner: 'Owner-occupied', cashflowModeRental: 'Rental', cashflowModeHidden: 'Hidden', cashflowRental: 'Rental income', cashflowMortgage: 'Mortgage', cashflowInsurance: 'Insurance', cashflowTax: 'Property tax', cashflowMgmt: 'Property management', cashflowHoa: 'Condo / strata fees', cashflowHydro: 'Electricity', cashflowGas: 'Gas / heat', cashflowWater: 'Water & sewer', cashflowInternet: 'Internet / phone', cashflowGroceries: 'Groceries', cashflowTransit: 'Transit / fuel', cashflowChildcare: 'Childcare', cashflowHealth: 'Healthcare', cashflowSubs: 'Subscriptions', cashflowReserve: 'Home reserve', cashflowOthers: 'Others total', cashflowNet: 'Net income', cashflowExpenseTotal: 'Total', confirmCashflow: 'Confirm figures', toastCashflowSaved: 'Monthly figures saved',
                 maintenanceTotalCost: 'Maintenance totals', maintenanceTotalHint: 'By year, then with / without receipt', expenseWithReceipt: 'With receipt', expenseNoReceipt: 'No receipt', noneInCategory: 'None', noMaintenanceCost: 'No maintenance spend recorded.', propertyIntro: 'Property overview', propertyIntroPlaceholder: 'Short note: layout, why you bought it, current use…', propertyIntroEmpty: 'No overview yet. Edit the property to add one.',
-                noAddress: 'No Address Set', noProperties: 'No properties added yet.', viewAll: 'View All',
-                allProperties: 'All Properties', noTasks: 'No pending tasks.', btnLogAsRepair: 'Done',
-                noLogs: 'No records found.', warrantyUntil: 'Warranty until', warrantyActive: '(Active)', warrantyExpired: '(Expired)', noneSelf: 'Self / None', gpsDenied: 'GPS access denied',
+                noAddress: 'No address on file', noProperties: 'No properties yet.', viewAll: 'View all',
+                allProperties: 'All properties', noTasks: 'No open tasks.', btnLogAsRepair: 'Done',
+                noLogs: 'No records yet.', warrantyUntil: 'Warranty until', warrantyActive: '(active)', warrantyExpired: '(expired)', noneSelf: 'Self / none', gpsDenied: 'Location access denied',
                 btnCopy: 'Copy', btnCall: 'Call',
-                addProperty: 'Add Property', addTask: 'Add Task', logEvent: 'Log Repair/Event', editLog: 'Edit Record', addContact: 'Add Contact', editContact: 'Edit Contact Details',
-                modalEditProperty: 'Edit Property Details', modalAddProperty: 'Add Property', deleteProperty: 'Delete Property',
-                modalPropName: 'Property Name (e.g. Primary Residence)', modalPropType: 'Property Usage', modalBuildingType: 'Building Type', modalPropAddress: 'Address (Optional)',
-                modalProperty: 'Belongs to', modalZone: 'Zone/Area', modalCategory: 'Category', selectCategory: 'Select category...', modalTaskTitle: 'Task Title', selectCommonTask: 'Select Common Task...', otherManual: 'Other (Manual Entry)', enterTaskManually: 'Enter task manually',
-                modalRepairTitle: 'Event/Repair Title', selectCommonRepair: 'Select Common Issue...', enterRepairManually: 'Enter event manually',
-                modalCost: 'Cost', modalDate: 'Date', issueDate: 'Issue Date', noIssueDate: 'No issue date', modalStartDate: 'Start Date', modalEndDate: 'End Date', modalContractor: 'Contractor / Pro', modalWarranty: 'Warranty Ends',
-                btnSave: 'Save', back: 'Back', backToProperties: 'Back to Properties', allTime: 'All Time', zoneLayout: 'Space Blueprint',
+                addProperty: 'Add property', addTask: 'Add task', logEvent: 'Log work', editLog: 'Edit record', addContact: 'Add contact', editContact: 'Edit contact',
+                modalEditProperty: 'Edit property', modalAddProperty: 'Add property', deleteProperty: 'Delete property',
+                modalPropName: 'Property name (e.g. Primary residence)', modalPropType: 'Use', modalBuildingType: 'Building type', modalPropAddress: 'Address (optional)',
+                modalProperty: 'Property', modalZone: 'Area', modalCategory: 'Category', selectCategory: 'Select a category…', modalTaskTitle: 'Task', selectCommonTask: 'Select a task…', otherManual: 'Other (manual)', enterTaskManually: 'Enter a task',
+                modalRepairTitle: 'Work item', selectCommonRepair: 'Select a work item…', enterRepairManually: 'Describe the work',
+                modalCost: 'Cost', modalDate: 'Date', issueDate: 'Date found', noIssueDate: 'No date found', modalStartDate: 'Start date', modalEndDate: 'End date', modalContractor: 'Contractor', modalWarranty: 'Warranty ends',
+                btnSave: 'Save', back: 'Back', backToProperties: 'All properties', allTime: 'All years', zoneLayout: 'Rooms & areas',
                 toastPropSaved: 'Property saved', toastPropUpdated: 'Property updated', toastPropertyDeleted: 'Property and linked work removed', toastTaskSaved: 'Task saved', toastTaskDeleted: 'Task deleted', toastRepairLogged: 'Repair logged', toastRepairDeleted: 'History record deleted', toastContactSaved: 'Contact saved', toastContactDeleted: 'Contact deleted', toastCopied: 'Copied!',
                 uploadReceipt: 'Receipts (Max 6)', viewReceipt: 'Receipts', remove: 'Remove', toastFileTooLarge: 'File over 20 MB, skipped', storageWarn: 'Local photos are getting large. Export a full backup or remove unused files.',
                 uploadBefore: 'Before Photos (Max 6)', uploadAfter: 'After Photos (Max 6)', addPhoto: 'Add Photo', viewBefore: 'Before', viewAfter: 'After',
-                taxKind: 'Tax treatment', taxOperating: 'Repair this year', taxCapital: 'Capital improvement', taxOperatingShort: 'Repair', taxCapitalShort: 'Capital', taxCapitalHint: 'This looks like a larger upgrade. Switch to capital improvement if it replaces a system or adds value.', hasReceipt: 'With Receipt', noReceipt: 'No Receipt', noReceiptMsg: 'No receipt will be attached.',
-                viewModeList: 'Cards', viewModeMap: 'Map View', viewModeGrid: 'Grid View', openPropertyDetails: 'Open Blueprint', recenterMap: 'Fit All Pins',
+                taxKind: 'Tax treatment', taxOperating: 'Repairs & maintenance', taxCapital: 'Capital improvement', taxOperatingShort: 'Maintenance', taxCapitalShort: 'Capital', taxCapitalHint: 'This looks like a larger upgrade. Choose capital improvement if it replaces a system or adds lasting value.', hasReceipt: 'Receipt on file', noReceipt: 'No receipt', noReceiptMsg: 'This record will be saved without a receipt.',
+                viewModeList: 'List', viewModeMap: 'Map', viewModeGrid: 'Grid', openPropertyDetails: 'View property', recenterMap: 'Show all pins',
                 btnGeocode: 'Locate Address', geocoding: 'Locating...', geocodeSuccess: 'Address located!', geocodeFailed: 'Address not found',
                 gpsEnabled: 'GPS Enabled', gpsDisabled: 'GPS Disabled', enableGPS: 'Enable GPS', locateMe: 'My Location', gpsOffMsg: 'GPS is disabled',
                 confirmDeleteTitle: 'Delete Task?', confirmDeleteLogTitle: 'Delete History Record?', confirmDeletePropertyTitle: 'Delete this property?', confirmDeletePropertyBody: 'Also remove {t} pending, {c} cycles, {h} history items. Contacts stay, but this property is unlinked.', confirmDeleteContactTitle: 'Delete Contact?', confirmDeleteRoleTitle: 'Delete Category?', confirmDeleteMediaTitle: 'Delete File?', btnCancel: 'Cancel', btnConfirmDelete: 'Delete',
                 usageTimeline: 'Usage Timeline', startDate: 'Start Date', endDate: 'End Date', addUsagePeriod: 'Add Event/Period', editUsagePeriod: 'Edit Event/Period', modalAddUsage: 'Add Event or Usage Period', ongoing: 'Present',
                 usageNotes: 'Period Notes / Price / Tenant Info', noUsageHistory: 'No timeline events logged yet.',
                 usageRealtor: 'Realtor', usageLawyer: 'Lawyer', usageManager: 'Property manager', noneAssigned: 'None',
-                linkedFromProperties: 'Linked houses', linkedFromHint: 'Appears after this person is chosen on a property timeline.',
-                tenantSubTimeline: 'Tenant Lease Sub-branch', addTenantSub: 'Add Tenant Lease', editTenantSub: 'Edit Tenant Lease', monthlyRent: 'Monthly Rent', selectCrmTenant: 'Pick from saved tenants', tenantName: 'Tenant Name', roomName: 'Room', roomHint: 'e.g. Master Bedroom, Room A', entireHouse: 'Entire house', leasesCount: 'leases',
+                linkedFromProperties: 'Linked properties', linkedFromHint: 'Shown after this person is selected on a property timeline.',
+                tenantSubTimeline: 'Tenants', addTenantSub: 'Add tenant', editTenantSub: 'Edit tenant', monthlyRent: 'Monthly rent', selectCrmTenant: 'Choose a saved tenant', tenantName: 'Tenant name', roomName: 'Unit / room', roomHint: 'e.g. Primary bedroom, Unit A', entireHouse: 'Whole property', leasesCount: 'leases',
                 toastTenantSubSaved: 'Tenant lease saved', toastTenantSubDeleted: 'Tenant lease deleted', toastUsageSaved: 'Timeline updated', toastUsageDeleted: 'Timeline record deleted',
-                usagePurchased: 'Purchased', usagePrimary: 'Primary', usageRental: 'Rental', usageShortTerm: 'Short-Term', usageVacant: 'Vacant', usageCommercial: 'Commercial', usageSold: 'Sold',
-                settingsTitle: 'Settings', settingsPreferences: 'Preferences', settingsLanguage: 'Language', settingsGPS: 'GPS Location Services', settingsGPSDesc: 'Enables automatic geolocation & map positioning.',
-                settingsDashboardViews: 'Dashboard Views', minOneViewRequired: 'At least one view mode must be active.', settingsPropertyOrder: 'Property Reorder',
-                settingsContactRoles: 'Contact Category Settings', addRoleCategory: 'Add Category', roleCategoryName: 'Category Name', toastRoleAdded: 'Category added', toastRoleDeleted: 'Category deleted',
-                settingsDataBackup: 'Data Management (Local-First)', exportBackup: 'Export JSON Backup', exportBackupLight: 'Light backup', exportBackupLightDesc: 'Houses, work and ledger only — no photos.', exportBackupFull: 'Full backup', exportBackupFullDesc: 'Includes photos and receipts. File can be large.', exportTaxPdf: 'Tax worksheet (PDF)', exportTaxPdfDesc: 'Receipted operating vs capital repairs. Print or Save as PDF.', exportTaxPrint: 'Print / Save PDF', exportTaxLang: 'PDF language', exportTaxYear: 'Year', exportTaxTitle: 'Repair tax worksheet', exportTaxGenerated: 'Prepared', exportTaxDisclaimer: 'This is a local worksheet from PocketProp. It is not a CRA T776 and not tax advice. Only records with a receipt are listed.', exportTaxEmpty: 'No receipted repair records in this filter.', exportTaxFooter: 'Capital cost allowance class is not assigned yet. Receipt images stay in the app.', importBackup: 'Restore JSON Backup', toastExportLight: 'Light backup saved (no photos)', toastExportFull: 'Full backup saved', toastImportLightNoPhotos: 'Restored text. Photos live in a full backup.', settingsDaily: 'Everyday', settingsAdvanced: 'Advanced', settingsLangHint: 'Switching language updates built-in system text only. Items you added or edited are not translated.', deadline: 'Deadline', itemAlertOn: 'Red-dot reminder for this item', workDotsTitle: 'Work red dots', workDotsHint: 'Turn on, then choose red for overdue and yellow for coming due.', cycleSoonDays: 'Days before cycle due', taskSoonDays: 'Days before task deadline', dotOverdueRed: 'Overdue: red dot', dotSoonYellow: 'Coming due: yellow dot', confirmNextDueTitle: 'Confirm next due date', cleanupUnusedPhotos: 'Clear unused photos', cleanupUnusedPhotosDesc: 'Remove photo files no record points to.', toastCleanupDone: 'Cleared {n} unused files', photoInFullBackup: 'In full backup', toastAddPropertyFirst: 'Add a property first', routineDotPromptTitle: 'A cycle is overdue', routineDotPromptBody: 'Show a small red dot on Work when something is due?', toastImportSuccess: 'Data restored successfully!', toastImportFailed: 'Invalid backup file format.', confirmImportMsg: 'Restoring from backup will overwrite all existing local data. Continue?',
+                usagePurchased: 'Purchased', usagePrimary: 'Owner-occupied', usageRental: 'Rental', usageShortTerm: 'Short-term rental', usageVacant: 'Vacant', usageCommercial: 'Commercial', usageSold: 'Sold',
+                settingsTitle: 'Settings', settingsPreferences: 'Preferences', settingsLanguage: 'Language', settingsTheme: 'Accent colour', settingsThemeHint: 'Sky is the original. Cedar is warm. Pine is green.', themeSky: 'Sky', themeCedar: 'Cedar', themePine: 'Pine', settingsGPS: 'Location services', settingsGPSDesc: 'Used to place you on the property map.',
+                settingsDashboardViews: 'Home views', minOneViewRequired: 'Keep at least one view turned on.', settingsPropertyOrder: 'Property order',
+                settingsContactRoles: 'Contact types', addRoleCategory: 'Add type', roleCategoryName: 'Type name', toastRoleAdded: 'Type added', toastRoleDeleted: 'Type removed',
+                settingsDataBackup: 'Backup & restore', exportBackup: 'Export JSON backup', exportBackupLight: 'Light backup', exportBackupLightDesc: 'Houses, work and ledger only — no photos.', exportBackupFull: 'Full backup', exportBackupFullDesc: 'Includes photos and receipts. File can be large.', exportTaxPdf: 'Tax worksheet (PDF)', exportTaxPdfDesc: 'Receipted operating vs capital repairs. Print or Save as PDF.', exportTaxPrint: 'Print / Save PDF', exportTaxLang: 'PDF language', exportTaxYear: 'Year', exportTaxTitle: 'Repair tax worksheet', exportTaxGenerated: 'Prepared', exportTaxDisclaimer: 'This is a local worksheet from PocketProp. It is not a CRA T776 and not tax advice. Only records with a receipt are listed.', exportTaxEmpty: 'No receipted repair records in this filter.', exportTaxFooter: 'Capital cost allowance class is not assigned yet. Receipt images stay in the app.', importBackup: 'Restore JSON Backup', toastExportLight: 'Light backup saved (no photos)', toastExportFull: 'Full backup saved', toastImportLightNoPhotos: 'Restored text. Photos live in a full backup.', settingsDaily: 'General', settingsAdvanced: 'Advanced', settingsLangHint: 'Language is switched from the button at the top of Home. Only built-in labels change. Names you added or edited stay as written.', deadline: 'Deadline', itemAlertOn: 'Red-dot reminder for this item', workDotsTitle: 'Work red dots', workDotsHint: 'Turn on, then choose red for overdue and yellow for coming due.', cycleSoonDays: 'Days before cycle due', taskSoonDays: 'Days before task deadline', dotOverdueRed: 'Overdue: red dot', dotSoonYellow: 'Coming due: yellow dot', confirmNextDueTitle: 'Confirm next due date', cleanupUnusedPhotos: 'Clear unused photos', cleanupUnusedPhotosDesc: 'Remove photo files no record points to.', toastCleanupDone: 'Cleared {n} unused files', photoInFullBackup: 'In full backup', toastAddPropertyFirst: 'Add a property first', routineDotPromptTitle: 'A cycle is overdue', routineDotPromptBody: 'Show a small red dot on Work when something is due?', toastImportSuccess: 'Data restored successfully!', toastImportFailed: 'Invalid backup file format.', confirmImportMsg: 'Restoring from backup will overwrite all existing local data. Continue?',
                 loadDemoData: 'Reset Demo Data', loadDemoDataDesc: 'Overwrites current data with multi-property sample dataset.', confirmDemoDataMsg: 'Are you sure you want to load sample data? Current data will be replaced.', toastDemoLoaded: 'Demo data loaded',
                 settingsFileManager: 'Media & File Storage', fileManagerTitle: 'Repair photos & receipts', filesCount: 'Files', storageUsed: 'Used', btnManageFiles: 'Open Gallery', noMediaFiles: 'No photo or document files match.', toastMediaDeleted: 'File removed from local storage.', fileTypeAll: 'All Files', fileLibraryHint: 'Grouped by work date. Tap a file, then swipe to browse.', fileSearchPh: 'Search title or property', viewerSwipeHint: 'Swipe left / right to switch', fileLibraryUpload: 'Upload', fileLibraryTitlePh: 'Name (optional)', fileLibraryUploadHint: 'Pick a property above first, then upload. Stored on this phone.', fileCatDeal: 'Closing / title', fileCatInsurance: 'Insurance', fileCatLease: 'Lease', fileCatMaintenance: 'Repairs', fileCatOther: 'Other', toastPickPropertyFirst: 'Choose a property first', toastLibraryUploaded: 'File added',
                 roleTenant: 'Tenant', roleContractor: 'Contractor', roleRealtor: 'Realtor', roleLawyer: 'Lawyer', roleType: 'Contact Role', contactName: 'Full Name', contactTrade: 'Specialty / Trade Title', contactTradeHint: 'e.g. HVAC, Plumbing Specialist', assocProperty: 'Associated Property', assocProperties: 'Associated Properties', contractorNote: 'Contractors are linked through repair logs.', noneGeneral: 'General / Unlinked', searchContact: 'Search contacts...', noContacts: 'No contacts found.',
@@ -2204,10 +2223,10 @@
                 tenantSubTimeline: '这期间的租客', addTenantSub: '添加租客', editTenantSub: '编辑租客', monthlyRent: '月租金', selectCrmTenant: '从联系人里选租客', tenantName: '租客姓名', roomName: '房间', roomHint: '例如：主卧、A房、地下室', entireHouse: '整套出租', leasesCount: '次租约',
                 toastTenantSubSaved: '租客已保存', toastTenantSubDeleted: '租客已删除', toastUsageSaved: '用途已保存', toastUsageDeleted: '用途已删除',
                 usagePurchased: '买入/购入', usagePrimary: '自住', usageRental: '出租(长租)', usageShortTerm: '短租', usageVacant: '空置', usageCommercial: '商业用途', usageSold: '已售出',
-                settingsTitle: '系统设置', settingsPreferences: '偏好设置', settingsLanguage: '界面语言', settingsGPS: 'GPS 定位服务', settingsGPSDesc: '开启后可在房屋地图中定位当前位置及导航。',
+                settingsTitle: '系统设置', settingsPreferences: '偏好设置', settingsLanguage: '界面语言', settingsTheme: '强调色', settingsThemeHint: '海蓝是原来的。暖铜偏家居，松绿偏户外。', themeSky: '海蓝', themeCedar: '暖铜', themePine: '松绿', settingsGPS: 'GPS 定位服务', settingsGPSDesc: '开启后可在房屋地图中定位当前位置及导航。',
                 settingsDashboardViews: '仪表盘视图设置', minOneViewRequired: '必须至少保留一个视图模式。', settingsPropertyOrder: '房屋卡片排序',
                 settingsContactRoles: '人员类别设置', addRoleCategory: '新增类别', roleCategoryName: '类别名称', toastRoleAdded: '已新增人员类别', toastRoleDeleted: '已删除人员类别',
-                settingsDataBackup: '数据备份与恢复 (离线)', exportBackup: '导出 JSON 备份文件', exportBackupLight: '轻备份', exportBackupLightDesc: '只含房屋、工作和账本，不含照片。', exportBackupFull: '完整备份', exportBackupFullDesc: '含照片和收据，文件可能很大。', exportTaxPdf: '税务备查 PDF', exportTaxPdfDesc: '只汇总有收据的维修保养与资产改良。用系统打印或存储为 PDF。', exportTaxPrint: '打印 / 存 PDF', exportTaxLang: 'PDF 语言', exportTaxYear: '年份', exportTaxTitle: '维修税务备查表', exportTaxGenerated: '生成日期', exportTaxDisclaimer: '本表由口袋屋在本机生成，不是 CRA T776，也不是税务意见。仅列入有收据的记录。', exportTaxEmpty: '当前筛选没有带收据的维修记录。', exportTaxFooter: '尚未标注 CCA 类别。收据原件仍在 App 里。', importBackup: '恢复 JSON 备份文件', toastExportLight: '已导出轻备份（不含照片）', toastExportFull: '已导出完整备份', toastImportLightNoPhotos: '文字已恢复。照片在完整备份里。', settingsDaily: '日常', settingsAdvanced: '进阶', settingsLangHint: '切换语言仅更换系统预设内容。凡自行新增或编辑过的项目，系统不会主动翻译。', deadline: '截止日期', itemAlertOn: '此项显示小红点', workDotsTitle: '工作小红点', workDotsHint: '打开后，再分别选择过期红点和快到期黄点。', cycleSoonDays: '周期提前几天', taskSoonDays: '待办提前几天', dotOverdueRed: '过期：红点', dotSoonYellow: '快到期：黄点', confirmNextDueTitle: '确认下次日期', cleanupUnusedPhotos: '清理未用照片', cleanupUnusedPhotosDesc: '删掉没有记录再引用的图片文件。', toastCleanupDone: '已清理 {n} 个未用文件', photoInFullBackup: '图在完整备份', toastAddPropertyFirst: '请先添加一套房子', routineDotPromptTitle: '有周期已经过期', routineDotPromptBody: '要不要在工作页用小红点标出到期项？', toastImportSuccess: '数据恢复成功！', toastImportFailed: '恢复失败，文件格式错误。', confirmImportMsg: '导入备份将覆盖当前所有本地数据，确定继续吗？',
+                settingsDataBackup: '数据备份与恢复 (离线)', exportBackup: '导出 JSON 备份文件', exportBackupLight: '轻备份', exportBackupLightDesc: '只含房屋、工作和账本，不含照片。', exportBackupFull: '完整备份', exportBackupFullDesc: '含照片和收据，文件可能很大。', exportTaxPdf: '税务备查 PDF', exportTaxPdfDesc: '只汇总有收据的维修保养与资产改良。用系统打印或存储为 PDF。', exportTaxPrint: '打印 / 存 PDF', exportTaxLang: 'PDF 语言', exportTaxYear: '年份', exportTaxTitle: '维修税务备查表', exportTaxGenerated: '生成日期', exportTaxDisclaimer: '本表由口袋屋在本机生成，不是 CRA T776，也不是税务意见。仅列入有收据的记录。', exportTaxEmpty: '当前筛选没有带收据的维修记录。', exportTaxFooter: '尚未标注 CCA 类别。收据原件仍在 App 里。', importBackup: '恢复 JSON 备份文件', toastExportLight: '已导出轻备份（不含照片）', toastExportFull: '已导出完整备份', toastImportLightNoPhotos: '文字已恢复。照片在完整备份里。', settingsDaily: '日常', settingsAdvanced: '进阶', settingsLangHint: '语言在首页右上角切换。仅更换系统预设文字。凡自行新增或编辑过的项目，系统不会主动翻译。', deadline: '截止日期', itemAlertOn: '此项显示小红点', workDotsTitle: '工作小红点', workDotsHint: '打开后，再分别选择过期红点和快到期黄点。', cycleSoonDays: '周期提前几天', taskSoonDays: '待办提前几天', dotOverdueRed: '过期：红点', dotSoonYellow: '快到期：黄点', confirmNextDueTitle: '确认下次日期', cleanupUnusedPhotos: '清理未用照片', cleanupUnusedPhotosDesc: '删掉没有记录再引用的图片文件。', toastCleanupDone: '已清理 {n} 个未用文件', photoInFullBackup: '图在完整备份', toastAddPropertyFirst: '请先添加一套房子', routineDotPromptTitle: '有周期已经过期', routineDotPromptBody: '要不要在工作页用小红点标出到期项？', toastImportSuccess: '数据恢复成功！', toastImportFailed: '恢复失败，文件格式错误。', confirmImportMsg: '导入备份将覆盖当前所有本地数据，确定继续吗？',
                 loadDemoData: '加载示例演示数据', loadDemoDataDesc: '重置并重新加载包含多处房屋资产的完整示例数据。', confirmDemoDataMsg: '确定要重新载入演示数据吗？当前修改将被覆盖。', toastDemoLoaded: '示例数据已加载',
                 settingsFileManager: '维修照片与收据', fileManagerTitle: '维修照片与收据', filesCount: '个文件', storageUsed: '已用容量', btnManageFiles: '打开', noMediaFiles: '未匹配到媒体文件。', toastMediaDeleted: '文件已彻底删除。', fileTypeAll: '全部文件', fileLibraryHint: '按工单日期排列。点开后左右滑动切换。', fileSearchPh: '搜索名称或房屋', viewerSwipeHint: '左右滑动切换文件', fileLibraryUpload: '上传', fileLibraryTitlePh: '名称（可选）', fileLibraryUploadHint: '先点选上方一套房屋，再上传。文件只存在这台手机。', fileCatDeal: '交易产权', fileCatInsurance: '保险', fileCatLease: '租约', fileCatMaintenance: '维修', fileCatOther: '其他', toastPickPropertyFirst: '请先选择一套房屋', toastLibraryUploaded: '文件已加入',
                 roleTenant: '租客', roleContractor: '师傅', roleRealtor: '经纪', roleLawyer: '律师', roleType: '联系人身份角色', contactName: '姓名/称呼', contactTrade: '工种/专长头衔', contactTradeHint: '例如: 暖通水工, 专修屋顶', assocProperty: '关联房屋', assocProperties: '关联房屋（可多选）', contractorNote: '师傅不用先绑房子，做完维修记录后会自动对上。', noneGeneral: '通用 / 未绑定具体房屋', searchContact: '搜索联系人...', noContacts: '该分类下暂无联系人。',
@@ -3018,6 +3037,7 @@
 
                 return {
                     currentLang: localStorage.getItem('pocket_prop_lang') || localStorage.getItem('my_home_os_lang') || 'en',
+                    colorTheme: localStorage.getItem('pocket_prop_theme') || 'sky',
                     currentTab: 'dashboard', 
                     workSubTab: 'tasks',
                     formCatalogCategory: '', 
@@ -3671,6 +3691,12 @@
                     this.currentLang = this.currentLang === 'en' ? 'zh' : 'en'; 
                     localStorage.setItem('pocket_prop_lang', this.currentLang);
                     if (this.mapInstance) this.renderMapMarkers(); 
+                },
+                setTheme(name) {
+                    const next = (name === 'cedar' || name === 'pine') ? name : 'sky';
+                    this.colorTheme = next;
+                    localStorage.setItem('pocket_prop_theme', next);
+                    document.documentElement.setAttribute('data-theme', next);
                 },
                 navToDashboard() { this.viewingPropertyId = null; this.viewingZone = null; this.currentTab = 'dashboard'; },
                 getProp(id) { return this.properties.find(p => p.id === id); },
@@ -4938,6 +4964,7 @@
             },
             
             async mounted() {
+                this.setTheme(this.colorTheme);
                 this.detectStandalonePwa();
                 this.registerServiceWorker();
                 const loaded = await this.loadFromStorage();
