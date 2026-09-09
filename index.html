@@ -2050,44 +2050,33 @@
                 <h2 class="text-xl font-black mt-1">{{ t('exportTaxTitle') }}</h2>
                 <p class="text-[12px] text-slate-600 mt-1">{{ taxExportRangeLabel }} · {{ t('exportTaxGenerated') }} {{ todayIso() }}</p>
                 <p class="text-[11px] text-slate-500 mt-3 leading-relaxed border border-slate-200 rounded-xl p-3 bg-slate-50">{{ t('exportTaxDisclaimer') }}</p>
-                <div class="mt-4 grid grid-cols-2 gap-2">
-                    <div class="rounded-xl border border-slate-200 p-3">
-                        <p class="text-[10px] font-bold text-slate-500 uppercase">{{ t('taxOperating') }}</p>
-                        <p class="text-lg font-black">${{ formatMoney(taxExportPack.operatingTotal) }}</p>
-                    </div>
-                    <div class="rounded-xl border border-slate-200 p-3">
-                        <p class="text-[10px] font-bold text-slate-500 uppercase">{{ t('taxCapital') }}</p>
-                        <p class="text-lg font-black">${{ formatMoney(taxExportPack.capitalTotal) }}</p>
-                    </div>
-                </div>
+                <table v-if="taxExportPack.operatingTotal || taxExportPack.capitalTotal" class="tax-sheet-table mt-4">
+                    <colgroup><col class="col-date"><col class="col-title"><col class="col-amt"></colgroup>
+                    <tbody>
+                        <tr v-if="taxExportPack.operatingTotal"><td colspan="2" class="font-bold">{{ t('taxOperating') }}</td><td class="col-amt font-black">${{ formatMoney(taxExportPack.operatingTotal) }}</td></tr>
+                        <tr v-if="taxExportPack.capitalTotal"><td colspan="2" class="font-bold">{{ t('taxCapital') }}</td><td class="col-amt font-black">${{ formatMoney(taxExportPack.capitalTotal) }}</td></tr>
+                    </tbody>
+                </table>
                 <div v-if="taxExportPack.groups.length === 0" class="text-[13px] text-slate-500 text-center py-10">{{ t('exportTaxEmpty') }}</div>
                 <div v-for="group in taxExportPack.groups" :key="group.id" class="mt-6">
-                    <h3 class="text-[15px] font-black border-b border-slate-200 pb-1">{{ group.name }}</h3>
+                    <h3 class="text-[15px] font-black">{{ group.name }}</h3>
                     <p v-if="group.address" class="text-[11px] text-slate-500 mt-1">{{ group.address }}</p>
-                    <p class="text-[12px] font-bold mt-3">{{ t('taxOperating') }} · ${{ formatMoney(group.operatingTotal) }}</p>
-                    <table class="tax-sheet-table mt-1">
+                    <table class="tax-sheet-table mt-2">
                         <colgroup><col class="col-date"><col class="col-title"><col class="col-amt"></colgroup>
-                        <thead><tr class="text-slate-500"><th class="text-left">{{ t('modalDate') }}</th><th class="text-left">{{ t('modalRepairTitle') }}</th><th class="col-amt">$</th></tr></thead>
+                        <thead><tr class="text-slate-500 border-b border-slate-200"><th class="text-left">{{ t('modalDate') }}</th><th class="text-left">{{ t('modalRepairTitle') }}</th><th class="col-amt">$</th></tr></thead>
                         <tbody>
+                            <tr v-if="group.operating.length" class="border-t border-slate-200"><td colspan="2" class="font-bold pt-3">{{ t('taxOperating') }}</td><td class="col-amt font-bold pt-3">${{ formatMoney(group.operatingTotal) }}</td></tr>
                             <tr v-for="row in group.operating" :key="row.id" class="border-t border-slate-100">
                                 <td>{{ row.date || '—' }}</td>
                                 <td>{{ row.title }}<span v-if="row.category" class="block text-slate-400">{{ row.category }}</span></td>
                                 <td class="col-amt">{{ formatMoney(row.cost) }}</td>
                             </tr>
-                            <tr v-if="group.operating.length === 0"><td colspan="3" class="text-slate-400">{{ t('noneInCategory') }}</td></tr>
-                        </tbody>
-                    </table>
-                    <p class="text-[12px] font-bold mt-4">{{ t('taxCapital') }} · ${{ formatMoney(group.capitalTotal) }}</p>
-                    <table class="tax-sheet-table mt-1">
-                        <colgroup><col class="col-date"><col class="col-title"><col class="col-amt"></colgroup>
-                        <thead><tr class="text-slate-500"><th class="text-left">{{ t('modalDate') }}</th><th class="text-left">{{ t('modalRepairTitle') }}</th><th class="col-amt">$</th></tr></thead>
-                        <tbody>
-                            <tr v-for="row in group.capital" :key="row.id" class="border-t border-slate-100">
+                            <tr v-if="group.capital.length" class="border-t border-slate-200"><td colspan="2" class="font-bold pt-3">{{ t('taxCapital') }}</td><td class="col-amt font-bold pt-3">${{ formatMoney(group.capitalTotal) }}</td></tr>
+                            <tr v-for="row in group.capital" :key="'c'+row.id" class="border-t border-slate-100">
                                 <td>{{ row.date || '—' }}</td>
                                 <td>{{ row.title }}<span v-if="row.category" class="block text-slate-400">{{ row.category }}</span></td>
                                 <td class="col-amt">{{ formatMoney(row.cost) }}</td>
                             </tr>
-                            <tr v-if="group.capital.length === 0"><td colspan="3" class="text-slate-400">{{ t('noneInCategory') }}</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -3280,6 +3269,7 @@
                         if (propId !== 'ALL' && r.propertyId !== propId) return false;
                         if (year !== 'ALL' && String(r.date || '').slice(0, 4) !== year) return false;
                         if (!this.repairHasReceipt(r)) return false;
+                        if (!(Number(r.cost) > 0)) return false;
                         return true;
                     }).slice().sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
                     const byProp = {};
@@ -3296,7 +3286,7 @@
                         if (r.taxKind === 'capital') { byProp[id].capital.push(item); byProp[id].capitalTotal += cost; }
                         else { byProp[id].operating.push(item); byProp[id].operatingTotal += cost; }
                     });
-                    const groups = order.map(id => byProp[id]);
+                    const groups = order.map(id => byProp[id]).filter(g => g.operatingTotal > 0 || g.capitalTotal > 0);
                     return {
                         groups,
                         operatingTotal: groups.reduce((s, g) => s + g.operatingTotal, 0),
