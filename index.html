@@ -36,21 +36,25 @@
             --brand-400: #7dd3fc;
             --brand-500: #3b82f6;
             --brand-600: #1d4ed8;
-            --page-bg: #0b1220;
+            --page-bg: #1e2a3d;
+            --app-bg: #243044;
         }
         [data-theme="brick"], [data-theme="cedar"] {
             --brand-400: #e0b089;
             --brand-500: #b56e3d;
             --brand-600: #8a3d28;
-            --page-bg: #16120f;
+            --page-bg: #2c241e;
+            --app-bg: #352c24;
         }
         [data-theme="fir"], [data-theme="pine"] {
             --brand-400: #8fbc98;
             --brand-500: #3f6b54;
             --brand-600: #2d4a3c;
-            --page-bg: #0e1411;
+            --page-bg: #1c2822;
+            --app-bg: #22302a;
         }
         body { font-family: 'Inter', sans-serif; background-color: var(--page-bg, #0f172a); color: #f8fafc; -webkit-tap-highlight-color: transparent; }
+        #app { background-color: var(--app-bg, #0f172a) !important; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .bottom-sheet-enter-active, .bottom-sheet-leave-active { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
@@ -1791,6 +1795,16 @@
                                     </div>
                                     <i class="fa-solid fa-chevron-right text-slate-600 text-xs"></i>
                                 </button>
+                                <button @click="openWipeWizard" class="w-full bg-slate-800/80 hover:bg-slate-800 p-4 rounded-2xl border border-red-900/40 flex items-center justify-between group active:scale-[0.99] transition-all text-left">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-9 h-9 rounded-xl bg-red-500/20 text-red-400 flex items-center justify-center"><i class="fa-solid fa-trash text-base"></i></div>
+                                        <div>
+                                            <p class="text-sm font-bold text-red-300 group-hover:text-red-200 transition-colors">{{ t('wipeAllData') }}</p>
+                                            <p class="text-[11px] text-slate-400 mt-0.5">{{ t('wipeAllDataDesc') }}</p>
+                                        </div>
+                                    </div>
+                                    <i class="fa-solid fa-chevron-right text-slate-600 text-xs"></i>
+                                </button>
                             </div>
                         </div>
 
@@ -2123,6 +2137,32 @@
             </div>
             </div>
         </div>
+        <div v-if="wipeStep" class="fixed inset-0 z-[90] flex items-center justify-center p-4 bg-slate-950/85">
+            <div class="bg-slate-900 border border-slate-700 rounded-3xl p-5 w-full max-w-sm space-y-3">
+                <p class="text-sm font-black text-white">{{ t('wipeAllData') }}</p>
+                <template v-if="wipeStep === 1">
+                    <p class="text-[12px] text-slate-400 leading-relaxed">{{ t('wipeStep1') }}</p>
+                    <button @click="exportData(false); wipeBackedUp = true" class="w-full py-2.5 rounded-xl bg-slate-800 text-white text-xs font-bold">{{ t('exportBackupLight') }}</button>
+                    <button @click="exportData(true); wipeBackedUp = true" class="w-full py-2.5 rounded-xl bg-slate-800 text-white text-xs font-bold">{{ t('exportBackupFull') }}</button>
+                    <p class="text-[11px] text-amber-300/90">{{ wipeBackedUp ? t('wipeBackupDone') : t('wipeBackupSoon') }}</p>
+                    <button @click="wipeStep = 2" class="w-full py-2.5 rounded-xl bg-slate-700 text-white text-xs font-bold">{{ t('wipeContinue') }}</button>
+                </template>
+                <template v-else-if="wipeStep === 2">
+                    <p class="text-[12px] text-slate-400 leading-relaxed">{{ t('wipeStep2') }}</p>
+                    <label class="flex items-start gap-2 text-[12px] text-slate-300">
+                        <input type="checkbox" v-model="wipeAck" class="mt-0.5">
+                        <span>{{ t('wipeAck') }}</span>
+                    </label>
+                    <input v-model="wipeTyped" type="text" class="w-full bg-slate-800 rounded-xl p-3 text-[13px] text-white outline-none" :placeholder="t('wipeTypeHint')">
+                    <button :disabled="!wipeAck || wipeTyped.trim().toUpperCase() !== 'ERASE'" @click="wipeStep = 3" class="w-full py-2.5 rounded-xl text-xs font-bold disabled:opacity-40 bg-slate-700 text-white">{{ t('wipeContinue') }}</button>
+                </template>
+                <template v-else>
+                    <p class="text-[12px] text-red-300 leading-relaxed">{{ t('wipeStep3') }}</p>
+                    <button @click="confirmWipeAll" class="w-full py-3 rounded-xl bg-red-600 text-white text-xs font-black">{{ t('wipeConfirmFinal') }}</button>
+                </template>
+                <button @click="closeWipeWizard" class="w-full py-2 text-[12px] text-slate-500">{{ t('btnCancel') }}</button>
+            </div>
+        </div>
         <div v-if="pendingNextDue" class="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-slate-950/80">
             <div class="bg-slate-900 border border-slate-700 rounded-3xl p-5 w-full max-w-xs space-y-3">
                 <p class="text-sm font-bold text-white text-center">{{ t('confirmNextDueTitle') }}</p>
@@ -2182,7 +2222,7 @@
                 settingsDashboardViews: 'Home views', minOneViewRequired: 'Keep at least one view turned on.', settingsPropertyOrder: 'Property order',
                 settingsContactRoles: 'Contact types', addRoleCategory: 'Add type', roleCategoryName: 'Type name', toastRoleAdded: 'Type added', toastRoleDeleted: 'Type removed',
                 settingsDataBackup: 'Backup & restore', exportBackup: 'Export JSON backup', exportBackupLight: 'Light backup', exportBackupLightDesc: 'Houses, work and ledger only — no photos.', exportBackupFull: 'Full backup', exportBackupFullDesc: 'Includes photos and receipts. File can be large.', exportTaxPdf: 'Tax worksheet (PDF)', exportTaxPdfDesc: 'Receipted operating vs capital repairs. Print or Save as PDF.', exportTaxPrint: 'Print / Save PDF', exportTaxLang: 'PDF language', exportTaxYear: 'Year', exportTaxTitle: 'Repair tax worksheet', exportTaxGenerated: 'Prepared', exportTaxDisclaimer: 'This is a local worksheet from PocketProp. It is not a CRA T776 and not tax advice. Only records with a receipt are listed.', exportTaxEmpty: 'No receipted repair records in this filter.', exportTaxFooter: 'Capital cost allowance class is not assigned yet. Receipt images stay in the app.', importBackup: 'Restore JSON Backup', toastExportLight: 'Light backup saved (no photos)', toastExportFull: 'Full backup saved', toastImportLightNoPhotos: 'Restored text. Photos live in a full backup.', settingsDaily: 'General', settingsAdvanced: 'Advanced', settingsLangHint: 'Language is switched from the button at the top of Home. Only built-in labels change. Names you added or edited stay as written.', deadline: 'Deadline', itemAlertOn: 'Red-dot reminder for this item', workDotsTitle: 'Work red dots', workDotsHint: 'Turn on, then choose red for overdue and yellow for coming due.', cycleSoonDays: 'Days before cycle due', taskSoonDays: 'Days before task deadline', dotOverdueRed: 'Overdue: red dot', dotSoonYellow: 'Coming due: yellow dot', confirmNextDueTitle: 'Confirm next due date', cleanupUnusedPhotos: 'Clear unused photos', cleanupUnusedPhotosDesc: 'Remove photo files no record points to.', toastCleanupDone: 'Cleared {n} unused files', photoInFullBackup: 'In full backup', toastAddPropertyFirst: 'Add a property first', routineDotPromptTitle: 'A cycle is overdue', routineDotPromptBody: 'Show a small red dot on Work when something is due?', toastImportSuccess: 'Data restored successfully!', toastImportFailed: 'Invalid backup file format.', confirmImportMsg: 'Restoring from backup will overwrite all existing local data. Continue?',
-                loadDemoData: 'Reset Demo Data', loadDemoDataDesc: 'Overwrites current data with multi-property sample dataset.', confirmDemoDataMsg: 'Are you sure you want to load sample data? Current data will be replaced.', toastDemoLoaded: 'Demo data loaded',
+                loadDemoData: 'Reset Demo Data', loadDemoDataDesc: 'Overwrites current data with multi-property sample dataset.', confirmDemoDataMsg: 'Are you sure you want to load sample data? Current data will be replaced.', toastDemoLoaded: 'Demo data loaded', wipeAllData: 'Erase all data', wipeAllDataDesc: 'Permanently remove every property, work item and photo on this phone.', wipeStep1: 'This cannot be undone. Export a backup first if you might need this data again.', wipeBackupSoon: 'No backup exported in this step yet. You can still continue.', wipeBackupDone: 'A backup file was saved from this phone.', wipeContinue: 'Continue', wipeStep2: 'Check the box and type ERASE to go to the last step.', wipeAck: 'I understand this deletes everything on this phone and cannot be undone.', wipeTypeHint: 'Type ERASE', wipeStep3: 'Last step. This removes houses, work, people and photos stored by PocketProp.', wipeConfirmFinal: 'Erase everything now', toastWiped: 'All local data removed',
                 settingsFileManager: 'Media & File Storage', fileManagerTitle: 'Repair photos & receipts', filesCount: 'Files', storageUsed: 'Used', btnManageFiles: 'Open Gallery', noMediaFiles: 'No photo or document files match.', toastMediaDeleted: 'File removed from local storage.', fileTypeAll: 'All Files', fileLibraryHint: 'Grouped by work date. Tap a file, then swipe to browse.', fileSearchPh: 'Search title or property', viewerSwipeHint: 'Swipe left / right to switch', fileLibraryUpload: 'Upload', fileLibraryTitlePh: 'Name (optional)', fileLibraryUploadHint: 'Pick a property above first, then upload. Stored on this phone.', fileCatDeal: 'Closing / title', fileCatInsurance: 'Insurance', fileCatLease: 'Lease', fileCatMaintenance: 'Repairs', fileCatOther: 'Other', toastPickPropertyFirst: 'Choose a property first', toastLibraryUploaded: 'File added',
                 roleTenant: 'Tenant', roleContractor: 'Contractor', roleRealtor: 'Realtor', roleLawyer: 'Lawyer', roleType: 'Contact Role', contactName: 'Full Name', contactTrade: 'Specialty / Trade Title', contactTradeHint: 'e.g. HVAC, Plumbing Specialist', assocProperty: 'Associated Property', assocProperties: 'Associated Properties', contractorNote: 'Contractors are linked through repair logs.', noneGeneral: 'General / Unlinked', searchContact: 'Search contacts...', noContacts: 'No contacts found.',
                 contactPhone: 'Phone', contactWechat: 'WeChat ID', contactEmail: 'Email', contactNotes: 'Private Notes',
@@ -2229,7 +2269,7 @@
                 settingsDashboardViews: '仪表盘视图设置', minOneViewRequired: '必须至少保留一个视图模式。', settingsPropertyOrder: '房屋卡片排序',
                 settingsContactRoles: '人员类别设置', addRoleCategory: '新增类别', roleCategoryName: '类别名称', toastRoleAdded: '已新增人员类别', toastRoleDeleted: '已删除人员类别',
                 settingsDataBackup: '数据备份与恢复 (离线)', exportBackup: '导出 JSON 备份文件', exportBackupLight: '轻备份', exportBackupLightDesc: '只含房屋、工作和账本，不含照片。', exportBackupFull: '完整备份', exportBackupFullDesc: '含照片和收据，文件可能很大。', exportTaxPdf: '税务备查 PDF', exportTaxPdfDesc: '只汇总有收据的维修保养与资产改良。用系统打印或存储为 PDF。', exportTaxPrint: '打印 / 存 PDF', exportTaxLang: 'PDF 语言', exportTaxYear: '年份', exportTaxTitle: '维修税务备查表', exportTaxGenerated: '生成日期', exportTaxDisclaimer: '本表由 PocketProp 在本机生成，不是 CRA T776，也不是税务意见。仅列入有收据的记录。', exportTaxEmpty: '当前筛选没有带收据的维修记录。', exportTaxFooter: '尚未标注 CCA 类别。收据原件仍在 App 里。', importBackup: '恢复 JSON 备份文件', toastExportLight: '已导出轻备份（不含照片）', toastExportFull: '已导出完整备份', toastImportLightNoPhotos: '文字已恢复。照片在完整备份里。', settingsDaily: '日常', settingsAdvanced: '进阶', settingsLangHint: '语言在首页右上角切换。仅更换系统预设文字。凡自行新增或编辑过的项目，系统不会主动翻译。', deadline: '截止日期', itemAlertOn: '此项显示小红点', workDotsTitle: '工作小红点', workDotsHint: '打开后，再分别选择过期红点和快到期黄点。', cycleSoonDays: '周期提前几天', taskSoonDays: '待办提前几天', dotOverdueRed: '过期：红点', dotSoonYellow: '快到期：黄点', confirmNextDueTitle: '确认下次日期', cleanupUnusedPhotos: '清理未用照片', cleanupUnusedPhotosDesc: '删掉没有记录再引用的图片文件。', toastCleanupDone: '已清理 {n} 个未用文件', photoInFullBackup: '图在完整备份', toastAddPropertyFirst: '请先添加一套房子', routineDotPromptTitle: '有周期已经过期', routineDotPromptBody: '要不要在工作页用小红点标出到期项？', toastImportSuccess: '数据恢复成功！', toastImportFailed: '恢复失败，文件格式错误。', confirmImportMsg: '导入备份将覆盖当前所有本地数据，确定继续吗？',
-                loadDemoData: '加载示例演示数据', loadDemoDataDesc: '重置并重新加载包含多处房屋资产的完整示例数据。', confirmDemoDataMsg: '确定要重新载入演示数据吗？当前修改将被覆盖。', toastDemoLoaded: '示例数据已加载',
+                loadDemoData: '加载示例演示数据', loadDemoDataDesc: '重置并重新加载包含多处房屋资产的完整示例数据。', confirmDemoDataMsg: '确定要重新载入演示数据吗？当前修改将被覆盖。', toastDemoLoaded: '示例数据已加载', wipeAllData: '清空全部数据', wipeAllDataDesc: '永久删除本机全部房屋、工作和照片。', wipeStep1: '此操作无法撤销。若以后可能还要用，请先导出备份。', wipeBackupSoon: '这一步里还没有导出备份，仍可继续。', wipeBackupDone: '已从本机保存了一份备份文件。', wipeContinue: '继续', wipeStep2: '勾选确认，并输入 ERASE，才能进入最后一步。', wipeAck: '我明白这会删掉本机全部数据，而且无法恢复。', wipeTypeHint: '输入 ERASE', wipeStep3: '最后一步。将删除 PocketProp 保存在本机的房屋、工作、联系人和照片。', wipeConfirmFinal: '立即全部清空', toastWiped: '本机数据已清空',
                 settingsFileManager: '维修照片与收据', fileManagerTitle: '维修照片与收据', filesCount: '个文件', storageUsed: '已用容量', btnManageFiles: '打开', noMediaFiles: '未匹配到媒体文件。', toastMediaDeleted: '文件已彻底删除。', fileTypeAll: '全部文件', fileLibraryHint: '按工单日期排列。点开后左右滑动切换。', fileSearchPh: '搜索名称或房屋', viewerSwipeHint: '左右滑动切换文件', fileLibraryUpload: '上传', fileLibraryTitlePh: '名称（可选）', fileLibraryUploadHint: '先点选上方一套房屋，再上传。文件只存在这台手机。', fileCatDeal: '交易产权', fileCatInsurance: '保险', fileCatLease: '租约', fileCatMaintenance: '维修', fileCatOther: '其他', toastPickPropertyFirst: '请先选择一套房屋', toastLibraryUploaded: '文件已加入',
                 roleTenant: '租客', roleContractor: '师傅', roleRealtor: '经纪', roleLawyer: '律师', roleType: '联系人身份角色', contactName: '姓名/称呼', contactTrade: '工种/专长头衔', contactTradeHint: '例如: 暖通水工, 专修屋顶', assocProperty: '关联房屋', assocProperties: '关联房屋（可多选）', contractorNote: '师傅不用先绑房子，做完维修记录后会自动对上。', noneGeneral: '通用 / 未绑定具体房屋', searchContact: '搜索联系人...', noContacts: '该分类下暂无联系人。',
                 contactPhone: '电话', contactWechat: '微信号', contactEmail: '邮箱', contactNotes: '私密备注',
@@ -3104,6 +3144,10 @@
                     cycleSoonDays: 14,
                     taskSoonDays: 3,
                     pendingNextDue: null,
+                    wipeStep: 0,
+                    wipeBackedUp: false,
+                    wipeAck: false,
+                    wipeTyped: '',
                     routineNotify: 'off',
                     routineNotifyPhone: '',
                     routineNotifyEmail: '',
@@ -4780,6 +4824,45 @@
                     }
                     await this.saveToStorage();
                     this.showToast(this.t('toastCleanupDone').replace('{n}', String(removed)));
+                },
+                openWipeWizard() {
+                    this.wipeStep = 1;
+                    this.wipeBackedUp = false;
+                    this.wipeAck = false;
+                    this.wipeTyped = '';
+                },
+                closeWipeWizard() {
+                    this.wipeStep = 0;
+                    this.wipeBackedUp = false;
+                    this.wipeAck = false;
+                    this.wipeTyped = '';
+                },
+                async confirmWipeAll() {
+                    if (!this.wipeAck || this.wipeTyped.trim().toUpperCase() !== 'ERASE') return;
+                    this.properties = [];
+                    this.tasks = [];
+                    this.repairs = [];
+                    this.routines = [];
+                    this.contacts = [];
+                    this.customRoles = [];
+                    this.propertyDocs = [];
+                    this.mediaBlobs = {};
+                    this.userCatalog = cloneDefaultCatalog();
+                    this.userZones = getDefaultZones(this.currentLang);
+                    this.viewingPropertyId = null;
+                    this.viewingZone = null;
+                    this.selectedPropertyId = 'ALL';
+                    this.viewingImages = [];
+                    this.currentTab = 'dashboard';
+                    try {
+                        if (typeof localforage !== 'undefined') await localforage.removeItem('pocket_prop_data');
+                        if (window.__pocketPropBlobs) await window.__pocketPropBlobs.clear();
+                    } catch (e) {}
+                    await this.saveToStorage();
+                    this.closeWipeWizard();
+                    this.closeModal();
+                    this.showToast(this.t('toastWiped'));
+                    if (this.dashboardViewMode === 'map') nextTick(() => this.initOrRefreshMap());
                 },
                 async loadDemoData() {
                     if (!confirm(this.t('confirmDemoDataMsg'))) return;
