@@ -140,6 +140,7 @@
                 <h1 class="text-2xl font-black text-white tracking-tight">
                     Pocket<span class="text-brand-500">Prop</span>
                 </h1>
+                <p v-if="guestMode" class="text-[10px] font-bold text-amber-300 mt-0.5">{{ t('guestBanner') }}</p>
             </div>
             <!-- Settings Button -->
             <div class="flex items-center gap-2">
@@ -175,11 +176,11 @@
                         <div class="w-12 h-12 bg-slate-900 rounded-full flex items-center justify-center text-slate-600 mb-3"><i class="fa-solid fa-house-chimney text-xl"></i></div>
                         <p class="text-xs text-slate-500 font-semibold mb-3">{{ t('noProperties') }}</p>
                         <div class="flex flex-wrap items-center justify-center gap-2">
-                            <button @click="openModal('property')" class="text-[11px] font-bold text-brand-400 bg-brand-500/10 hover:bg-brand-500/20 px-3 py-1.5 rounded-xl border border-brand-500/30">{{ t('addProperty') }}</button>
+                            <button v-if="!guestMode" @click="openModal('property')" class="text-[11px] font-bold text-brand-400 bg-brand-500/10 hover:bg-brand-500/20 px-3 py-1.5 rounded-xl border border-brand-500/30">{{ t('addProperty') }}</button>
                             <button @click="loadDemoData" class="text-[11px] font-bold text-slate-300 bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-600">{{ t('loadDemoData') }}</button>
                         </div>
                     </div>
-                    <div v-for="prop in properties" 
+                    <div v-for="prop in visiblePropertyList()" 
                          :key="prop.id" 
                          @click="viewProperty(prop.id)" 
                          class="bg-slate-800/80 hover:bg-slate-800 rounded-[20px] p-3.5 border border-slate-700/50 relative overflow-hidden active:scale-[0.98] transition-all cursor-pointer shadow-sm grid grid-cols-12 items-center gap-2 sm:gap-3 group">
@@ -232,7 +233,7 @@
 
                 <!-- Grid View Mode -->
                 <div v-if="!viewingPropertyId && dashboardViewMode === 'grid'" class="grid grid-cols-2 gap-3 pt-1 pb-4">
-                    <div v-for="prop in properties" :key="'grid_'+prop.id"
+                    <div v-for="prop in visiblePropertyList()" :key="'grid_'+prop.id"
                          @click="viewProperty(prop.id)"
                          class="bg-gradient-to-br from-slate-800 to-slate-900 rounded-3xl p-4 border border-slate-700/50 relative overflow-hidden shadow-lg shadow-black/40 active:scale-95 transition-all cursor-pointer flex flex-col items-center text-center group">
                          
@@ -266,7 +267,7 @@
                         <div class="w-12 h-12 bg-slate-900 rounded-full flex items-center justify-center text-slate-600 mb-3"><i class="fa-solid fa-table-cells-large text-xl"></i></div>
                         <p class="text-xs text-slate-500 font-semibold mb-3">{{ t('noProperties') }}</p>
                         <div class="flex flex-wrap items-center justify-center gap-2">
-                            <button @click="openModal('property')" class="text-[11px] font-bold text-brand-400 bg-brand-500/10 px-3 py-1.5 rounded-xl border border-brand-500/30">{{ t('addProperty') }}</button>
+                            <button v-if="!guestMode" @click="openModal('property')" class="text-[11px] font-bold text-brand-400 bg-brand-500/10 px-3 py-1.5 rounded-xl border border-brand-500/30">{{ t('addProperty') }}</button>
                             <button @click="loadDemoData" class="text-[11px] font-bold text-slate-300 bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-600">{{ t('loadDemoData') }}</button>
                         </div>
                     </div>
@@ -277,7 +278,7 @@
                         <button @click="viewingPropertyId = null" class="text-brand-400 text-sm font-bold flex items-center gap-2 active:opacity-70">
                             <i class="fa-solid fa-arrow-left"></i> {{ t('backToProperties') }}
                         </button>
-                        <button @click="editProperty(getProp(viewingPropertyId))" class="text-xs font-bold text-slate-300 bg-slate-800/80 hover:bg-slate-800 hover:text-white px-3 py-1.5 rounded-xl border border-slate-700/80 active:scale-95 transition-all flex items-center gap-1.5 shadow-sm">
+                        <button v-if="!guestMode" @click="editProperty(getProp(viewingPropertyId))" class="text-xs font-bold text-slate-300 bg-slate-800/80 hover:bg-slate-800 hover:text-white px-3 py-1.5 rounded-xl border border-slate-700/80 active:scale-95 transition-all flex items-center gap-1.5 shadow-sm">
                             <i class="fa-solid fa-pen text-[10px]"></i> {{ t('modalEditProperty') }}
                         </button>
                     </div>
@@ -654,7 +655,7 @@
                         <div class="absolute right-0 top-0 bottom-2 w-8 bg-gradient-to-l from-slate-900 to-transparent z-10 pointer-events-none"></div>
                         
                         <div class="flex overflow-x-auto no-scrollbar gap-2.5 pb-2 pt-1 snap-x">
-                            <button @click="selectedPropertyId = 'ALL'"
+                            <button v-if="!guestMode" @click="selectedPropertyId = 'ALL'"
                                     class="snap-start shrink-0 px-4 py-2.5 rounded-[16px] text-xs font-bold transition-all border flex items-center gap-2 active:scale-95"
                                     :class="selectedPropertyId === 'ALL'
                                         ? 'bg-gradient-to-r from-brand-600 to-brand-500 text-white border-brand-400/50 shadow-md shadow-brand-500/20 ring-2 ring-brand-500/30'
@@ -663,7 +664,7 @@
                                 <span>{{ t('allProperties') }}</span>
                             </button>
 
-                            <button v-for="p in properties" :key="p.id"
+                            <button v-for="p in visiblePropertyList()" :key="p.id"
                                     @click="selectedPropertyId = p.id"
                                     class="snap-start shrink-0 px-4 py-2.5 rounded-[16px] text-xs font-bold transition-all border flex items-center gap-2 active:scale-95"
                                     :class="selectedPropertyId === p.id 
@@ -956,7 +957,7 @@
         </main>
 
         <!-- Global FAB -->
-        <button @click="handleFabClick" class="absolute bottom-24 right-5 w-14 h-14 bg-brand-500 text-white rounded-full shadow-lg shadow-brand-500/30 flex items-center justify-center text-2xl active:scale-90 transition-transform z-30">
+        <button v-if="!guestMode" @click="handleFabClick" class="absolute bottom-24 right-5 w-14 h-14 bg-brand-500 text-white rounded-full shadow-lg shadow-brand-500/30 flex items-center justify-center text-2xl active:scale-90 transition-transform z-30">
             <i class="fa-solid fa-plus"></i>
         </button>
 
@@ -965,7 +966,7 @@
                 <i class="text-xl mb-1 fa-solid fa-house-chimney"></i>
                 <span class="text-[10px] font-bold">{{ t('navDashboard') }}</span>
             </button>
-            <button @click="currentTab = 'work'; selectedPropertyId = 'ALL'" class="flex flex-col items-center p-2 w-16 transition-colors relative" :class="currentTab === 'work' ? 'text-brand-400' : 'text-slate-500'">
+            <button @click="currentTab = 'work'; selectedPropertyId = guestMode ? guestPropertyId : 'ALL'" class="flex flex-col items-center p-2 w-16 transition-colors relative" :class="currentTab === 'work' ? 'text-brand-400' : 'text-slate-500'">
                 <span class="relative inline-flex">
                     <i class="text-xl mb-1 fa-solid fa-clipboard-list"></i>
                     <span v-if="showRoutineDots && routineAlertLevel" class="absolute -top-0.5 -right-1.5 w-2 h-2 rounded-full" :class="routineAlertLevel === 'overdue' ? 'bg-rose-500' : 'bg-amber-400'"></span>
@@ -1023,6 +1024,7 @@
                                     </button>
                                 </div>
                                 <input v-model="formProperty.address" type="text" placeholder="e.g. 710 St Laurent Blvd, Ottawa" class="w-full bg-slate-800 rounded-2xl p-4 text-[15px] text-white outline-none border border-transparent focus:border-brand-500">
+                                <p class="text-[10px] text-slate-500 mt-1.5 px-1 leading-relaxed">{{ t('geocodePrivacy') }}</p>
                             </div>
 
                             <div>
@@ -1690,6 +1692,18 @@
                                     <p class="text-[11px] text-slate-400">{{ appLockOn ? t('appLockOn') : t('appLockOff') }}</p>
                                     <button v-if="appLockOn" type="button" @click="openPinDlg('change')" class="text-[11px] font-bold text-brand-400">{{ t('appLockChange') }}</button>
                                 </div>
+                                <div class="bg-slate-800/80 p-4 rounded-2xl border border-slate-700/60 space-y-2">
+                                    <div class="flex justify-between items-center gap-3">
+                                        <div>
+                                            <p class="text-sm font-bold text-white">{{ t('guestModeTitle') }}</p>
+                                            <p class="text-[10px] text-slate-500 mt-0.5">{{ t('guestModeHint') }}</p>
+                                        </div>
+                                        <button type="button" @click="toggleGuestMode" class="w-12 h-6 rounded-full p-1 transition-colors relative flex-shrink-0" :class="guestMode ? 'bg-brand-500' : 'bg-slate-700'">
+                                            <div class="w-4 h-4 bg-white rounded-full transition-transform transform shadow" :class="guestMode ? 'translate-x-6' : 'translate-x-0'"></div>
+                                        </button>
+                                    </div>
+                                    <p class="text-[11px] text-slate-400">{{ guestMode ? t('guestModeOn') : t('guestModeOff') }}</p>
+                                </div>
                                 <div class="bg-slate-800/80 p-4 rounded-2xl border border-slate-700/60 space-y-3">
                                     <div class="flex justify-between items-center gap-3">
                                         <div>
@@ -1747,7 +1761,7 @@
                                 </div>
                             </div>
 
-                            <div v-show="settingsSection === 'daily'" class="space-y-3 pt-2 border-t border-slate-800">
+                            <div v-show="settingsSection === 'daily' && !guestMode" class="space-y-3 pt-2 border-t border-slate-800">
                                 <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider pl-1">{{ t('settingsDataBackup') }}</h4>
                                 <button @click="openTaxExport" class="w-full bg-slate-800/80 hover:bg-slate-800 p-4 rounded-2xl border border-slate-700/60 flex items-center justify-between group active:scale-[0.99] transition-all text-left">
                                     <div class="flex items-center gap-3">
@@ -2064,7 +2078,7 @@
                     <button v-if="viewingImages.length > 1 && currentImageIndex > 0" @click="prevImage" class="absolute left-3 z-20 w-11 h-11 rounded-full bg-slate-800/80 text-white border border-slate-700 flex items-center justify-center active:scale-90 shadow-lg"><i class="fa-solid fa-chevron-left text-sm"></i></button>
                     <template v-if="isPdf(viewingImages[currentImageIndex])">
                         <div class="w-full h-full max-w-2xl max-h-[80vh] flex flex-col items-center justify-center bg-slate-900 rounded-2xl border border-slate-700 p-3 relative">
-                            <iframe :src="viewingImages[currentImageIndex]" class="w-full flex-1 rounded-xl bg-white border-0 min-h-[300px]"></iframe>
+                            <iframe v-if="safePdfSrc(viewingImages[currentImageIndex])" :src="safePdfSrc(viewingImages[currentImageIndex])" class="w-full flex-1 rounded-xl bg-white border-0 min-h-[300px]"></iframe>
                             <div class="mt-3 flex gap-2">
                                 <button @click="openPdfInNewTab(viewingImages[currentImageIndex])" class="px-4 py-2 bg-brand-500 text-white font-bold text-xs rounded-xl flex items-center gap-2 active:scale-95 transition-transform shadow-lg"><i class="fa-solid fa-up-right-from-square"></i> {{ currentLang === 'zh' ? '新窗口全屏打开 PDF' : 'Open PDF Fullscreen' }}</button>
                             </div>
@@ -2259,7 +2273,7 @@
                 tenantSubTimeline: 'Tenants', addTenantSub: 'Add tenant', editTenantSub: 'Edit tenant', monthlyRent: 'Monthly rent', selectCrmTenant: 'Choose a saved tenant', tenantName: 'Tenant name', roomName: 'Unit / room', roomHint: 'e.g. Primary bedroom, Unit A', entireHouse: 'Whole property', leasesCount: 'leases',
                 toastTenantSubSaved: 'Tenant lease saved', toastTenantSubDeleted: 'Tenant lease deleted', toastUsageSaved: 'Timeline updated', toastUsageDeleted: 'Timeline record deleted',
                 usagePurchased: 'Purchased', usagePrimary: 'Owner-occupied', usageRental: 'Rental', usageShortTerm: 'Short-term rental', usageVacant: 'Vacant', usageCommercial: 'Commercial', usageSold: 'Sold',
-                settingsTitle: 'Settings', settingsPreferences: 'Preferences', settingsLanguage: 'Language', settingsTheme: 'Colour theme', settingsThemeHint: 'Harbor for downtown condos. Brick for houses. Fir for land and cottages.', themeHarbor: 'Harbor', themeBrick: 'Brick', themeFir: 'Fir', themeSky: 'Harbor', themeCedar: 'Brick', themePine: 'Fir', settingsGPS: 'Location services', settingsGPSDesc: 'Used to place you on the property map.', appLockTitle: 'App lock', appLockHint: 'Optional PIN when opening PocketProp. This hides the screen only — it does not encrypt the database.', appLockOff: 'Off. Anyone with this phone can open the app.', appLockOn: 'On. The screen locks when you leave the app.', appLockSet: 'Set PIN', appLockChange: 'Change PIN', appLockTurnOff: 'Turn off lock', appLockGate: 'Enter PIN to open', appLockPinPh: 'PIN', appLockUnlock: 'Unlock', appLockCurrent: 'Current PIN', appLockNew: 'New PIN (4–8 digits)', appLockAgain: 'Type new PIN again', toastPinBad: 'PIN is incorrect.', toastPinWeak: 'Use 4 to 8 digits.', toastPinMismatch: 'The two PINs do not match.', toastPinOn: 'App lock is on.', toastPinOff: 'App lock is off.', toastPinChanged: 'PIN updated.',
+                settingsTitle: 'Settings', settingsPreferences: 'Preferences', settingsLanguage: 'Language', settingsTheme: 'Colour theme', settingsThemeHint: 'Harbor for downtown condos. Brick for houses. Fir for land and cottages.', themeHarbor: 'Harbor', themeBrick: 'Brick', themeFir: 'Fir', themeSky: 'Harbor', themeCedar: 'Brick', themePine: 'Fir', settingsGPS: 'Location services', settingsGPSDesc: 'Used to place you on the property map. Location is only requested when you tap locate. Address lookup is sent to OpenStreetMap Nominatim.', geocodePrivacy: 'This sends the address to OpenStreetMap to place a pin. Nothing else from the house file is sent.', appLockTitle: 'App lock', appLockHint: 'Optional PIN when opening PocketProp. This hides the screen only — it does not encrypt the database.', appLockOff: 'Off. Anyone with this phone can open the app.', appLockOn: 'On. The screen locks when you leave the app.', appLockSet: 'Set PIN', appLockChange: 'Change PIN', appLockTurnOff: 'Turn off lock', appLockGate: 'Enter PIN to open', appLockPinPh: 'PIN', appLockUnlock: 'Unlock', appLockCurrent: 'Current PIN', appLockNew: 'New PIN (4–8 digits)', appLockAgain: 'Type new PIN again', toastPinBad: 'PIN is incorrect.', toastPinWeak: 'Use 4 to 8 digits.', toastPinMismatch: 'The two PINs do not match.', toastPinOn: 'App lock is on.', toastPinOff: 'App lock is off.', toastPinChanged: 'PIN updated.', guestModeTitle: 'Guest mode', guestModeHint: 'Read-only for one property. Hides backup, erase and add/edit.', guestModeOn: 'On. This phone shows one property and cannot export or erase.', guestModeOff: 'Off. Full editing and backup are available.', guestBanner: 'Guest mode', toastGuestNeedProperty: 'Open a property first, then turn on Guest mode.', toastGuestReadOnly: 'Guest mode is read-only.',
                 settingsDashboardViews: 'Home views', minOneViewRequired: 'Keep at least one view turned on.', settingsPropertyOrder: 'Property order',
                 settingsContactRoles: 'Contact types', addRoleCategory: 'Add type', roleCategoryName: 'Type name', toastRoleAdded: 'Type added', toastRoleDeleted: 'Type removed',
                 settingsDataBackup: 'Backup & restore', exportBackup: 'Export JSON backup', exportBackupLight: 'Light backup', exportBackupLightDesc: 'Houses, work and ledger only — no photos. Optional passphrase encrypts the file.', exportBackupFull: 'Full backup', exportBackupFullDesc: 'Includes photos and receipts. Optional passphrase recommended. File can be large.', backupPassTitle: 'Backup passphrase', backupPassHint: 'Leave blank to save a plain JSON file. A passphrase encrypts it on this phone — PocketProp cannot recover a forgotten one.', backupPassLabel: 'Passphrase (optional)', backupPassAgain: 'Type it again', backupPassSkip: 'Save without passphrase', backupPassSave: 'Save encrypted backup', backupUnlockTitle: 'Encrypted backup', backupUnlockHint: 'This file was saved with a passphrase.', backupUnlockLabel: 'Passphrase', backupUnlockBtn: 'Unlock and restore', toastBackupPassMismatch: 'The two passphrases do not match.', toastBackupBadPass: 'That passphrase does not open this file.', toastBackupTooBig: 'Backup file is too large to restore on this phone.', toastBackupUnsafeMedia: 'Ignored {n} unsafe attachments.', toastExportEncrypted: 'Encrypted backup saved', confirmImportCounts: 'This file has {p} properties, {w} work logs, {c} contacts. Restore replaces everything on this phone. Continue?', exportTaxPdf: 'Tax worksheet (PDF)', exportTaxPdfDesc: 'Receipted operating vs capital repairs. Print or Save as PDF.', exportTaxPrint: 'Print / Save PDF', exportTaxLang: 'PDF language', exportTaxYear: 'Year', exportTaxTitle: 'Repair tax worksheet', exportTaxGenerated: 'Prepared', exportTaxDisclaimer: 'This is a local worksheet from PocketProp. It is not a CRA T776 and not tax advice. Only records with a receipt are listed.', exportTaxEmpty: 'No receipted repair records in this filter.', exportTaxFooter: 'Capital cost allowance class is not assigned yet. Receipt images stay in the app.', importBackup: 'Restore JSON Backup', toastExportLight: 'Light backup saved (no photos)', toastExportFull: 'Full backup saved', toastImportLightNoPhotos: 'Restored text. Photos live in a full backup.', settingsDaily: 'General', settingsAdvanced: 'Advanced', settingsLangHint: 'Language is switched from the button at the top of Home. Only built-in labels change. Names you added or edited stay as written.', deadline: 'Deadline', itemAlertOn: 'Red-dot reminder for this item', workDotsTitle: 'Work red dots', workDotsHint: 'Turn on, then choose red for overdue and yellow for coming due.', cycleSoonDays: 'Days before cycle due', taskSoonDays: 'Days before task deadline', dotOverdueRed: 'Overdue: red dot', dotSoonYellow: 'Coming due: yellow dot', confirmNextDueTitle: 'Confirm next due date', cleanupUnusedPhotos: 'Clear unused photos', cleanupUnusedPhotosDesc: 'Remove photo files no record points to.', toastCleanupDone: 'Cleared {n} unused files', photoInFullBackup: 'In full backup', toastAddPropertyFirst: 'Add a property first', routineDotPromptTitle: 'A cycle is overdue', routineDotPromptBody: 'Show a small red dot on Work when something is due?', toastImportSuccess: 'Data restored successfully!', toastImportFailed: 'Invalid backup file format.', confirmImportMsg: 'Restoring from backup will overwrite all existing local data. Continue?',
@@ -2306,7 +2320,7 @@
                 tenantSubTimeline: '这期间的租客', addTenantSub: '添加租客', editTenantSub: '编辑租客', monthlyRent: '月租金', selectCrmTenant: '从联系人里选租客', tenantName: '租客姓名', roomName: '房间', roomHint: '例如：主卧、A房、地下室', entireHouse: '整套出租', leasesCount: '次租约',
                 toastTenantSubSaved: '租客已保存', toastTenantSubDeleted: '租客已删除', toastUsageSaved: '用途已保存', toastUsageDeleted: '用途已删除',
                 usagePurchased: '买入/购入', usagePrimary: '自住', usageRental: '出租(长租)', usageShortTerm: '短租', usageVacant: '空置', usageCommercial: '商业用途', usageSold: '已售出',
-                settingsTitle: '系统设置', settingsPreferences: '偏好设置', settingsLanguage: '界面语言', settingsTheme: '色彩主题', settingsThemeHint: '港湾适合市区公寓。砖色适合独立屋。冷杉适合土地和度假屋。', themeHarbor: '港湾', themeBrick: '砖色', themeFir: '冷杉', themeSky: '港湾', themeCedar: '砖色', themePine: '冷杉', settingsGPS: 'GPS 定位服务', settingsGPSDesc: '开启后可在房屋地图中定位当前位置及导航。', appLockTitle: '应用锁', appLockHint: '可选 PIN，打开 App 时挡住界面。只锁屏幕，不加密数据库。', appLockOff: '已关闭。能打开这台手机的人都能进 App。', appLockOn: '已开启。离开 App 后再次进入需输入 PIN。', appLockSet: '设置 PIN', appLockChange: '更换 PIN', appLockTurnOff: '关闭应用锁', appLockGate: '输入 PIN 后进入', appLockPinPh: 'PIN', appLockUnlock: '解锁', appLockCurrent: '当前 PIN', appLockNew: '新 PIN（4–8 位数字）', appLockAgain: '再输入一次新 PIN', toastPinBad: 'PIN 不正确。', toastPinWeak: '请使用 4 到 8 位数字。', toastPinMismatch: '两次 PIN 不一致。', toastPinOn: '应用锁已打开。', toastPinOff: '应用锁已关闭。', toastPinChanged: 'PIN 已更新。',
+                settingsTitle: '系统设置', settingsPreferences: '偏好设置', settingsLanguage: '界面语言', settingsTheme: '色彩主题', settingsThemeHint: '港湾适合市区公寓。砖色适合独立屋。冷杉适合土地和度假屋。', themeHarbor: '港湾', themeBrick: '砖色', themeFir: '冷杉', themeSky: '港湾', themeCedar: '砖色', themePine: '冷杉', settingsGPS: 'GPS 定位服务', settingsGPSDesc: '开启后可在房屋地图中定位当前位置及导航。只有你点定位才会向系统要位置。按地址解析会把地址发给 OpenStreetMap Nominatim。', geocodePrivacy: '这一步会把地址发给 OpenStreetMap 来打点。房屋档案里的其它内容不会送出。', appLockTitle: '应用锁', appLockHint: '可选 PIN，打开 App 时挡住界面。只锁屏幕，不加密数据库。', appLockOff: '已关闭。能打开这台手机的人都能进 App。', appLockOn: '已开启。离开 App 后再次进入需输入 PIN。', appLockSet: '设置 PIN', appLockChange: '更换 PIN', appLockTurnOff: '关闭应用锁', appLockGate: '输入 PIN 后进入', appLockPinPh: 'PIN', appLockUnlock: '解锁', appLockCurrent: '当前 PIN', appLockNew: '新 PIN（4–8 位数字）', appLockAgain: '再输入一次新 PIN', toastPinBad: 'PIN 不正确。', toastPinWeak: '请使用 4 到 8 位数字。', toastPinMismatch: '两次 PIN 不一致。', toastPinOn: '应用锁已打开。', toastPinOff: '应用锁已关闭。', toastPinChanged: 'PIN 已更新。', guestModeTitle: '访客模式', guestModeHint: '只读查看一套房屋。备份、清空和增删都藏起来。', guestModeOn: '已开启。本机只显示一套房屋，不能导出或清空。', guestModeOff: '已关闭。可编辑、可备份。', guestBanner: '访客模式', toastGuestNeedProperty: '请先打开一套房屋，再开启访客模式。', toastGuestReadOnly: '访客模式只能看，不能改。',
                 settingsDashboardViews: '仪表盘视图设置', minOneViewRequired: '必须至少保留一个视图模式。', settingsPropertyOrder: '房屋卡片排序',
                 settingsContactRoles: '人员类别设置', addRoleCategory: '新增类别', roleCategoryName: '类别名称', toastRoleAdded: '已新增人员类别', toastRoleDeleted: '已删除人员类别',
                 settingsDataBackup: '数据备份与恢复 (离线)', exportBackup: '导出 JSON 备份文件', exportBackupLight: '轻备份', exportBackupLightDesc: '只含房屋、工作和账本，不含照片。可加口令加密。', exportBackupFull: '完整备份', exportBackupFullDesc: '含照片和收据，建议加口令。文件可能很大。', backupPassTitle: '备份口令', backupPassHint: '留空则保存普通 JSON。设置口令后文件在本机加密，口令遗忘无法找回。', backupPassLabel: '口令（可选）', backupPassAgain: '再输入一次', backupPassSkip: '不加密，直接保存', backupPassSave: '保存加密备份', backupUnlockTitle: '加密备份', backupUnlockHint: '这份文件导出时加了口令。', backupUnlockLabel: '口令', backupUnlockBtn: '解锁并恢复', toastBackupPassMismatch: '两次口令不一致。', toastBackupBadPass: '口令无法打开这份文件。', toastBackupTooBig: '备份文件过大，这台手机无法恢复。', toastBackupUnsafeMedia: '已忽略 {n} 个不安全附件。', toastExportEncrypted: '已保存加密备份', confirmImportCounts: '这份备份含 {p} 套房、{w} 条工作记录、{c} 位联系人。恢复会覆盖本机全部数据。继续？', exportTaxPdf: '税务备查 PDF', exportTaxPdfDesc: '只汇总有收据的维修保养与资产改良。用系统打印或存储为 PDF。', exportTaxPrint: '打印 / 存 PDF', exportTaxLang: 'PDF 语言', exportTaxYear: '年份', exportTaxTitle: '维修税务备查表', exportTaxGenerated: '生成日期', exportTaxDisclaimer: '本表由 PocketProp 在本机生成，不是 CRA T776，也不是税务意见。仅列入有收据的记录。', exportTaxEmpty: '当前筛选没有带收据的维修记录。', exportTaxFooter: '尚未标注 CCA 类别。收据原件仍在 App 里。', importBackup: '恢复 JSON 备份文件', toastExportLight: '已导出轻备份（不含照片）', toastExportFull: '已导出完整备份', toastImportLightNoPhotos: '文字已恢复。照片在完整备份里。', settingsDaily: '日常', settingsAdvanced: '进阶', settingsLangHint: '语言在首页右上角切换。仅更换系统预设文字。凡自行新增或编辑过的项目，系统不会主动翻译。', deadline: '截止日期', itemAlertOn: '此项显示小红点', workDotsTitle: '工作小红点', workDotsHint: '打开后，再分别选择过期红点和快到期黄点。', cycleSoonDays: '周期提前几天', taskSoonDays: '待办提前几天', dotOverdueRed: '过期：红点', dotSoonYellow: '快到期：黄点', confirmNextDueTitle: '确认下次日期', cleanupUnusedPhotos: '清理未用照片', cleanupUnusedPhotosDesc: '删掉没有记录再引用的图片文件。', toastCleanupDone: '已清理 {n} 个未用文件', photoInFullBackup: '图在完整备份', toastAddPropertyFirst: '请先添加一套房子', routineDotPromptTitle: '有周期已经过期', routineDotPromptBody: '要不要在工作页用小红点标出到期项？', toastImportSuccess: '数据恢复成功！', toastImportFailed: '恢复失败，文件格式错误。', confirmImportMsg: '导入备份将覆盖当前所有本地数据，确定继续吗？',
@@ -3111,7 +3125,7 @@
             return { properties, tasks, repairs, contacts, customRoles, userZones: zones };
         }
 
-        const APP_VERSION = '2026.09.10-h';
+        const APP_VERSION = '2026.09.10-i';
 
         const app = createApp({
             data() {
@@ -3195,6 +3209,8 @@
                     appLocked: !!localStorage.getItem('pocket_prop_pin'),
                     lockPinInput: '',
                     pinDlg: { open: false, mode: 'set', current: '', next: '', again: '' },
+                    guestMode: localStorage.getItem('pocket_prop_guest') === '1',
+                    guestPropertyId: localStorage.getItem('pocket_prop_guest_prop') || '',
                     routineNotify: 'off',
                     routineNotifyPhone: '',
                     routineNotifyEmail: '',
@@ -4064,7 +4080,7 @@
                         this.markerClusterGroup = L.markerClusterGroup({ maxClusterRadius: 35, spiderfyOnMaxZoom: true, showCoverageOnHover: false, zoomToBoundsOnClick: true, spiderfyDistanceMultiplier: 1.6, iconCreateFunction: (cluster) => { return L.divIcon({ html: `<div class="w-10 h-10 rounded-full bg-brand-500/90 border-2 border-slate-900 text-white font-black text-xs flex items-center justify-center shadow-lg shadow-black/80 ring-2 ring-brand-400/40">${cluster.getChildCount()}</div>`, className: 'custom-cluster-icon', iconSize: [40, 40], iconAnchor: [20, 20] }); } });
                     }
                     const coordCounts = {};
-                    this.properties.forEach((prop, index) => {
+                    this.visiblePropertyList().forEach((prop, index) => {
                         let coords = this.getValidCoordinates(prop, index);
                         const coordKey = `${coords.lat.toFixed(5)}_${coords.lng.toFixed(5)}`;
                         if (coordCounts[coordKey]) {
@@ -4110,7 +4126,40 @@
                     if (coords) { this.formProperty.lat = coords.lat; this.formProperty.lng = coords.lng; this.showToast(this.t('geocodeSuccess')); } 
                     else { this.showToast(this.t('geocodeFailed')); }
                 },
+                visiblePropertyList() {
+                    if (!this.guestMode) return this.properties;
+                    return this.properties.filter(p => p.id === this.guestPropertyId);
+                },
+                safePdfSrc(url) {
+                    const u = this.safeMediaUrl(url);
+                    return (u && this.isPdf(u)) ? u : '';
+                },
+                toggleGuestMode() {
+                    if (this.guestMode) {
+                        this.guestMode = false;
+                        localStorage.setItem('pocket_prop_guest', '0');
+                        return;
+                    }
+                    const id = this.viewingPropertyId || this.guestPropertyId || (this.properties[0] && this.properties[0].id);
+                    if (!id) { this.showToast(this.t('toastGuestNeedProperty')); return; }
+                    this.guestPropertyId = id;
+                    this.guestMode = true;
+                    localStorage.setItem('pocket_prop_guest', '1');
+                    localStorage.setItem('pocket_prop_guest_prop', id);
+                    this.viewingPropertyId = id;
+                    this.selectedPropertyId = id;
+                    this.viewingZone = null;
+                    this.currentTab = 'dashboard';
+                    this.closeModal();
+                },
+                guestBlocks(action) {
+                    if (!this.guestMode) return false;
+                    this.showToast(this.t('toastGuestReadOnly'));
+                    return true;
+                },
                 handleFabClick() {
+                    if (this.guestBlocks()) return;
+
                     if (this.currentTab === 'dashboard') this.openModal(this.viewingPropertyId ? 'task' : 'property');
                     else if (this.currentTab === 'work') {
                         if (!this.properties.length) { this.showToast(this.t('toastAddPropertyFirst')); return; }
@@ -4344,6 +4393,7 @@
                 },
                 async deleteTenantSub(parentUsage, tenantId) { if (!parentUsage || !parentUsage.tenants) return; parentUsage.tenants = parentUsage.tenants.filter(t => t.id !== tenantId); await this.saveToStorage(); this.showToast(this.t('toastTenantSubDeleted')); },
                 openModal(type, item = null) {
+                    if (this.guestMode && ['property','usage','tenantSub','task','routine','repair','contact','catalogManager','cashflowCatalog','zoneManager','addRole'].includes(type)) { this.showToast(this.t('toastGuestReadOnly')); return; }
                     if (type === 'repair' && !item && !this.convertingTaskId && !this.convertingRoutineId) { this.formRepair = { propertyId: this.viewingPropertyId || (this.properties.length > 0 ? this.properties[0].id : ''), titleSelect: '', title: '', zone: this.viewingZone || '', category: '', cost: '', date: this.todayIso(), warrantyEndDate: '', contractorId: '', taxKind: 'operating', hasReceipt: true, receiptPhotos: [], beforePhotos: [], afterPhotos: [] }; }
                     this.activeModal = type; const defaultProp = this.viewingPropertyId || (this.properties.length > 0 ? this.properties[0].id : '');
                     if (type === 'property') { if (item) { this.editingPropertyId = item.id; this.formProperty = { name: item.name, buildingType: item.buildingType, address: item.address, intro: item.intro || '', lat: item.lat, lng: item.lng }; } else { this.editingPropertyId = null; this.formProperty = { name: '', buildingType: 'detached', address: '', intro: '', lat: null, lng: null }; } }
