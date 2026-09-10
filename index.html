@@ -2142,8 +2142,8 @@
                 <p class="text-sm font-black text-white">{{ t('wipeAllData') }}</p>
                 <template v-if="wipeStep === 1">
                     <p class="text-[12px] text-slate-400 leading-relaxed">{{ t('wipeStep1') }}</p>
-                    <button @click="exportData(false); wipeBackedUp = true" class="w-full py-2.5 rounded-xl bg-slate-800 text-white text-xs font-bold">{{ t('exportBackupLight') }}</button>
-                    <button @click="exportData(true); wipeBackedUp = true" class="w-full py-2.5 rounded-xl bg-slate-800 text-white text-xs font-bold">{{ t('exportBackupFull') }}</button>
+                    <button @click="exportData(false)" class="w-full py-2.5 rounded-xl bg-slate-800 text-white text-xs font-bold">{{ t('exportBackupLight') }}</button>
+                    <button @click="exportData(true)" class="w-full py-2.5 rounded-xl bg-slate-800 text-white text-xs font-bold">{{ t('exportBackupFull') }}</button>
                     <p class="text-[11px] text-amber-300/90">{{ wipeBackedUp ? t('wipeBackupDone') : t('wipeBackupSoon') }}</p>
                     <button @click="wipeStep = 2" class="w-full py-2.5 rounded-xl bg-slate-700 text-white text-xs font-bold">{{ t('wipeContinue') }}</button>
                 </template>
@@ -2161,6 +2161,18 @@
                     <button @click="confirmWipeAll" class="w-full py-3 rounded-xl bg-red-600 text-white text-xs font-black">{{ t('wipeConfirmFinal') }}</button>
                 </template>
                 <button @click="closeWipeWizard" class="w-full py-2 text-[12px] text-slate-500">{{ t('btnCancel') }}</button>
+            </div>
+        </div>
+        <div v-if="backupDlg.open" class="fixed inset-0 z-[92] flex items-center justify-center p-4 bg-slate-950/85">
+            <div class="bg-slate-900 border border-slate-700 rounded-3xl p-5 w-full max-w-sm space-y-3">
+                <p class="text-sm font-black text-white">{{ backupDlg.mode === 'import' ? t('backupUnlockTitle') : t('backupPassTitle') }}</p>
+                <p class="text-[12px] text-slate-400 leading-relaxed">{{ backupDlg.mode === 'import' ? t('backupUnlockHint') : t('backupPassHint') }}</p>
+                <input v-model="backupDlg.pass" type="password" autocomplete="new-password" class="w-full bg-slate-800 rounded-xl p-3 text-[13px] text-white outline-none" :placeholder="backupDlg.mode === 'import' ? t('backupUnlockLabel') : t('backupPassLabel')">
+                <input v-if="backupDlg.mode === 'export'" v-model="backupDlg.pass2" type="password" autocomplete="new-password" class="w-full bg-slate-800 rounded-xl p-3 text-[13px] text-white outline-none" :placeholder="t('backupPassAgain')">
+                <button v-if="backupDlg.mode === 'export'" @click="confirmEncryptedExport" class="w-full py-2.5 rounded-xl bg-brand-500 text-white text-xs font-bold">{{ t('backupPassSave') }}</button>
+                <button v-if="backupDlg.mode === 'export'" @click="confirmPlainExport" class="w-full py-2.5 rounded-xl bg-slate-700 text-white text-xs font-bold">{{ t('backupPassSkip') }}</button>
+                <button v-if="backupDlg.mode === 'import'" @click="confirmDecryptImport" class="w-full py-2.5 rounded-xl bg-brand-500 text-white text-xs font-bold">{{ t('backupUnlockBtn') }}</button>
+                <button @click="closeBackupDlg" class="w-full py-2 text-[12px] text-slate-500">{{ t('btnCancel') }}</button>
             </div>
         </div>
         <div v-if="pendingNextDue" class="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-slate-950/80">
@@ -2221,7 +2233,7 @@
                 settingsTitle: 'Settings', settingsPreferences: 'Preferences', settingsLanguage: 'Language', settingsTheme: 'Colour theme', settingsThemeHint: 'Harbor for downtown condos. Brick for houses. Fir for land and cottages.', themeHarbor: 'Harbor', themeBrick: 'Brick', themeFir: 'Fir', themeSky: 'Harbor', themeCedar: 'Brick', themePine: 'Fir', settingsGPS: 'Location services', settingsGPSDesc: 'Used to place you on the property map.',
                 settingsDashboardViews: 'Home views', minOneViewRequired: 'Keep at least one view turned on.', settingsPropertyOrder: 'Property order',
                 settingsContactRoles: 'Contact types', addRoleCategory: 'Add type', roleCategoryName: 'Type name', toastRoleAdded: 'Type added', toastRoleDeleted: 'Type removed',
-                settingsDataBackup: 'Backup & restore', exportBackup: 'Export JSON backup', exportBackupLight: 'Light backup', exportBackupLightDesc: 'Houses, work and ledger only — no photos.', exportBackupFull: 'Full backup', exportBackupFullDesc: 'Includes photos and receipts. File can be large.', exportTaxPdf: 'Tax worksheet (PDF)', exportTaxPdfDesc: 'Receipted operating vs capital repairs. Print or Save as PDF.', exportTaxPrint: 'Print / Save PDF', exportTaxLang: 'PDF language', exportTaxYear: 'Year', exportTaxTitle: 'Repair tax worksheet', exportTaxGenerated: 'Prepared', exportTaxDisclaimer: 'This is a local worksheet from PocketProp. It is not a CRA T776 and not tax advice. Only records with a receipt are listed.', exportTaxEmpty: 'No receipted repair records in this filter.', exportTaxFooter: 'Capital cost allowance class is not assigned yet. Receipt images stay in the app.', importBackup: 'Restore JSON Backup', toastExportLight: 'Light backup saved (no photos)', toastExportFull: 'Full backup saved', toastImportLightNoPhotos: 'Restored text. Photos live in a full backup.', settingsDaily: 'General', settingsAdvanced: 'Advanced', settingsLangHint: 'Language is switched from the button at the top of Home. Only built-in labels change. Names you added or edited stay as written.', deadline: 'Deadline', itemAlertOn: 'Red-dot reminder for this item', workDotsTitle: 'Work red dots', workDotsHint: 'Turn on, then choose red for overdue and yellow for coming due.', cycleSoonDays: 'Days before cycle due', taskSoonDays: 'Days before task deadline', dotOverdueRed: 'Overdue: red dot', dotSoonYellow: 'Coming due: yellow dot', confirmNextDueTitle: 'Confirm next due date', cleanupUnusedPhotos: 'Clear unused photos', cleanupUnusedPhotosDesc: 'Remove photo files no record points to.', toastCleanupDone: 'Cleared {n} unused files', photoInFullBackup: 'In full backup', toastAddPropertyFirst: 'Add a property first', routineDotPromptTitle: 'A cycle is overdue', routineDotPromptBody: 'Show a small red dot on Work when something is due?', toastImportSuccess: 'Data restored successfully!', toastImportFailed: 'Invalid backup file format.', confirmImportMsg: 'Restoring from backup will overwrite all existing local data. Continue?',
+                settingsDataBackup: 'Backup & restore', exportBackup: 'Export JSON backup', exportBackupLight: 'Light backup', exportBackupLightDesc: 'Houses, work and ledger only — no photos. Optional passphrase encrypts the file.', exportBackupFull: 'Full backup', exportBackupFullDesc: 'Includes photos and receipts. Optional passphrase recommended. File can be large.', backupPassTitle: 'Backup passphrase', backupPassHint: 'Leave blank to save a plain JSON file. A passphrase encrypts it on this phone — PocketProp cannot recover a forgotten one.', backupPassLabel: 'Passphrase (optional)', backupPassAgain: 'Type it again', backupPassSkip: 'Save without passphrase', backupPassSave: 'Save encrypted backup', backupUnlockTitle: 'Encrypted backup', backupUnlockHint: 'This file was saved with a passphrase.', backupUnlockLabel: 'Passphrase', backupUnlockBtn: 'Unlock and restore', toastBackupPassMismatch: 'The two passphrases do not match.', toastBackupBadPass: 'That passphrase does not open this file.', toastBackupTooBig: 'Backup file is too large to restore on this phone.', toastBackupUnsafeMedia: 'Ignored {n} unsafe attachments.', toastExportEncrypted: 'Encrypted backup saved', confirmImportCounts: 'This file has {p} properties, {w} work logs, {c} contacts. Restore replaces everything on this phone. Continue?', exportTaxPdf: 'Tax worksheet (PDF)', exportTaxPdfDesc: 'Receipted operating vs capital repairs. Print or Save as PDF.', exportTaxPrint: 'Print / Save PDF', exportTaxLang: 'PDF language', exportTaxYear: 'Year', exportTaxTitle: 'Repair tax worksheet', exportTaxGenerated: 'Prepared', exportTaxDisclaimer: 'This is a local worksheet from PocketProp. It is not a CRA T776 and not tax advice. Only records with a receipt are listed.', exportTaxEmpty: 'No receipted repair records in this filter.', exportTaxFooter: 'Capital cost allowance class is not assigned yet. Receipt images stay in the app.', importBackup: 'Restore JSON Backup', toastExportLight: 'Light backup saved (no photos)', toastExportFull: 'Full backup saved', toastImportLightNoPhotos: 'Restored text. Photos live in a full backup.', settingsDaily: 'General', settingsAdvanced: 'Advanced', settingsLangHint: 'Language is switched from the button at the top of Home. Only built-in labels change. Names you added or edited stay as written.', deadline: 'Deadline', itemAlertOn: 'Red-dot reminder for this item', workDotsTitle: 'Work red dots', workDotsHint: 'Turn on, then choose red for overdue and yellow for coming due.', cycleSoonDays: 'Days before cycle due', taskSoonDays: 'Days before task deadline', dotOverdueRed: 'Overdue: red dot', dotSoonYellow: 'Coming due: yellow dot', confirmNextDueTitle: 'Confirm next due date', cleanupUnusedPhotos: 'Clear unused photos', cleanupUnusedPhotosDesc: 'Remove photo files no record points to.', toastCleanupDone: 'Cleared {n} unused files', photoInFullBackup: 'In full backup', toastAddPropertyFirst: 'Add a property first', routineDotPromptTitle: 'A cycle is overdue', routineDotPromptBody: 'Show a small red dot on Work when something is due?', toastImportSuccess: 'Data restored successfully!', toastImportFailed: 'Invalid backup file format.', confirmImportMsg: 'Restoring from backup will overwrite all existing local data. Continue?',
                 loadDemoData: 'Reset Demo Data', loadDemoDataDesc: 'Overwrites current data with multi-property sample dataset.', confirmDemoDataMsg: 'Are you sure you want to load sample data? Current data will be replaced.', toastDemoLoaded: 'Demo data loaded', wipeAllData: 'Erase all data', wipeAllDataDesc: 'Permanently remove every property, work item and photo on this phone.', wipeStep1: 'This cannot be undone. Export a backup first if you might need this data again.', wipeBackupSoon: 'No backup exported in this step yet. You can still continue.', wipeBackupDone: 'A backup file was saved from this phone.', wipeContinue: 'Continue', wipeStep2: 'Check the box and type ERASE to go to the last step.', wipeAck: 'I understand this deletes everything on this phone and cannot be undone.', wipeTypeHint: 'Type ERASE', wipeStep3: 'Last step. This removes houses, work, people and photos stored by PocketProp.', wipeConfirmFinal: 'Erase everything now', toastWiped: 'All local data removed',
                 settingsFileManager: 'Media & File Storage', fileManagerTitle: 'Repair photos & receipts', filesCount: 'Files', storageUsed: 'Used', btnManageFiles: 'Open Gallery', noMediaFiles: 'No photo or document files match.', toastMediaDeleted: 'File removed from local storage.', fileTypeAll: 'All Files', fileLibraryHint: 'Grouped by work date. Tap a file, then swipe to browse.', fileSearchPh: 'Search title or property', viewerSwipeHint: 'Swipe left / right to switch', fileLibraryUpload: 'Upload', fileLibraryTitlePh: 'Name (optional)', fileLibraryUploadHint: 'Pick a property above first, then upload. Stored on this phone.', fileCatDeal: 'Closing / title', fileCatInsurance: 'Insurance', fileCatLease: 'Lease', fileCatMaintenance: 'Repairs', fileCatOther: 'Other', toastPickPropertyFirst: 'Choose a property first', toastLibraryUploaded: 'File added',
                 roleTenant: 'Tenant', roleContractor: 'Contractor', roleRealtor: 'Realtor', roleLawyer: 'Lawyer', roleType: 'Contact Role', contactName: 'Full Name', contactTrade: 'Specialty / Trade Title', contactTradeHint: 'e.g. HVAC, Plumbing Specialist', assocProperty: 'Associated Property', assocProperties: 'Associated Properties', contractorNote: 'Contractors are linked through repair logs.', noneGeneral: 'General / Unlinked', searchContact: 'Search contacts...', noContacts: 'No contacts found.',
@@ -2268,7 +2280,7 @@
                 settingsTitle: '系统设置', settingsPreferences: '偏好设置', settingsLanguage: '界面语言', settingsTheme: '色彩主题', settingsThemeHint: '港湾适合市区公寓。砖色适合独立屋。冷杉适合土地和度假屋。', themeHarbor: '港湾', themeBrick: '砖色', themeFir: '冷杉', themeSky: '港湾', themeCedar: '砖色', themePine: '冷杉', settingsGPS: 'GPS 定位服务', settingsGPSDesc: '开启后可在房屋地图中定位当前位置及导航。',
                 settingsDashboardViews: '仪表盘视图设置', minOneViewRequired: '必须至少保留一个视图模式。', settingsPropertyOrder: '房屋卡片排序',
                 settingsContactRoles: '人员类别设置', addRoleCategory: '新增类别', roleCategoryName: '类别名称', toastRoleAdded: '已新增人员类别', toastRoleDeleted: '已删除人员类别',
-                settingsDataBackup: '数据备份与恢复 (离线)', exportBackup: '导出 JSON 备份文件', exportBackupLight: '轻备份', exportBackupLightDesc: '只含房屋、工作和账本，不含照片。', exportBackupFull: '完整备份', exportBackupFullDesc: '含照片和收据，文件可能很大。', exportTaxPdf: '税务备查 PDF', exportTaxPdfDesc: '只汇总有收据的维修保养与资产改良。用系统打印或存储为 PDF。', exportTaxPrint: '打印 / 存 PDF', exportTaxLang: 'PDF 语言', exportTaxYear: '年份', exportTaxTitle: '维修税务备查表', exportTaxGenerated: '生成日期', exportTaxDisclaimer: '本表由 PocketProp 在本机生成，不是 CRA T776，也不是税务意见。仅列入有收据的记录。', exportTaxEmpty: '当前筛选没有带收据的维修记录。', exportTaxFooter: '尚未标注 CCA 类别。收据原件仍在 App 里。', importBackup: '恢复 JSON 备份文件', toastExportLight: '已导出轻备份（不含照片）', toastExportFull: '已导出完整备份', toastImportLightNoPhotos: '文字已恢复。照片在完整备份里。', settingsDaily: '日常', settingsAdvanced: '进阶', settingsLangHint: '语言在首页右上角切换。仅更换系统预设文字。凡自行新增或编辑过的项目，系统不会主动翻译。', deadline: '截止日期', itemAlertOn: '此项显示小红点', workDotsTitle: '工作小红点', workDotsHint: '打开后，再分别选择过期红点和快到期黄点。', cycleSoonDays: '周期提前几天', taskSoonDays: '待办提前几天', dotOverdueRed: '过期：红点', dotSoonYellow: '快到期：黄点', confirmNextDueTitle: '确认下次日期', cleanupUnusedPhotos: '清理未用照片', cleanupUnusedPhotosDesc: '删掉没有记录再引用的图片文件。', toastCleanupDone: '已清理 {n} 个未用文件', photoInFullBackup: '图在完整备份', toastAddPropertyFirst: '请先添加一套房子', routineDotPromptTitle: '有周期已经过期', routineDotPromptBody: '要不要在工作页用小红点标出到期项？', toastImportSuccess: '数据恢复成功！', toastImportFailed: '恢复失败，文件格式错误。', confirmImportMsg: '导入备份将覆盖当前所有本地数据，确定继续吗？',
+                settingsDataBackup: '数据备份与恢复 (离线)', exportBackup: '导出 JSON 备份文件', exportBackupLight: '轻备份', exportBackupLightDesc: '只含房屋、工作和账本，不含照片。可加口令加密。', exportBackupFull: '完整备份', exportBackupFullDesc: '含照片和收据，建议加口令。文件可能很大。', backupPassTitle: '备份口令', backupPassHint: '留空则保存普通 JSON。设置口令后文件在本机加密，口令遗忘无法找回。', backupPassLabel: '口令（可选）', backupPassAgain: '再输入一次', backupPassSkip: '不加密，直接保存', backupPassSave: '保存加密备份', backupUnlockTitle: '加密备份', backupUnlockHint: '这份文件导出时加了口令。', backupUnlockLabel: '口令', backupUnlockBtn: '解锁并恢复', toastBackupPassMismatch: '两次口令不一致。', toastBackupBadPass: '口令无法打开这份文件。', toastBackupTooBig: '备份文件过大，这台手机无法恢复。', toastBackupUnsafeMedia: '已忽略 {n} 个不安全附件。', toastExportEncrypted: '已保存加密备份', confirmImportCounts: '这份备份含 {p} 套房、{w} 条工作记录、{c} 位联系人。恢复会覆盖本机全部数据。继续？', exportTaxPdf: '税务备查 PDF', exportTaxPdfDesc: '只汇总有收据的维修保养与资产改良。用系统打印或存储为 PDF。', exportTaxPrint: '打印 / 存 PDF', exportTaxLang: 'PDF 语言', exportTaxYear: '年份', exportTaxTitle: '维修税务备查表', exportTaxGenerated: '生成日期', exportTaxDisclaimer: '本表由 PocketProp 在本机生成，不是 CRA T776，也不是税务意见。仅列入有收据的记录。', exportTaxEmpty: '当前筛选没有带收据的维修记录。', exportTaxFooter: '尚未标注 CCA 类别。收据原件仍在 App 里。', importBackup: '恢复 JSON 备份文件', toastExportLight: '已导出轻备份（不含照片）', toastExportFull: '已导出完整备份', toastImportLightNoPhotos: '文字已恢复。照片在完整备份里。', settingsDaily: '日常', settingsAdvanced: '进阶', settingsLangHint: '语言在首页右上角切换。仅更换系统预设文字。凡自行新增或编辑过的项目，系统不会主动翻译。', deadline: '截止日期', itemAlertOn: '此项显示小红点', workDotsTitle: '工作小红点', workDotsHint: '打开后，再分别选择过期红点和快到期黄点。', cycleSoonDays: '周期提前几天', taskSoonDays: '待办提前几天', dotOverdueRed: '过期：红点', dotSoonYellow: '快到期：黄点', confirmNextDueTitle: '确认下次日期', cleanupUnusedPhotos: '清理未用照片', cleanupUnusedPhotosDesc: '删掉没有记录再引用的图片文件。', toastCleanupDone: '已清理 {n} 个未用文件', photoInFullBackup: '图在完整备份', toastAddPropertyFirst: '请先添加一套房子', routineDotPromptTitle: '有周期已经过期', routineDotPromptBody: '要不要在工作页用小红点标出到期项？', toastImportSuccess: '数据恢复成功！', toastImportFailed: '恢复失败，文件格式错误。', confirmImportMsg: '导入备份将覆盖当前所有本地数据，确定继续吗？',
                 loadDemoData: '加载示例演示数据', loadDemoDataDesc: '重置并重新加载包含多处房屋资产的完整示例数据。', confirmDemoDataMsg: '确定要重新载入演示数据吗？当前修改将被覆盖。', toastDemoLoaded: '示例数据已加载', wipeAllData: '清空全部数据', wipeAllDataDesc: '永久删除本机全部房屋、工作和照片。', wipeStep1: '此操作无法撤销。若以后可能还要用，请先导出备份。', wipeBackupSoon: '这一步里还没有导出备份，仍可继续。', wipeBackupDone: '已从本机保存了一份备份文件。', wipeContinue: '继续', wipeStep2: '勾选确认，并输入 ERASE，才能进入最后一步。', wipeAck: '我明白这会删掉本机全部数据，而且无法恢复。', wipeTypeHint: '输入 ERASE', wipeStep3: '最后一步。将删除 PocketProp 保存在本机的房屋、工作、联系人和照片。', wipeConfirmFinal: '立即全部清空', toastWiped: '本机数据已清空',
                 settingsFileManager: '维修照片与收据', fileManagerTitle: '维修照片与收据', filesCount: '个文件', storageUsed: '已用容量', btnManageFiles: '打开', noMediaFiles: '未匹配到媒体文件。', toastMediaDeleted: '文件已彻底删除。', fileTypeAll: '全部文件', fileLibraryHint: '按工单日期排列。点开后左右滑动切换。', fileSearchPh: '搜索名称或房屋', viewerSwipeHint: '左右滑动切换文件', fileLibraryUpload: '上传', fileLibraryTitlePh: '名称（可选）', fileLibraryUploadHint: '先点选上方一套房屋，再上传。文件只存在这台手机。', fileCatDeal: '交易产权', fileCatInsurance: '保险', fileCatLease: '租约', fileCatMaintenance: '维修', fileCatOther: '其他', toastPickPropertyFirst: '请先选择一套房屋', toastLibraryUploaded: '文件已加入',
                 roleTenant: '租客', roleContractor: '师傅', roleRealtor: '经纪', roleLawyer: '律师', roleType: '联系人身份角色', contactName: '姓名/称呼', contactTrade: '工种/专长头衔', contactTradeHint: '例如: 暖通水工, 专修屋顶', assocProperty: '关联房屋', assocProperties: '关联房屋（可多选）', contractorNote: '师傅不用先绑房子，做完维修记录后会自动对上。', noneGeneral: '通用 / 未绑定具体房屋', searchContact: '搜索联系人...', noContacts: '该分类下暂无联系人。',
@@ -3070,7 +3082,7 @@
             return { properties, tasks, repairs, contacts, customRoles, userZones: zones };
         }
 
-        const APP_VERSION = '2026.09.10-f';
+        const APP_VERSION = '2026.09.10-g';
 
         const app = createApp({
             data() {
@@ -3149,6 +3161,7 @@
                     wipeBackedUp: false,
                     wipeAck: false,
                     wipeTyped: '',
+                    backupDlg: { open: false, mode: 'export', includeBlobs: false, pass: '', pass2: '', rawText: '' },
                     routineNotify: 'off',
                     routineNotifyPhone: '',
                     routineNotifyEmail: '',
@@ -4329,7 +4342,18 @@
                     }
                 },
                 isPdf(url) { return typeof url === 'string' && (url.startsWith('data:application/pdf') || url.toLowerCase().endsWith('.pdf')); },
-                openPdfInNewTab(url) { if (!url) return; const win = window.open(); if (win) { win.document.write(`<iframe src="${url}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>`); } },
+                openPdfInNewTab(url) {
+                    const safe = this.safeMediaUrl(url);
+                    if (!safe || !this.isPdf(safe)) return;
+                    const win = window.open('', '_blank');
+                    if (!win) return;
+                    win.document.title = 'PDF';
+                    const frame = win.document.createElement('iframe');
+                    frame.setAttribute('style', 'border:0;position:fixed;inset:0;width:100%;height:100%;');
+                    frame.src = safe;
+                    win.document.body.style.margin = '0';
+                    win.document.body.appendChild(frame);
+                },
                 readFileAsDataUrl(file) { return new Promise((resolve) => { const reader = new FileReader(); reader.onload = (e) => resolve(e.target.result); reader.onerror = () => resolve(null); reader.readAsDataURL(file); }); },
                 compressImage(file) {
                     return new Promise((resolve) => {
@@ -4380,16 +4404,31 @@
                 fileRefId(url) { return this.isFileRef(url) ? url.slice(5) : ''; },
                 resolveMediaUrl(url) {
                     if (!url || typeof url !== 'string') return '';
-                    if (this.isFileRef(url)) return this.mediaBlobs[this.fileRefId(url)] || '';
-                    return url;
+                    if (this.isFileRef(url)) return this.safeMediaUrl(this.mediaBlobs[this.fileRefId(url)] || '');
+                    return this.safeMediaUrl(url);
+                },
+                isSafeMediaUrl(url) {
+                    if (!url || typeof url !== 'string') return false;
+                    if (this.isFileRef(url)) return /^file:[A-Za-z0-9_-]+$/.test(url);
+                    return /^(data:image\/(jpeg|jpg|png|webp|gif);base64,|data:application\/pdf;base64,)/i.test(url);
+                },
+                safeMediaUrl(url) {
+                    if (!url || typeof url !== 'string') return '';
+                    if (this.isFileRef(url)) return this.isSafeMediaUrl(url) ? url : '';
+                    return this.isSafeMediaUrl(url) ? url : '';
+                },
+                sanitizeMediaList(list) {
+                    if (!Array.isArray(list)) return [];
+                    return list.filter(u => this.isSafeMediaUrl(u) || this.isFileRef(u) && /^file:[A-Za-z0-9_-]+$/.test(u));
                 },
                 resolveMediaList(list) {
                     if (!Array.isArray(list)) return [];
                     return list.map(u => this.resolveMediaUrl(u)).filter(Boolean);
                 },
                 ingestMediaUrl(url) {
-                    if (!url || typeof url !== 'string') return url;
-                    if (this.isFileRef(url) || !url.startsWith('data:')) return url;
+                    if (!url || typeof url !== 'string') return '';
+                    if (this.isFileRef(url)) return /^file:[A-Za-z0-9_-]+$/.test(url) ? url : '';
+                    if (!this.isSafeMediaUrl(url)) return '';
                     const id = 'f_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
                     this.mediaBlobs[id] = url;
                     return 'file:' + id;
@@ -4979,9 +5018,62 @@
                 printTaxPdf() {
                     window.print();
                 },
-                exportData(includeBlobs = false) {
+                backupMaxBytes(includeBlobs) { return includeBlobs ? 200 * 1024 * 1024 : 20 * 1024 * 1024; },
+                closeBackupDlg() {
+                    this.backupDlg = { open: false, mode: 'export', includeBlobs: false, pass: '', pass2: '', rawText: '' };
+                },
+                bytesToB64(buf) {
+                    const bytes = buf instanceof Uint8Array ? buf : new Uint8Array(buf);
+                    let s = '';
+                    for (let i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
+                    return btoa(s);
+                },
+                b64ToBytes(b64) {
+                    const bin = atob(b64);
+                    const out = new Uint8Array(bin.length);
+                    for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+                    return out;
+                },
+                async deriveBackupKey(pass, salt) {
+                    const enc = new TextEncoder();
+                    const material = await crypto.subtle.importKey('raw', enc.encode(pass), 'PBKDF2', false, ['deriveKey']);
+                    return crypto.subtle.deriveKey(
+                        { name: 'PBKDF2', salt, iterations: 150000, hash: 'SHA-256' },
+                        material,
+                        { name: 'AES-GCM', length: 256 },
+                        false,
+                        ['encrypt', 'decrypt']
+                    );
+                },
+                async encryptBackupPayload(plainObj, pass) {
+                    const salt = crypto.getRandomValues(new Uint8Array(16));
+                    const iv = crypto.getRandomValues(new Uint8Array(12));
+                    const key = await this.deriveBackupKey(pass, salt);
+                    const pt = new TextEncoder().encode(JSON.stringify(plainObj));
+                    const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, pt);
+                    return {
+                        pocketprop: 1,
+                        enc: true,
+                        alg: 'AES-GCM',
+                        kdf: 'PBKDF2',
+                        iter: 150000,
+                        salt: this.bytesToB64(salt),
+                        iv: this.bytesToB64(iv),
+                        ct: this.bytesToB64(ct)
+                    };
+                },
+                async decryptBackupPayload(wrap, pass) {
+                    const salt = this.b64ToBytes(wrap.salt);
+                    const iv = this.b64ToBytes(wrap.iv);
+                    const key = await this.deriveBackupKey(pass, salt);
+                    const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, this.b64ToBytes(wrap.ct));
+                    return JSON.parse(new TextDecoder().decode(pt));
+                },
+                buildBackupObject(includeBlobs) {
                     this.harvestAllPhotos();
                     const data = {
+                        pocketprop: 1,
+                        enc: false,
                         properties: this.properties,
                         tasks: this.tasks,
                         repairs: this.repairs,
@@ -4997,60 +5089,155 @@
                         routineNotifyEmail: this.routineNotifyEmail
                     };
                     if (includeBlobs) data.blobs = { ...this.mediaBlobs };
-                    const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+                    return data;
+                },
+                downloadBackupText(text, includeBlobs, encrypted) {
+                    const blob = new Blob([text], { type: 'application/json' });
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = includeBlobs ? `pocketprop_full_${this.todayIso()}.json` : `pocketprop_light_${this.todayIso()}.json`;
+                    const tag = encrypted ? 'enc' : (includeBlobs ? 'full' : 'light');
+                    a.download = `pocketprop_${tag}_${this.todayIso()}.json`;
                     a.click();
                     URL.revokeObjectURL(url);
+                    this.wipeBackedUp = true;
+                },
+                exportData(includeBlobs = false) {
+                    this.backupDlg = { open: true, mode: 'export', includeBlobs: !!includeBlobs, pass: '', pass2: '', rawText: '' };
+                },
+                confirmPlainExport() {
+                    const includeBlobs = this.backupDlg.includeBlobs;
+                    const data = this.buildBackupObject(includeBlobs);
+                    this.downloadBackupText(JSON.stringify(data), includeBlobs, false);
+                    this.closeBackupDlg();
                     this.showToast(includeBlobs ? this.t('toastExportFull') : this.t('toastExportLight'));
                 },
-                triggerImport() {
-                    if(confirm(this.t('confirmImportMsg'))) {
-                        this.$refs.importFileInput.click();
+                async confirmEncryptedExport() {
+                    const pass = (this.backupDlg.pass || '').trim();
+                    if (!pass) { this.confirmPlainExport(); return; }
+                    if (pass !== (this.backupDlg.pass2 || '').trim()) {
+                        this.showToast(this.t('toastBackupPassMismatch'));
+                        return;
                     }
+                    const includeBlobs = this.backupDlg.includeBlobs;
+                    const wrap = await this.encryptBackupPayload(this.buildBackupObject(includeBlobs), pass);
+                    this.downloadBackupText(JSON.stringify(wrap), includeBlobs, true);
+                    this.closeBackupDlg();
+                    this.showToast(this.t('toastExportEncrypted'));
+                },
+                triggerImport() {
+                    this.$refs.importFileInput.click();
+                },
+                sanitizeImportedBlobs(blobs) {
+                    const out = {};
+                    let dropped = 0;
+                    if (!blobs || typeof blobs !== 'object') return { blobs: out, dropped };
+                    Object.keys(blobs).forEach(id => {
+                        if (!/^[A-Za-z0-9_-]+$/.test(id) || !this.isSafeMediaUrl(blobs[id])) dropped++;
+                        else out[id] = blobs[id];
+                    });
+                    return { blobs: out, dropped };
+                },
+                sanitizeImportedDataset(data) {
+                    let dropped = 0;
+                    const scrubRec = (rec) => {
+                        if (!rec) return rec;
+                        ['beforePhotos', 'afterPhotos', 'receiptPhotos'].forEach(k => {
+                            if (!Array.isArray(rec[k])) return;
+                            const next = rec[k].filter(u => this.isSafeMediaUrl(u) || (typeof u === 'string' && /^file:[A-Za-z0-9_-]+$/.test(u)));
+                            dropped += rec[k].length - next.length;
+                            rec[k] = next;
+                        });
+                        return rec;
+                    };
+                    (data.tasks || []).forEach(scrubRec);
+                    (data.repairs || []).forEach(scrubRec);
+                    (data.propertyDocs || []).forEach(d => {
+                        if (d && d.fileRef && !(this.isSafeMediaUrl(d.fileRef) || /^file:[A-Za-z0-9_-]+$/.test(d.fileRef))) {
+                            d.fileRef = '';
+                            dropped++;
+                        }
+                    });
+                    const blobPack = this.sanitizeImportedBlobs(data.blobs);
+                    data.blobs = blobPack.blobs;
+                    dropped += blobPack.dropped;
+                    return dropped;
+                },
+                async applyImportedData(data) {
+                    if (!data || !Array.isArray(data.properties)) {
+                        this.showToast(this.t('toastImportFailed'));
+                        return;
+                    }
+                    const dropped = this.sanitizeImportedDataset(data);
+                    const p = (data.properties || []).length;
+                    const w = (data.tasks || []).length + (data.repairs || []).length + (data.routines || []).length;
+                    const c = (data.contacts || []).length;
+                    const msg = this.t('confirmImportCounts').replace('{p}', p).replace('{w}', w).replace('{c}', c);
+                    if (!confirm(msg)) return;
+                    this.properties = data.properties || [];
+                    this.tasks = data.tasks || [];
+                    this.repairs = data.repairs || [];
+                    this.routines = data.routines || [];
+                    this.userCatalog = data.userCatalog && data.userCatalog.categories ? data.userCatalog : cloneDefaultCatalog();
+                    if (!this.userCatalog.cashflow || !this.userCatalog.cashflow.rental) this.userCatalog.cashflow = JSON.parse(JSON.stringify(defaultCashflowCatalog));
+                    this.contacts = data.contacts || [];
+                    this.customRoles = data.customRoles || [];
+                    this.propertyDocs = data.propertyDocs || [];
+                    this.userZones = data.userZones || getDefaultZones(this.currentLang);
+                    if (data.routineNotify) this.routineNotify = data.routineNotify;
+                    if (data.routineNotifyAsked != null) this.routineNotifyAsked = !!data.routineNotifyAsked;
+                    if (data.routineNotifyPhone != null) this.routineNotifyPhone = data.routineNotifyPhone;
+                    if (data.routineNotifyEmail != null) this.routineNotifyEmail = data.routineNotifyEmail;
+                    this.normalizePhotoFields();
+                    if (data.blobs) await this.importMediaBlobs(data.blobs);
+                    await this.loadMediaBlobs();
+                    this.harvestAllPhotos();
+                    await this.saveToStorage();
+                    const hasFileRefs = JSON.stringify({ t: this.tasks, r: this.repairs }).includes('file:');
+                    if (dropped) this.showToast(this.t('toastBackupUnsafeMedia').replace('{n}', String(dropped)));
+                    else if (hasFileRefs && !Object.keys(data.blobs || {}).length) this.showToast(this.t('toastImportLightNoPhotos'));
+                    else this.showToast(this.t('toastImportSuccess'));
+                    if (this.dashboardViewMode === 'map') this.renderMapMarkers();
                 },
                 importData(event) {
                     const file = event.target.files[0];
                     if (!file) return;
+                    const maxBytes = this.backupMaxBytes(true);
+                    if (file.size > maxBytes) {
+                        this.showToast(this.t('toastBackupTooBig'));
+                        event.target.value = '';
+                        return;
+                    }
                     const reader = new FileReader();
                     reader.onload = async (e) => {
                         try {
-                            const data = JSON.parse(e.target.result);
-                            if (data.properties) {
-                                this.properties = data.properties || [];
-                                this.tasks = data.tasks || [];
-                                this.repairs = data.repairs || [];
-                                this.routines = data.routines || [];
-                                this.userCatalog = data.userCatalog && data.userCatalog.categories ? data.userCatalog : cloneDefaultCatalog();
-                                if (!this.userCatalog.cashflow || !this.userCatalog.cashflow.rental) this.userCatalog.cashflow = JSON.parse(JSON.stringify(defaultCashflowCatalog));
-                                this.contacts = data.contacts || [];
-                                this.customRoles = data.customRoles || [];
-                                this.propertyDocs = data.propertyDocs || [];
-                                this.userZones = data.userZones || getDefaultZones(this.currentLang);
-                                if (data.routineNotify) this.routineNotify = data.routineNotify;
-                                if (data.routineNotifyAsked != null) this.routineNotifyAsked = !!data.routineNotifyAsked;
-                                if (data.routineNotifyPhone != null) this.routineNotifyPhone = data.routineNotifyPhone;
-                                if (data.routineNotifyEmail != null) this.routineNotifyEmail = data.routineNotifyEmail;
-                                this.normalizePhotoFields();
-                                if (data.blobs) await this.importMediaBlobs(data.blobs);
-                                await this.loadMediaBlobs();
-                                this.harvestAllPhotos();
-                                await this.saveToStorage();
-                                const hasFileRefs = JSON.stringify({ t: this.tasks, r: this.repairs }).includes('file:');
-                                if (hasFileRefs && !data.blobs) this.showToast(this.t('toastImportLightNoPhotos'));
-                                else this.showToast(this.t('toastImportSuccess'));
-                                if (this.dashboardViewMode === 'map') this.renderMapMarkers();
-                            } else {
-                                this.showToast(this.t('toastImportFailed'));
+                            const parsed = JSON.parse(e.target.result);
+                            if (parsed && parsed.enc === true && parsed.ct && parsed.salt && parsed.iv) {
+                                this.backupDlg = { open: true, mode: 'import', includeBlobs: false, pass: '', pass2: '', rawText: e.target.result };
+                                return;
                             }
+                            if (parsed && parsed.blobs && e.target.result.length > this.backupMaxBytes(false) && file.size > this.backupMaxBytes(false)) {
+                                /* full backups allowed up to 200MB already checked */
+                            }
+                            await this.applyImportedData(parsed);
                         } catch (err) {
                             this.showToast(this.t('toastImportFailed'));
                         }
                     };
                     reader.readAsText(file);
                     event.target.value = '';
+                },
+                async confirmDecryptImport() {
+                    const pass = (this.backupDlg.pass || '').trim();
+                    if (!pass) { this.showToast(this.t('toastBackupBadPass')); return; }
+                    try {
+                        const wrap = JSON.parse(this.backupDlg.rawText);
+                        const data = await this.decryptBackupPayload(wrap, pass);
+                        this.closeBackupDlg();
+                        await this.applyImportedData(data);
+                    } catch (err) {
+                        this.showToast(this.t('toastBackupBadPass'));
+                    }
                 }
             },
             
