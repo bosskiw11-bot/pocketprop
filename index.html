@@ -84,27 +84,36 @@
         #app { background-color: var(--app-bg, #0f172a) !important; }
         [data-paper="on"] body { color: var(--paper-ink); }
         [data-paper="on"] #app { color: var(--paper-ink); }
-        [data-paper="on"] .text-white { color: var(--paper-ink) !important; }
-        [data-paper="on"] .text-slate-200, [data-paper="on"] .text-slate-300 { color: var(--paper-ink) !important; opacity: 0.82; }
-        [data-paper="on"] .text-slate-400, [data-paper="on"] .text-slate-500, [data-paper="on"] .text-slate-600 { color: var(--paper-muted) !important; }
-        [data-paper="on"] .bg-slate-900,
-        [data-paper="on"] .bg-slate-950,
-        [data-paper="on"] .bg-slate-900\/80,
-        [data-paper="on"] .bg-slate-900\/60,
-        [data-paper="on"] .bg-slate-950\/80,
-        [data-paper="on"] .bg-slate-950\/60 { background-color: var(--app-bg) !important; }
-        [data-paper="on"] .bg-slate-800,
-        [data-paper="on"] .bg-slate-800\/80,
-        [data-paper="on"] .bg-slate-800\/60,
-        [data-paper="on"] .bg-slate-700 { background-color: var(--paper-card) !important; }
-        [data-paper="on"] .from-slate-800, [data-paper="on"] .to-slate-900 { --tw-gradient-from: var(--paper-card) !important; --tw-gradient-to: var(--paper-card-2) !important; }
-        [data-paper="on"] .border-slate-800,
-        [data-paper="on"] .border-slate-700,
-        [data-paper="on"] .border-slate-700\/60,
-        [data-paper="on"] .border-slate-700\/50,
-        [data-paper="on"] .border-slate-600 { border-color: var(--paper-line) !important; }
-        [data-paper="on"] header, [data-paper="on"] nav { background-color: color-mix(in srgb, var(--app-bg) 88%, white) !important; }
-        [data-paper="on"] .tax-a4, [data-paper="on"] .tax-a4 * { color: inherit; }
+        [data-paper="on"] #app [class*="bg-slate-950"],
+        [data-paper="on"] #app [class*="bg-slate-900"] { background-color: var(--app-bg) !important; }
+        [data-paper="on"] #app [class*="bg-slate-8"],
+        [data-paper="on"] #app [class*="bg-slate-7"],
+        [data-paper="on"] #app [class*="bg-slate-6"] { background-color: var(--paper-card) !important; }
+        [data-paper="on"] #app [class*="from-slate-"],
+        [data-paper="on"] #app [class*="to-slate-"] { background-color: var(--paper-card) !important; background-image: none !important; }
+        [data-paper="on"] #app [class*="border-slate-"] { border-color: var(--paper-line) !important; }
+        [data-paper="on"] #app .text-white,
+        [data-paper="on"] #app [class*="text-slate-1"],
+        [data-paper="on"] #app [class*="text-slate-2"],
+        [data-paper="on"] #app [class*="text-slate-3"] { color: var(--paper-ink) !important; }
+        [data-paper="on"] #app [class*="text-slate-4"],
+        [data-paper="on"] #app [class*="text-slate-5"],
+        [data-paper="on"] #app [class*="text-slate-6"] { color: var(--paper-muted) !important; }
+        [data-paper="on"] #app input,
+        [data-paper="on"] #app textarea,
+        [data-paper="on"] #app select { background-color: var(--paper-card) !important; color: var(--paper-ink) !important; border-color: var(--paper-line); }
+        [data-paper="on"] #app header,
+        [data-paper="on"] #app nav { background-color: var(--paper-card) !important; }
+        [data-paper="on"] #app .shadow-black\/40,
+        [data-paper="on"] #app .shadow-black\/20 { box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08) !important; }
+        [data-paper="on"] .leaflet-container { background-color: var(--paper-card-2) !important; }
+        [data-paper="on"] .leaflet-tile-pane { filter: grayscale(0.15) saturate(0.85) brightness(1.05) !important; }
+        [data-paper="on"] .leaflet-popup-content-wrapper,
+        [data-paper="on"] .leaflet-popup-tip { background: var(--paper-card) !important; color: var(--paper-ink) !important; border-color: var(--paper-line) !important; }
+        [data-paper="on"] #app [class*="bg-black\/"] { background-color: rgba(15, 23, 42, 0.86) !important; }
+        [data-paper="on"] #app [class*="bg-black\/"] .text-white { color: #f8fafc !important; }
+        [data-paper="on"] .tax-a4 { background: #fff !important; color: #111 !important; }
+        [data-paper="on"] .tax-print-actions { background-color: #0f172a !important; }
         [data-paper="on"] .tax-print-actions .text-white { color: #f8fafc !important; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
