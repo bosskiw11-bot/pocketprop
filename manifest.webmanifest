@@ -1,7 +1,7 @@
 {
   "id": "./",
   "name": "PocketProp",
-  "short_name": "口袋屋",
+  "short_name": "PocketProp",
   "description": "Local-first property, maintenance and evidence-chain manager.",
   "start_url": "./index.html",
   "scope": "./",
