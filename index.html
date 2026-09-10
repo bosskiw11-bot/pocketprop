@@ -56,6 +56,29 @@
         #app .text-brand-500 { color: var(--brand-500) !important; }
         #app .text-brand-400 { color: var(--brand-400) !important; }
         header h1 .text-brand-500 { color: var(--cream) !important; }
+
+        /* Primary actions = cream paper on navy, not pastel blue */
+        #app .bg-brand-500 { background-color: #e6dccb !important; color: #122036 !important; }
+        #app .hover\:bg-brand-600:hover, #app .bg-brand-600 { background-color: #d4c8b3 !important; color: #122036 !important; }
+        #app .bg-brand-500\/10, #app .hover\:bg-brand-500\/20 { background-color: rgba(230,220,203,0.10) !important; }
+        #app .text-brand-400 { color: #c9dcea !important; }
+        #app .border-brand-500\/20, #app .border-brand-500\/30, #app .border-brand-400 { border-color: rgba(201,220,234,0.28) !important; }
+        #app .shadow-brand-500\/20, #app .shadow-brand-500\/30 { box-shadow: 0 10px 24px rgba(11,21,36,0.35) !important; }
+
+        /* Rainbow chips → folio ice / cream / muted rose */
+        #app [class*="text-emerald-"], #app [class*="text-green-"], #app [class*="text-teal-"],
+        #app [class*="text-sky-"], #app [class*="text-cyan-"], #app [class*="text-indigo-"],
+        #app [class*="text-purple-"], #app [class*="text-violet-"] { color: #c9dcea !important; }
+        #app [class*="text-amber-"], #app [class*="text-orange-"], #app [class*="text-yellow-"] { color: #e6dccb !important; }
+        #app [class*="bg-emerald-"], #app [class*="bg-green-"], #app [class*="bg-teal-"],
+        #app [class*="bg-sky-"], #app [class*="bg-cyan-"], #app [class*="bg-indigo-"],
+        #app [class*="bg-purple-"], #app [class*="bg-violet-"] { background-color: rgba(143,180,201,0.16) !important; }
+        #app [class*="bg-amber-"], #app [class*="bg-orange-"], #app [class*="bg-yellow-"] { background-color: rgba(230,220,203,0.14) !important; }
+        #app [class*="border-emerald-"], #app [class*="border-green-"], #app [class*="border-teal-"],
+        #app [class*="border-sky-"], #app [class*="border-indigo-"], #app [class*="border-purple-"] { border-color: rgba(143,180,201,0.28) !important; }
+        #app [class*="border-amber-"], #app [class*="border-orange-"] { border-color: rgba(230,220,203,0.28) !important; }
+        #app [class*="text-red-"]:not(.tax-print-sheet *), #app [class*="text-rose-"]:not(nav *) { color: #e8a8b0 !important; }
+        #app [class*="bg-red-5"], #app [class*="bg-rose-5"]:not(nav *) { background-color: rgba(196,92,106,0.16) !important; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .bottom-sheet-enter-active, .bottom-sheet-leave-active { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
@@ -3070,7 +3093,7 @@
             return { properties, tasks, repairs, contacts, customRoles, userZones: zones };
         }
 
-        const APP_VERSION = '2026.09.10-b';
+        const APP_VERSION = '2026.09.10-c';
 
         const app = createApp({
             data() {
