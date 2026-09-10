@@ -36,25 +36,76 @@
             --brand-400: #7dd3fc;
             --brand-500: #3b82f6;
             --brand-600: #1d4ed8;
-            --page-bg: #1e2a3d;
-            --app-bg: #243044;
+            --page-bg: #0f172a;
+            --app-bg: #0f172a;
         }
         [data-theme="brick"], [data-theme="cedar"] {
             --brand-400: #e0b089;
             --brand-500: #b56e3d;
             --brand-600: #8a3d28;
-            --page-bg: #2c241e;
-            --app-bg: #352c24;
+            --page-bg: #0f172a;
+            --app-bg: #0f172a;
         }
         [data-theme="fir"], [data-theme="pine"] {
             --brand-400: #8fbc98;
             --brand-500: #3f6b54;
             --brand-600: #2d4a3c;
-            --page-bg: #1c2822;
-            --app-bg: #22302a;
+            --page-bg: #0f172a;
+            --app-bg: #0f172a;
+        }
+        [data-paper="on"][data-theme="harbor"], [data-paper="on"][data-theme="sky"] {
+            --page-bg: #e7eef6;
+            --app-bg: #f4f7fb;
+            --paper-card: #ffffff;
+            --paper-card-2: #e8eef5;
+            --paper-ink: #0f172a;
+            --paper-muted: #475569;
+            --paper-line: #cbd5e1;
+        }
+        [data-paper="on"][data-theme="brick"], [data-paper="on"][data-theme="cedar"] {
+            --page-bg: #efe6db;
+            --app-bg: #f7f1e8;
+            --paper-card: #fffaf4;
+            --paper-card-2: #efe4d6;
+            --paper-ink: #1c1410;
+            --paper-muted: #6b5344;
+            --paper-line: #ddc8b4;
+        }
+        [data-paper="on"][data-theme="fir"], [data-paper="on"][data-theme="pine"] {
+            --page-bg: #dde8e1;
+            --app-bg: #eef4f0;
+            --paper-card: #f7fbf8;
+            --paper-card-2: #dde8e0;
+            --paper-ink: #14201a;
+            --paper-muted: #4a5f54;
+            --paper-line: #b7c9be;
         }
         body { font-family: 'Inter', sans-serif; background-color: var(--page-bg, #0f172a); color: #f8fafc; -webkit-tap-highlight-color: transparent; }
         #app { background-color: var(--app-bg, #0f172a) !important; }
+        [data-paper="on"] body { color: var(--paper-ink); }
+        [data-paper="on"] #app { color: var(--paper-ink); }
+        [data-paper="on"] .text-white { color: var(--paper-ink) !important; }
+        [data-paper="on"] .text-slate-200, [data-paper="on"] .text-slate-300 { color: var(--paper-ink) !important; opacity: 0.82; }
+        [data-paper="on"] .text-slate-400, [data-paper="on"] .text-slate-500, [data-paper="on"] .text-slate-600 { color: var(--paper-muted) !important; }
+        [data-paper="on"] .bg-slate-900,
+        [data-paper="on"] .bg-slate-950,
+        [data-paper="on"] .bg-slate-900\/80,
+        [data-paper="on"] .bg-slate-900\/60,
+        [data-paper="on"] .bg-slate-950\/80,
+        [data-paper="on"] .bg-slate-950\/60 { background-color: var(--app-bg) !important; }
+        [data-paper="on"] .bg-slate-800,
+        [data-paper="on"] .bg-slate-800\/80,
+        [data-paper="on"] .bg-slate-800\/60,
+        [data-paper="on"] .bg-slate-700 { background-color: var(--paper-card) !important; }
+        [data-paper="on"] .from-slate-800, [data-paper="on"] .to-slate-900 { --tw-gradient-from: var(--paper-card) !important; --tw-gradient-to: var(--paper-card-2) !important; }
+        [data-paper="on"] .border-slate-800,
+        [data-paper="on"] .border-slate-700,
+        [data-paper="on"] .border-slate-700\/60,
+        [data-paper="on"] .border-slate-700\/50,
+        [data-paper="on"] .border-slate-600 { border-color: var(--paper-line) !important; }
+        [data-paper="on"] header, [data-paper="on"] nav { background-color: color-mix(in srgb, var(--app-bg) 88%, white) !important; }
+        [data-paper="on"] .tax-a4, [data-paper="on"] .tax-a4 * { color: inherit; }
+        [data-paper="on"] .tax-print-actions .text-white { color: #f8fafc !important; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .bottom-sheet-enter-active, .bottom-sheet-leave-active { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
@@ -1664,6 +1715,16 @@
                                         <button type="button" @click="setTheme('fir')" class="w-8 h-8 rounded-full border-2" style="background:#3f6b54" :class="colorTheme === 'fir' ? 'border-white scale-110' : 'border-slate-600'" :title="t('themeFir')"></button>
                                     </div>
                                 </div>
+                                <div class="bg-slate-800/80 p-4 rounded-2xl border border-slate-700/60 flex justify-between items-center gap-3">
+                                    <div>
+                                        <p class="text-sm font-bold text-white">{{ t('settingsPaper') }}</p>
+                                        <p class="text-[10px] text-slate-500 mt-0.5">{{ t('settingsPaperHint') }}</p>
+                                    </div>
+                                    <div class="flex rounded-xl overflow-hidden border border-slate-600 text-[11px] font-bold">
+                                        <button type="button" @click="setPaper(false)" class="px-3 py-1.5" :class="!paperMode ? 'bg-brand-500 text-white' : 'bg-slate-700 text-slate-300'">{{ t('paperDark') }}</button>
+                                        <button type="button" @click="setPaper(true)" class="px-3 py-1.5" :class="paperMode ? 'bg-brand-500 text-white' : 'bg-slate-700 text-slate-300'">{{ t('paperLight') }}</button>
+                                    </div>
+                                </div>
                                 <div class="bg-slate-800/80 p-4 rounded-2xl border border-slate-700/60 flex justify-between items-center">
                                     <div class="flex items-center gap-3">
                                         <div class="w-9 h-9 rounded-xl flex items-center justify-center" :class="gpsEnabled ? 'bg-brand-500/20 text-brand-400' : 'bg-slate-700 text-slate-500'">
@@ -2218,7 +2279,7 @@
                 tenantSubTimeline: 'Tenants', addTenantSub: 'Add tenant', editTenantSub: 'Edit tenant', monthlyRent: 'Monthly rent', selectCrmTenant: 'Choose a saved tenant', tenantName: 'Tenant name', roomName: 'Unit / room', roomHint: 'e.g. Primary bedroom, Unit A', entireHouse: 'Whole property', leasesCount: 'leases',
                 toastTenantSubSaved: 'Tenant lease saved', toastTenantSubDeleted: 'Tenant lease deleted', toastUsageSaved: 'Timeline updated', toastUsageDeleted: 'Timeline record deleted',
                 usagePurchased: 'Purchased', usagePrimary: 'Owner-occupied', usageRental: 'Rental', usageShortTerm: 'Short-term rental', usageVacant: 'Vacant', usageCommercial: 'Commercial', usageSold: 'Sold',
-                settingsTitle: 'Settings', settingsPreferences: 'Preferences', settingsLanguage: 'Language', settingsTheme: 'Colour theme', settingsThemeHint: 'Harbor for downtown condos. Brick for houses. Fir for land and cottages.', themeHarbor: 'Harbor', themeBrick: 'Brick', themeFir: 'Fir', themeSky: 'Harbor', themeCedar: 'Brick', themePine: 'Fir', settingsGPS: 'Location services', settingsGPSDesc: 'Used to place you on the property map.',
+                settingsTitle: 'Settings', settingsPreferences: 'Preferences', settingsLanguage: 'Language', settingsTheme: 'Colour theme', settingsThemeHint: 'Harbor for downtown condos. Brick for houses. Fir for land and cottages.', settingsPaper: 'Background', settingsPaperHint: 'Dark is the original night desk. Paper is a light page tinted by the theme.', paperDark: 'Dark', paperLight: 'Paper', themeHarbor: 'Harbor', themeBrick: 'Brick', themeFir: 'Fir', themeSky: 'Harbor', themeCedar: 'Brick', themePine: 'Fir', settingsGPS: 'Location services', settingsGPSDesc: 'Used to place you on the property map.',
                 settingsDashboardViews: 'Home views', minOneViewRequired: 'Keep at least one view turned on.', settingsPropertyOrder: 'Property order',
                 settingsContactRoles: 'Contact types', addRoleCategory: 'Add type', roleCategoryName: 'Type name', toastRoleAdded: 'Type added', toastRoleDeleted: 'Type removed',
                 settingsDataBackup: 'Backup & restore', exportBackup: 'Export JSON backup', exportBackupLight: 'Light backup', exportBackupLightDesc: 'Houses, work and ledger only — no photos.', exportBackupFull: 'Full backup', exportBackupFullDesc: 'Includes photos and receipts. File can be large.', exportTaxPdf: 'Tax worksheet (PDF)', exportTaxPdfDesc: 'Receipted operating vs capital repairs. Print or Save as PDF.', exportTaxPrint: 'Print / Save PDF', exportTaxLang: 'PDF language', exportTaxYear: 'Year', exportTaxTitle: 'Repair tax worksheet', exportTaxGenerated: 'Prepared', exportTaxDisclaimer: 'This is a local worksheet from PocketProp. It is not a CRA T776 and not tax advice. Only records with a receipt are listed.', exportTaxEmpty: 'No receipted repair records in this filter.', exportTaxFooter: 'Capital cost allowance class is not assigned yet. Receipt images stay in the app.', importBackup: 'Restore JSON Backup', toastExportLight: 'Light backup saved (no photos)', toastExportFull: 'Full backup saved', toastImportLightNoPhotos: 'Restored text. Photos live in a full backup.', settingsDaily: 'General', settingsAdvanced: 'Advanced', settingsLangHint: 'Language is switched from the button at the top of Home. Only built-in labels change. Names you added or edited stay as written.', deadline: 'Deadline', itemAlertOn: 'Red-dot reminder for this item', workDotsTitle: 'Work red dots', workDotsHint: 'Turn on, then choose red for overdue and yellow for coming due.', cycleSoonDays: 'Days before cycle due', taskSoonDays: 'Days before task deadline', dotOverdueRed: 'Overdue: red dot', dotSoonYellow: 'Coming due: yellow dot', confirmNextDueTitle: 'Confirm next due date', cleanupUnusedPhotos: 'Clear unused photos', cleanupUnusedPhotosDesc: 'Remove photo files no record points to.', toastCleanupDone: 'Cleared {n} unused files', photoInFullBackup: 'In full backup', toastAddPropertyFirst: 'Add a property first', routineDotPromptTitle: 'A cycle is overdue', routineDotPromptBody: 'Show a small red dot on Work when something is due?', toastImportSuccess: 'Data restored successfully!', toastImportFailed: 'Invalid backup file format.', confirmImportMsg: 'Restoring from backup will overwrite all existing local data. Continue?',
@@ -2265,7 +2326,7 @@
                 tenantSubTimeline: '这期间的租客', addTenantSub: '添加租客', editTenantSub: '编辑租客', monthlyRent: '月租金', selectCrmTenant: '从联系人里选租客', tenantName: '租客姓名', roomName: '房间', roomHint: '例如：主卧、A房、地下室', entireHouse: '整套出租', leasesCount: '次租约',
                 toastTenantSubSaved: '租客已保存', toastTenantSubDeleted: '租客已删除', toastUsageSaved: '用途已保存', toastUsageDeleted: '用途已删除',
                 usagePurchased: '买入/购入', usagePrimary: '自住', usageRental: '出租(长租)', usageShortTerm: '短租', usageVacant: '空置', usageCommercial: '商业用途', usageSold: '已售出',
-                settingsTitle: '系统设置', settingsPreferences: '偏好设置', settingsLanguage: '界面语言', settingsTheme: '色彩主题', settingsThemeHint: '港湾适合市区公寓。砖色适合独立屋。冷杉适合土地和度假屋。', themeHarbor: '港湾', themeBrick: '砖色', themeFir: '冷杉', themeSky: '港湾', themeCedar: '砖色', themePine: '冷杉', settingsGPS: 'GPS 定位服务', settingsGPSDesc: '开启后可在房屋地图中定位当前位置及导航。',
+                settingsTitle: '系统设置', settingsPreferences: '偏好设置', settingsLanguage: '界面语言', settingsTheme: '色彩主题', settingsThemeHint: '港湾适合市区公寓。砖色适合独立屋。冷杉适合土地和度假屋。', settingsPaper: '底色', settingsPaperHint: '深色是原来的夜桌。浅色是跟主题走的纸底。', paperDark: '深色', paperLight: '浅色纸', themeHarbor: '港湾', themeBrick: '砖色', themeFir: '冷杉', themeSky: '港湾', themeCedar: '砖色', themePine: '冷杉', settingsGPS: 'GPS 定位服务', settingsGPSDesc: '开启后可在房屋地图中定位当前位置及导航。',
                 settingsDashboardViews: '仪表盘视图设置', minOneViewRequired: '必须至少保留一个视图模式。', settingsPropertyOrder: '房屋卡片排序',
                 settingsContactRoles: '人员类别设置', addRoleCategory: '新增类别', roleCategoryName: '类别名称', toastRoleAdded: '已新增人员类别', toastRoleDeleted: '已删除人员类别',
                 settingsDataBackup: '数据备份与恢复 (离线)', exportBackup: '导出 JSON 备份文件', exportBackupLight: '轻备份', exportBackupLightDesc: '只含房屋、工作和账本，不含照片。', exportBackupFull: '完整备份', exportBackupFullDesc: '含照片和收据，文件可能很大。', exportTaxPdf: '税务备查 PDF', exportTaxPdfDesc: '只汇总有收据的维修保养与资产改良。用系统打印或存储为 PDF。', exportTaxPrint: '打印 / 存 PDF', exportTaxLang: 'PDF 语言', exportTaxYear: '年份', exportTaxTitle: '维修税务备查表', exportTaxGenerated: '生成日期', exportTaxDisclaimer: '本表由 PocketProp 在本机生成，不是 CRA T776，也不是税务意见。仅列入有收据的记录。', exportTaxEmpty: '当前筛选没有带收据的维修记录。', exportTaxFooter: '尚未标注 CCA 类别。收据原件仍在 App 里。', importBackup: '恢复 JSON 备份文件', toastExportLight: '已导出轻备份（不含照片）', toastExportFull: '已导出完整备份', toastImportLightNoPhotos: '文字已恢复。照片在完整备份里。', settingsDaily: '日常', settingsAdvanced: '进阶', settingsLangHint: '语言在首页右上角切换。仅更换系统预设文字。凡自行新增或编辑过的项目，系统不会主动翻译。', deadline: '截止日期', itemAlertOn: '此项显示小红点', workDotsTitle: '工作小红点', workDotsHint: '打开后，再分别选择过期红点和快到期黄点。', cycleSoonDays: '周期提前几天', taskSoonDays: '待办提前几天', dotOverdueRed: '过期：红点', dotSoonYellow: '快到期：黄点', confirmNextDueTitle: '确认下次日期', cleanupUnusedPhotos: '清理未用照片', cleanupUnusedPhotosDesc: '删掉没有记录再引用的图片文件。', toastCleanupDone: '已清理 {n} 个未用文件', photoInFullBackup: '图在完整备份', toastAddPropertyFirst: '请先添加一套房子', routineDotPromptTitle: '有周期已经过期', routineDotPromptBody: '要不要在工作页用小红点标出到期项？', toastImportSuccess: '数据恢复成功！', toastImportFailed: '恢复失败，文件格式错误。', confirmImportMsg: '导入备份将覆盖当前所有本地数据，确定继续吗？',
@@ -3080,6 +3141,7 @@
                 return {
                     currentLang: localStorage.getItem('pocket_prop_lang') || localStorage.getItem('my_home_os_lang') || 'en',
                     colorTheme: localStorage.getItem('pocket_prop_theme') || 'harbor',
+                    paperMode: localStorage.getItem('pocket_prop_paper') === 'on',
                     currentTab: 'dashboard', 
                     workSubTab: 'tasks',
                     formCatalogCategory: '', 
@@ -3744,6 +3806,12 @@
                     this.colorTheme = next;
                     localStorage.setItem('pocket_prop_theme', next);
                     document.documentElement.setAttribute('data-theme', next);
+                    document.documentElement.setAttribute('data-paper', this.paperMode ? 'on' : 'off');
+                },
+                setPaper(on) {
+                    this.paperMode = !!on;
+                    localStorage.setItem('pocket_prop_paper', this.paperMode ? 'on' : 'off');
+                    document.documentElement.setAttribute('data-paper', this.paperMode ? 'on' : 'off');
                 },
                 navToDashboard() { this.viewingPropertyId = null; this.viewingZone = null; this.currentTab = 'dashboard'; },
                 getProp(id) { return this.properties.find(p => p.id === id); },
