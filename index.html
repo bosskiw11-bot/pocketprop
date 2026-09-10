@@ -169,6 +169,19 @@
                     </button>
                 </div>
 
+                <!-- Shared map (list, map and grid) -->
+                <div v-show="!viewingPropertyId" class="w-full aspect-[3/2] max-h-[280px] mb-3 bg-slate-800 rounded-3xl border border-slate-700/50 overflow-hidden relative shadow-lg flex-none">
+                    <div class="absolute top-3 right-3 z-20 flex gap-2">
+                        <button v-if="gpsEnabled" @click="locateUserOnMap" class="bg-slate-900/90 text-brand-400 text-xs font-bold px-3 py-1.5 rounded-xl border border-slate-700 shadow-md active:scale-95 transition-transform flex items-center gap-1.5">
+                            <i class="fa-solid fa-crosshairs"></i> {{ t('locateMe') }}
+                        </button>
+                        <button @click="fitMapBounds" class="bg-slate-900/90 text-brand-400 text-xs font-bold px-3 py-1.5 rounded-xl border border-slate-700 shadow-md active:scale-95 transition-transform flex items-center gap-1.5">
+                            <i class="fa-solid fa-expand"></i> {{ t('recenterMap') }}
+                        </button>
+                    </div>
+                    <div id="property-map" class="absolute inset-0 w-full h-full z-10"></div>
+                </div>
+
                 <!-- List View Mode -->
                 <div v-if="!viewingPropertyId && dashboardViewMode === 'list'" class="space-y-2.5">
                     <div v-if="properties.length === 0" class="flex flex-col items-center justify-center py-14 bg-slate-800/30 rounded-3xl border border-slate-700/30 border-dashed">
@@ -215,19 +228,6 @@
                             <i class="fa-solid fa-chevron-right text-slate-600 text-[10px] pl-1 sm:hidden"></i>
                         </div>
                     </div>
-                </div>
-
-                <!-- Map View Mode -->
-                <div v-show="!viewingPropertyId && dashboardViewMode === 'map'" class="w-full aspect-[3/2] max-h-[280px] bg-slate-800 rounded-3xl border border-slate-700/50 overflow-hidden relative shadow-lg flex-none">
-                    <div class="absolute top-3 right-3 z-20 flex gap-2">
-                        <button v-if="gpsEnabled" @click="locateUserOnMap" class="bg-slate-900/90 text-brand-400 text-xs font-bold px-3 py-1.5 rounded-xl border border-slate-700 shadow-md active:scale-95 transition-transform flex items-center gap-1.5">
-                            <i class="fa-solid fa-crosshairs"></i> {{ t('locateMe') }}
-                        </button>
-                        <button @click="fitMapBounds" class="bg-slate-900/90 text-brand-400 text-xs font-bold px-3 py-1.5 rounded-xl border border-slate-700 shadow-md active:scale-95 transition-transform flex items-center gap-1.5">
-                            <i class="fa-solid fa-expand"></i> {{ t('recenterMap') }}
-                        </button>
-                    </div>
-                    <div id="property-map" class="absolute inset-0 w-full h-full z-10"></div>
                 </div>
 
                 <!-- Grid View Mode -->
@@ -3112,7 +3112,7 @@
             return { properties, tasks, repairs, contacts, customRoles, userZones: zones };
         }
 
-        const APP_VERSION = '2026.09.10-k';
+        const APP_VERSION = '2026.09.10-l';
 
         const app = createApp({
             data() {
@@ -3855,7 +3855,7 @@
                     document.documentElement.removeAttribute('data-paper');
                 },
                 setPaper() {},
-                navToDashboard() { this.viewingPropertyId = null; this.viewingZone = null; this.currentTab = 'dashboard'; },
+                navToDashboard() { this.viewingPropertyId = null; this.viewingZone = null; this.currentTab = 'dashboard'; nextTick(() => this.initOrRefreshMap()); },
                 getProp(id) { return this.properties.find(p => p.id === id); },
                 cashflowCatalogGroup(kind) {
                     const cf = (this.userCatalog && this.userCatalog.cashflow) || defaultCashflowCatalog;
@@ -3949,7 +3949,7 @@
                     localStorage.setItem('pocket_prop_enabled_views', JSON.stringify(this.enabledViews));
                     if (!this.enabledViews.includes(this.dashboardViewMode)) {
                         this.dashboardViewMode = this.enabledViews[0];
-                        if (this.dashboardViewMode === 'map') nextTick(() => this.initOrRefreshMap());
+                        nextTick(() => this.initOrRefreshMap());
                     }
                 },
                 getRoleConfig(roleKey) { return this.roleConfigMap[roleKey] || this.roleConfigMap.tenant; },
@@ -3968,8 +3968,8 @@
                     this.repairs.forEach(r => { if (r.contractorId === contact.id && r.propertyId) ids.add(r.propertyId); });
                     return [...ids];
                 },
-                movePropertyUp(index) { if (index > 0) { const item = this.properties.splice(index, 1)[0]; this.properties.splice(index - 1, 0, item); this.saveToStorage(); if (this.dashboardViewMode === 'map') this.renderMapMarkers(); } },
-                movePropertyDown(index) { if (index < this.properties.length - 1) { const item = this.properties.splice(index, 1)[0]; this.properties.splice(index + 1, 0, item); this.saveToStorage(); if (this.dashboardViewMode === 'map') this.renderMapMarkers(); } },
+                movePropertyUp(index) { if (index > 0) { const item = this.properties.splice(index, 1)[0]; this.properties.splice(index - 1, 0, item); this.saveToStorage(); this.renderMapMarkers(); } },
+                movePropertyDown(index) { if (index < this.properties.length - 1) { const item = this.properties.splice(index, 1)[0]; this.properties.splice(index + 1, 0, item); this.saveToStorage(); this.renderMapMarkers(); } },
                 getUsageConfig(typeKey) { return this.availableUsageTypes[typeKey] || this.availableUsageTypes.primary; },
                 isSingleDateType(typeKey) { return typeKey === 'purchased' || typeKey === 'sold'; },
                 getCurrentUsageType(prop) {
@@ -4013,7 +4013,7 @@
                     const newUsages = []; if (purchased) newUsages.push(purchased); newUsages.push(...periods); if (sold) newUsages.push(sold);
                     prop.usages = newUsages;
                 },
-                switchDashboardView(mode) { if (!this.enabledViews.includes(mode)) return; this.dashboardViewMode = mode; if (mode === 'map') nextTick(() => this.initOrRefreshMap()); },
+                switchDashboardView(mode) { if (!this.enabledViews.includes(mode)) return; this.dashboardViewMode = mode; nextTick(() => this.initOrRefreshMap()); },
                 toggleGPS() {
                     this.gpsEnabled = !this.gpsEnabled; localStorage.setItem('pocket_prop_gps', this.gpsEnabled);
                     if (!this.gpsEnabled && this.userLocationMarker && this.mapInstance) { this.mapInstance.removeLayer(this.userLocationMarker); this.userLocationMarker = null; }
@@ -4663,7 +4663,7 @@
                         this.properties.push({ id: 'p_' + Date.now(), usages: [{ id: 'u_' + Date.now(), usageType: 'purchased', startDate: this.todayIso(), endDate: '', notes: 'Property Purchase' }, { id: 'u_' + (Date.now() + 1), usageType: 'primary', startDate: this.todayIso(), endDate: '', notes: '' }], ...this.formProperty });
                         this.showToast(this.t('toastPropSaved'));
                     }
-                    await this.saveToStorage(); this.closeModal(); if (this.dashboardViewMode === 'map') this.renderMapMarkers();
+                    await this.saveToStorage(); this.closeModal(); this.renderMapMarkers();
                 },
                 async editProperty(prop) { this.openModal('property', prop); },
                 editTask(task) { this.openModal('task', task); },
@@ -4695,7 +4695,7 @@
                     await this.saveToStorage();
                     this.closeModal();
                     this.showToast(this.t('toastPropertyDeleted'));
-                    if (this.dashboardViewMode === 'map') this.renderMapMarkers();
+                    this.renderMapMarkers();
                 },
                 async deleteProperty() {
                     if (this.editingPropertyId) this.promptDeleteProperty(this.editingPropertyId);
@@ -4709,7 +4709,7 @@
                     } else {
                         this.tasks.unshift({ id: 't_' + Date.now(), propertyId: this.formTask.propertyId, titleSelect: this.formTask.titleSelect, title: this.formTask.title, zone: this.formTask.zone, category: this.formTask.category, issueDate: this.formTask.issueDate || this.todayIso(), deadline: this.formTask.deadline || '', alertOn: !!this.formTask.alertOn, beforePhotos: [...this.formTask.beforePhotos], completed: false });
                     }
-                    await this.saveToStorage(); this.closeModal(); this.showToast(this.t('toastTaskSaved')); if (this.dashboardViewMode === 'map') this.renderMapMarkers();
+                    await this.saveToStorage(); this.closeModal(); this.showToast(this.t('toastTaskSaved')); this.renderMapMarkers();
                 },
                 promptDeleteTask(id) { this.itemToDelete = { type: 'task', id }; },
                 promptDeleteRepair(id) { this.itemToDelete = { type: 'repair', id }; },
@@ -4748,7 +4748,7 @@
                     
                     this.itemToDelete = null;
                     await this.saveToStorage();
-                    if (this.dashboardViewMode === 'map') this.renderMapMarkers();
+                    this.renderMapMarkers();
                 },
                 convertTaskToRepair(task) {
                     this.convertingTaskId = task.id;
@@ -5002,7 +5002,7 @@
                     this.closeWipeWizard();
                     this.closeModal();
                     this.showToast(this.t('toastWiped'));
-                    if (this.dashboardViewMode === 'map') nextTick(() => this.initOrRefreshMap());
+                    nextTick(() => this.initOrRefreshMap());
                 },
                 async loadDemoData() {
                     if (!confirm(this.t('confirmDemoDataMsg'))) return;
@@ -5033,7 +5033,7 @@
                     await this.saveToStorage();
                     this.closeModal();
                     this.showToast(this.t('toastDemoLoaded'));
-                    if (this.dashboardViewMode === 'map') nextTick(() => this.initOrRefreshMap());
+                    nextTick(() => this.initOrRefreshMap());
                 },
                 async saveToStorage() {
                     if (typeof localforage !== 'undefined') {
@@ -5293,7 +5293,7 @@
                     if (dropped) this.showToast(this.t('toastBackupUnsafeMedia').replace('{n}', String(dropped)));
                     else if (hasFileRefs && !Object.keys(data.blobs || {}).length) this.showToast(this.t('toastImportLightNoPhotos'));
                     else this.showToast(this.t('toastImportSuccess'));
-                    if (this.dashboardViewMode === 'map') this.renderMapMarkers();
+                    this.renderMapMarkers();
                 },
                 importData(event) {
                     const file = event.target.files[0];
@@ -5351,9 +5351,7 @@
                 if (!loaded) {
                     this.userZones = getDefaultZones(this.currentLang);
                 }
-                if (this.dashboardViewMode === 'map') {
-                    nextTick(() => { this.initOrRefreshMap(); });
-                }
+                nextTick(() => { this.initOrRefreshMap(); });
             }
         });
         
