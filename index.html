@@ -161,9 +161,6 @@
                     <button v-if="enabledViews.includes('list')" @click="switchDashboardView('list')" class="flex-1 py-2 text-[11px] sm:text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5" :class="dashboardViewMode === 'list' ? 'bg-brand-500 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'">
                         <i class="fa-solid fa-list-ul"></i> {{ t('viewModeList') }}
                     </button>
-                    <button v-if="enabledViews.includes('map')" @click="switchDashboardView('map')" class="flex-1 py-2 text-[11px] sm:text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5" :class="dashboardViewMode === 'map' ? 'bg-brand-500 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'">
-                        <i class="fa-solid fa-map-location-dot"></i> {{ t('viewModeMap') }}
-                    </button>
                     <button v-if="enabledViews.includes('grid')" @click="switchDashboardView('grid')" class="flex-1 py-2 text-[11px] sm:text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5" :class="dashboardViewMode === 'grid' ? 'bg-brand-500 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'">
                         <i class="fa-solid fa-table-cells-large"></i> {{ t('viewModeGrid') }}
                     </button>
@@ -484,7 +481,7 @@
                                         <span class="text-[10px] text-slate-400 uppercase font-bold tracking-widest"><i class="fa-solid mr-1.5" :class="layer.icon"></i>{{ layer.title }}</span>
                                         <div class="h-px bg-slate-700 flex-1"></div>
                                     </div>
-                                    <div class="grid grid-cols-3 gap-2">
+                                    <div class="grid grid-cols-2 gap-2">
                                         <div v-for="zone in layer.zones" :key="zone"
                                              @click="viewZone(zone)"
                                              class="rounded-xl p-2 border flex flex-col items-center justify-center text-center min-h-[56px] relative transition-all duration-200 cursor-pointer active:scale-95"
@@ -1589,10 +1586,6 @@
                                     <button @click="toggleDashboardView('list')" class="p-3 rounded-2xl border text-xs font-bold flex flex-col items-center justify-center gap-1.5 transition-all active:scale-95" :class="enabledViews.includes('list') ? 'bg-brand-500/20 text-brand-400 border-brand-500/50 shadow-md shadow-brand-500/10' : 'bg-slate-800 text-slate-500 border-slate-700 hover:text-slate-400'">
                                         <i class="fa-solid fa-list-ul text-lg mb-1"></i>
                                         <span>{{ t('viewModeList') }}</span>
-                                    </button>
-                                    <button @click="toggleDashboardView('map')" class="p-3 rounded-2xl border text-xs font-bold flex flex-col items-center justify-center gap-1.5 transition-all active:scale-95" :class="enabledViews.includes('map') ? 'bg-brand-500/20 text-brand-400 border-brand-500/50 shadow-md shadow-brand-500/10' : 'bg-slate-800 text-slate-500 border-slate-700 hover:text-slate-400'">
-                                        <i class="fa-solid fa-map-location-dot text-lg mb-1"></i>
-                                        <span>{{ t('viewModeMap') }}</span>
                                     </button>
                                     <button @click="toggleDashboardView('grid')" class="p-3 rounded-2xl border text-xs font-bold flex flex-col items-center justify-center gap-1.5 transition-all active:scale-95" :class="enabledViews.includes('grid') ? 'bg-brand-500/20 text-brand-400 border-brand-500/50 shadow-md shadow-brand-500/10' : 'bg-slate-800 text-slate-500 border-slate-700 hover:text-slate-400'">
                                         <i class="fa-solid fa-table-cells-large text-lg mb-1"></i>
@@ -3112,12 +3105,13 @@
             return { properties, tasks, repairs, contacts, customRoles, userZones: zones };
         }
 
-        const APP_VERSION = '2026.09.10-l';
+        const APP_VERSION = '2026.09.10-m';
 
         const app = createApp({
             data() {
-                let savedViews = JSON.parse(localStorage.getItem('pocket_prop_enabled_views')) || ['list', 'map', 'grid'];
-                savedViews = savedViews.map(v => v === '3d' ? 'grid' : v);
+                let savedViews = JSON.parse(localStorage.getItem('pocket_prop_enabled_views')) || ['list', 'grid'];
+                savedViews = savedViews.map(v => v === '3d' ? 'grid' : v).filter(v => v === 'list' || v === 'grid');
+                if (!savedViews.length) savedViews = ['list', 'grid'];
 
                 return {
                     currentLang: localStorage.getItem('pocket_prop_lang') || localStorage.getItem('my_home_os_lang') || 'en',
@@ -3127,7 +3121,7 @@
                     workSubTab: 'tasks',
                     formCatalogCategory: '', 
                     enabledViews: savedViews,
-                    dashboardViewMode: 'list', 
+                    dashboardViewMode: (localStorage.getItem('pocket_prop_dash_view') === 'grid' ? 'grid' : 'list'), 
                     mapInstance: null,
                     mapMarkers: [],
                     markerClusterGroup: null,
@@ -3942,6 +3936,7 @@
                 },
                 viewZone(zone) { this.viewingZone = zone; },
                 toggleDashboardView(mode) {
+                    if (mode === 'map') return;
                     if (this.enabledViews.includes(mode)) {
                         if (this.enabledViews.length > 1) { this.enabledViews = this.enabledViews.filter(v => v !== mode); } 
                         else { this.showToast(this.t('minOneViewRequired')); return; }
@@ -4013,7 +4008,7 @@
                     const newUsages = []; if (purchased) newUsages.push(purchased); newUsages.push(...periods); if (sold) newUsages.push(sold);
                     prop.usages = newUsages;
                 },
-                switchDashboardView(mode) { if (!this.enabledViews.includes(mode)) return; this.dashboardViewMode = mode; nextTick(() => this.initOrRefreshMap()); },
+                switchDashboardView(mode) { if (mode === 'map' || !this.enabledViews.includes(mode)) return; this.dashboardViewMode = mode; localStorage.setItem('pocket_prop_dash_view', mode); nextTick(() => this.initOrRefreshMap()); },
                 toggleGPS() {
                     this.gpsEnabled = !this.gpsEnabled; localStorage.setItem('pocket_prop_gps', this.gpsEnabled);
                     if (!this.gpsEnabled && this.userLocationMarker && this.mapInstance) { this.mapInstance.removeLayer(this.userLocationMarker); this.userLocationMarker = null; }
