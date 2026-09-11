@@ -3105,7 +3105,7 @@
             return { properties, tasks, repairs, contacts, customRoles, userZones: zones };
         }
 
-        const APP_VERSION = '2026.09.10-m';
+        const APP_VERSION = '2026.09.11-a';
 
         const app = createApp({
             data() {
@@ -4153,10 +4153,8 @@
                 },
                 isRoutineDueSoon(routine) {
                     if (!routine || !routine.nextDueDate || this.isRoutineOverdue(routine)) return false;
-                    const due = new Date(routine.nextDueDate + 'T00:00:00');
-                    const limit = new Date();
-                    limit.setDate(limit.getDate() + (Number(this.cycleSoonDays) || 0));
-                    return due <= limit;
+                    const lastSoon = this.addDaysToDateStr(this.todayIso(), Number(this.cycleSoonDays) || 0);
+                    return routine.nextDueDate <= lastSoon;
                 },
                 applyRoutineCatalog() {
                     if (this.formRoutine.catalogKey === 'OTHER') {
@@ -4239,10 +4237,8 @@
                 },
                 isTaskDueSoon(task) {
                     if (!task || !task.deadline || this.isTaskOverdue(task)) return false;
-                    const due = new Date(task.deadline + 'T00:00:00');
-                    const limit = new Date();
-                    limit.setDate(limit.getDate() + (Number(this.taskSoonDays) || 0));
-                    return due <= limit;
+                    const lastSoon = this.addDaysToDateStr(this.todayIso(), Number(this.taskSoonDays) || 0);
+                    return task.deadline <= lastSoon;
                 },
                 wasRoutineCompletedToday(routine) {
                     if (!routine) return false;
