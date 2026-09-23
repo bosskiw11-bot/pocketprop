@@ -1105,7 +1105,7 @@
                                 <div>
                                     <div class="flex justify-between items-center mb-2 pl-1">
                                         <label class="text-[12px] font-bold text-slate-400 uppercase tracking-wider">{{ t('usagePhotosBefore') }}</label>
-                                        <span class="text-[11px] font-bold text-brand-400">{{ (formUsage.beforePhotos || []).length }} / {{ photoMax }}</span>
+                                        <span class="text-[11px] font-bold text-brand-400">{{ (formUsage.beforePhotos || []).length }} / {{ usagePhotoMax }}</span>
                                     </div>
                                     <div class="grid grid-cols-3 gap-3">
                                         <div v-for="(photo, idx) in (formUsage.beforePhotos || [])" :key="'ub_'+idx" class="relative aspect-square bg-slate-800 rounded-2xl p-1 border border-slate-700 flex items-center justify-center overflow-hidden">
@@ -1114,7 +1114,7 @@
                                                 <i class="fa-solid fa-xmark"></i>
                                             </button>
                                         </div>
-                                        <div v-if="(formUsage.beforePhotos || []).length < photoMax" @click="triggerFileInput('before', true)" class="aspect-square bg-slate-800/50 border-2 border-dashed border-slate-600 rounded-2xl flex flex-col items-center justify-center text-slate-400 cursor-pointer active:bg-slate-800 transition-colors p-1 text-center">
+                                        <div v-if="(formUsage.beforePhotos || []).length < usagePhotoMax" @click="triggerFileInput('before', true)" class="aspect-square bg-slate-800/50 border-2 border-dashed border-slate-600 rounded-2xl flex flex-col items-center justify-center text-slate-400 cursor-pointer active:bg-slate-800 transition-colors p-1 text-center">
                                             <i class="fa-solid fa-camera text-xl mb-1 text-brand-400"></i>
                                             <span class="text-[10px] font-bold leading-tight">{{ t('addPhoto') }}</span>
                                         </div>
@@ -1124,7 +1124,7 @@
                                 <div>
                                     <div class="flex justify-between items-center mb-2 pl-1">
                                         <label class="text-[12px] font-bold text-slate-400 uppercase tracking-wider">{{ t('usagePhotosAfter') }}</label>
-                                        <span class="text-[11px] font-bold text-emerald-400">{{ (formUsage.afterPhotos || []).length }} / {{ photoMax }}</span>
+                                        <span class="text-[11px] font-bold text-emerald-400">{{ (formUsage.afterPhotos || []).length }} / {{ usagePhotoMax }}</span>
                                     </div>
                                     <div class="grid grid-cols-3 gap-3">
                                         <div v-for="(photo, idx) in (formUsage.afterPhotos || [])" :key="'ua_'+idx" class="relative aspect-square bg-slate-800 rounded-2xl p-1 border border-slate-700 flex items-center justify-center overflow-hidden">
@@ -1133,7 +1133,7 @@
                                                 <i class="fa-solid fa-xmark"></i>
                                             </button>
                                         </div>
-                                        <div v-if="(formUsage.afterPhotos || []).length < photoMax" @click="triggerFileInput('after', true)" class="aspect-square bg-slate-800/50 border-2 border-dashed border-slate-600 rounded-2xl flex flex-col items-center justify-center text-slate-400 cursor-pointer active:bg-slate-800 transition-colors p-1 text-center">
+                                        <div v-if="(formUsage.afterPhotos || []).length < usagePhotoMax" @click="triggerFileInput('after', true)" class="aspect-square bg-slate-800/50 border-2 border-dashed border-slate-600 rounded-2xl flex flex-col items-center justify-center text-slate-400 cursor-pointer active:bg-slate-800 transition-colors p-1 text-center">
                                             <i class="fa-solid fa-camera text-xl mb-1 text-emerald-400"></i>
                                             <span class="text-[10px] font-bold leading-tight">{{ t('addPhoto') }}</span>
                                         </div>
@@ -2297,7 +2297,7 @@
                 usageTimeline: 'Usage Timeline', startDate: 'Start Date', endDate: 'End Date', addUsagePeriod: 'Add Event/Period', editUsagePeriod: 'Edit Event/Period', modalAddUsage: 'Add Event or Usage Period', ongoing: 'Present',
                 usageNotes: 'Period Notes / Price / Tenant Info', noUsageHistory: 'No timeline events logged yet.',
                 usageRealtor: 'Realtor', usageLawyer: 'Lawyer', usageManager: 'Property manager', noneAssigned: 'None',
-                usagePhotosBefore: 'Before photos (max 6)', usagePhotosAfter: 'After photos (max 6)',
+                usagePhotosBefore: 'Before photos (max 20)', usagePhotosAfter: 'After photos (max 20)',
                 linkedFromProperties: 'Linked properties', linkedFromHint: 'Shown after this person is selected on a property timeline.',
                 tenantSubTimeline: 'Tenants', addTenantSub: 'Add tenant', editTenantSub: 'Edit tenant', monthlyRent: 'Monthly rent', selectCrmTenant: 'Choose a saved tenant', tenantName: 'Tenant name', roomName: 'Unit / room', roomHint: 'e.g. Primary bedroom, Unit A', entireHouse: 'Whole property', leasesCount: 'leases',
                 toastTenantSubSaved: 'Tenant lease saved', toastTenantSubDeleted: 'Tenant lease deleted', toastUsageSaved: 'Timeline updated', toastUsageDeleted: 'Timeline record deleted',
@@ -2345,7 +2345,7 @@
                 usageTimeline: '用途时间线', startDate: '开始日期', endDate: '结束日期', addUsagePeriod: '添加一段用途', editUsagePeriod: '编辑这段用途', modalAddUsage: '添加买入、自住、出租等', ongoing: '至今',
                 usageNotes: '备注 / 价格 / 租客情况', noUsageHistory: '还没有用途记录。',
                 usageRealtor: '经纪', usageLawyer: '律师', usageManager: '托管', noneAssigned: '未指定',
-                usagePhotosBefore: '交接前照片 (最多6张)', usagePhotosAfter: '交接后照片 (最多6张)',
+                usagePhotosBefore: '交接前照片 (最多20张)', usagePhotosAfter: '交接后照片 (最多20张)',
                 linkedFromProperties: '关联房屋', linkedFromHint: '在房子的用途时间线里选中此人后，房子会出现在这里。',
                 tenantSubTimeline: '这期间的租客', addTenantSub: '添加租客', editTenantSub: '编辑租客', monthlyRent: '月租金', selectCrmTenant: '从联系人里选租客', tenantName: '租客姓名', roomName: '房间', roomHint: '例如：主卧、A房、地下室', entireHouse: '整套出租', leasesCount: '次租约',
                 toastTenantSubSaved: '租客已保存', toastTenantSubDeleted: '租客已删除', toastUsageSaved: '用途已保存', toastUsageDeleted: '用途已删除',
@@ -3155,7 +3155,7 @@
             return { properties, tasks, repairs, contacts, customRoles, userZones: zones };
         }
 
-        const APP_VERSION = '2026.09.23-b';
+        const APP_VERSION = '2026.09.23-c';
 
         const app = createApp({
             data() {
@@ -3222,6 +3222,7 @@
                     completingRoutineIds: {},
                     formRoutine: { catalogKey: '', title: '', propertyId: '', zone: '', category: '', intervalMonths: 12, nextDueDate: '', lastDoneDate: '', alertOn: false },
                     photoMax: 6,
+                    usagePhotoMax: 20,
                     maxFileBytes: 20 * 1024 * 1024,
                     workDotsOn: false,
                     dotCycleOverdue: true,
@@ -4561,10 +4562,11 @@
                     } else if (this.activeModal === 'usage') {
                         const arrKey = this.currentUploadType === 'after' ? 'afterPhotos' : 'beforePhotos';
                         if (!Array.isArray(this.formUsage[arrKey])) this.formUsage[arrKey] = [];
-                        const availableSlots = this.photoMax - this.formUsage[arrKey].length; const filesToProcess = accepted.slice(0, availableSlots);
+                        const maxN = this.usagePhotoMax || 20;
+                        const availableSlots = maxN - this.formUsage[arrKey].length; const filesToProcess = accepted.slice(0, availableSlots);
                         for (const file of filesToProcess) {
                             const dataUrl = await this.compressImage(file);
-                            if (dataUrl && this.formUsage[arrKey].length < this.photoMax) this.formUsage[arrKey].push(dataUrl);
+                            if (dataUrl && this.formUsage[arrKey].length < maxN) this.formUsage[arrKey].push(dataUrl);
                         }
                     }
                     event.target.value = '';
