@@ -1,5 +1,5 @@
 /* PocketProp service worker — keep VERSION in sync with APP_VERSION in index.html */
-const VERSION = '2026.09.14-c';
+const VERSION = '2026.09.23-a';
 const CACHE_NAME = 'pocketprop-shell-' + VERSION;
 
 const PRECACHE_URLS = [
@@ -7,9 +7,9 @@ const PRECACHE_URLS = [
   './index.html',
   './manifest.webmanifest',
   './apple-touch-icon.png',
-  './icons/icon-192.png',
-  './icons/icon-512.png',
-  './icons/icon-512-maskable.png',
+  './icon-192.png',
+  './icon-512.png',
+  './icon-512-maskable.png',
   'https://unpkg.com/vue@3/dist/vue.global.prod.js',
   'https://cdn.tailwindcss.com',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
