@@ -447,6 +447,14 @@
                                                                     {{ tenant.startDate || '?' }} <span class="text-slate-500">➔</span> {{ tenant.endDate || t('ongoing') }}
                                                                 </p>
                                                                 <p v-if="tenant.notes" class="text-[10px] text-slate-400 italic mt-0.5 truncate">"{{ tenant.notes }}"</p>
+                                                                <div v-if="((tenant.beforePhotos || []).length || (tenant.afterPhotos || []).length)" class="flex flex-wrap items-center gap-1.5 mt-2">
+                                                                    <span v-if="(tenant.beforePhotos || []).length" @click.stop="openImageViewer(resolveMediaList(tenant.beforePhotos))" class="text-[10px] bg-slate-700/50 text-brand-400 px-2 py-0.5 rounded flex items-center gap-1 border border-slate-600 active:bg-slate-600 cursor-pointer">
+                                                                        <i class="fa-solid fa-camera"></i> {{ t('viewBefore') }} ({{ tenant.beforePhotos.length }})
+                                                                    </span>
+                                                                    <span v-if="(tenant.afterPhotos || []).length" @click.stop="openImageViewer(resolveMediaList(tenant.afterPhotos))" class="text-[10px] bg-slate-700/50 text-emerald-400 px-2 py-0.5 rounded flex items-center gap-1 border border-slate-600 active:bg-slate-600 cursor-pointer">
+                                                                        <i class="fa-solid fa-image"></i> {{ t('viewAfter') }} ({{ tenant.afterPhotos.length }})
+                                                                    </span>
+                                                                </div>
                                                             </div>
                                                             <div class="flex gap-1 flex-shrink-0">
                                                                 <button @click.stop="openTenantModal(usage, tenant)" class="w-5 h-5 rounded bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center text-[8px] transition-colors">
@@ -1196,6 +1204,46 @@
                             <div>
                                 <label class="block text-[12px] font-bold text-slate-400 uppercase tracking-wider mb-2 pl-1">{{ t('usageNotes') }}</label>
                                 <input v-model="formTenantSub.notes" type="text" placeholder="e.g. Deposit info, Lease renewal terms" class="w-full bg-slate-800 rounded-2xl p-3.5 text-[14px] text-white outline-none">
+                            </div>
+
+                            <div class="mt-4 border-t border-slate-700/50 pt-4 space-y-4">
+                                <div>
+                                    <div class="flex justify-between items-center mb-2 pl-1">
+                                        <label class="text-[12px] font-bold text-slate-400 uppercase tracking-wider">{{ t('usagePhotosBefore') }}</label>
+                                        <span class="text-[11px] font-bold text-brand-400">{{ (formTenantSub.beforePhotos || []).length }} / {{ usagePhotoMax }}</span>
+                                    </div>
+                                    <div class="grid grid-cols-3 gap-3">
+                                        <div v-for="(photo, idx) in (formTenantSub.beforePhotos || [])" :key="'tb_'+idx" class="relative aspect-square bg-slate-800 rounded-2xl p-1 border border-slate-700 flex items-center justify-center overflow-hidden">
+                                            <img :src="resolveMediaUrl(photo)" @click="openImageViewer(resolveMediaList(formTenantSub.beforePhotos), idx)" class="max-h-full max-w-full rounded-xl object-contain cursor-pointer">
+                                            <button @click.stop="removeTenantPhoto('before', idx)" type="button" class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg active:scale-90 text-[10px]">
+                                                <i class="fa-solid fa-xmark"></i>
+                                            </button>
+                                        </div>
+                                        <div v-if="(formTenantSub.beforePhotos || []).length < usagePhotoMax" @click="triggerFileInput('before', true)" class="aspect-square bg-slate-800/50 border-2 border-dashed border-slate-600 rounded-2xl flex flex-col items-center justify-center text-slate-400 cursor-pointer active:bg-slate-800 transition-colors p-1 text-center">
+                                            <i class="fa-solid fa-camera text-xl mb-1 text-brand-400"></i>
+                                            <span class="text-[10px] font-bold leading-tight">{{ t('addPhoto') }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <div class="flex justify-between items-center mb-2 pl-1">
+                                        <label class="text-[12px] font-bold text-slate-400 uppercase tracking-wider">{{ t('usagePhotosAfter') }}</label>
+                                        <span class="text-[11px] font-bold text-emerald-400">{{ (formTenantSub.afterPhotos || []).length }} / {{ usagePhotoMax }}</span>
+                                    </div>
+                                    <div class="grid grid-cols-3 gap-3">
+                                        <div v-for="(photo, idx) in (formTenantSub.afterPhotos || [])" :key="'ta_'+idx" class="relative aspect-square bg-slate-800 rounded-2xl p-1 border border-slate-700 flex items-center justify-center overflow-hidden">
+                                            <img :src="resolveMediaUrl(photo)" @click="openImageViewer(resolveMediaList(formTenantSub.afterPhotos), idx)" class="max-h-full max-w-full rounded-xl object-contain cursor-pointer">
+                                            <button @click.stop="removeTenantPhoto('after', idx)" type="button" class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg active:scale-90 text-[10px]">
+                                                <i class="fa-solid fa-xmark"></i>
+                                            </button>
+                                        </div>
+                                        <div v-if="(formTenantSub.afterPhotos || []).length < usagePhotoMax" @click="triggerFileInput('after', true)" class="aspect-square bg-slate-800/50 border-2 border-dashed border-slate-600 rounded-2xl flex flex-col items-center justify-center text-slate-400 cursor-pointer active:bg-slate-800 transition-colors p-1 text-center">
+                                            <i class="fa-solid fa-camera text-xl mb-1 text-emerald-400"></i>
+                                            <span class="text-[10px] font-bold leading-tight">{{ t('addPhoto') }}</span>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
                             <button @click="saveTenantSub" class="w-full py-4 mt-2 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-2xl shadow-lg active:scale-95 transition-all text-lg">{{ t('btnSave') }}</button>
@@ -3155,7 +3203,7 @@
             return { properties, tasks, repairs, contacts, customRoles, userZones: zones };
         }
 
-        const APP_VERSION = '2026.09.23-c';
+        const APP_VERSION = '2026.09.23-d';
 
         const app = createApp({
             data() {
@@ -3251,7 +3299,7 @@
                     cashflowDraft: { rentalIncome: '', mortgage: '', insurance: '', propertyTax: '', propertyManagement: '', hoa: '', hydro: '', gas: '', water: '', internet: '', groceries: '', transit: '', childcare: '', health: '', subscriptions: '', reserve: '', others: '' },
                     formProperty: { name: '', buildingType: 'detached', address: '', intro: '', lat: null, lng: null },
                     formUsage: { id: null, usageType: 'primary', startDate: '', endDate: '', notes: '', realtorId: '', lawyerId: '', managerId: '', beforePhotos: [], afterPhotos: [] },
-                    formTenantSub: { id: null, usageId: null, contactId: '', name: '', room: '', rent: '', startDate: '', endDate: '', notes: '' },
+                    formTenantSub: { id: null, usageId: null, contactId: '', name: '', room: '', rent: '', startDate: '', endDate: '', notes: '', beforePhotos: [], afterPhotos: [] },
                     formTask: { propertyId: '', titleSelect: '', title: '', zone: '', category: '', issueDate: '', deadline: '', alertOn: false, beforePhotos: [] },
                     showTaxExport: false,
                     taxExportYear: 'ALL',
@@ -3301,6 +3349,11 @@
                             const title = u.notes ? (label + ' · ' + u.notes) : label;
                             pushRefs(u.beforePhotos, { id: `u_${u.id}_b_`, parentId: u.id, parentType: 'usage', type: 'before', bucket: 'before', typeLabel: this.t('viewBefore'), propertyId: p.id, title, date: u.startDate || '' });
                             pushRefs(u.afterPhotos, { id: `u_${u.id}_a_`, parentId: u.id, parentType: 'usage', type: 'after', bucket: 'after', typeLabel: this.t('viewAfter'), propertyId: p.id, title, date: u.startDate || '' });
+                            (u.tenants || []).forEach(tn => {
+                                const tnTitle = tn.room ? ((tn.name || '') + ' · ' + tn.room) : (tn.name || '');
+                                pushRefs(tn.beforePhotos, { id: `tn_${tn.id}_b_`, parentId: tn.id, parentType: 'tenant', type: 'before', bucket: 'before', typeLabel: this.t('viewBefore'), propertyId: p.id, title: tnTitle, date: tn.startDate || '' });
+                                pushRefs(tn.afterPhotos, { id: `tn_${tn.id}_a_`, parentId: tn.id, parentType: 'tenant', type: 'after', bucket: 'after', typeLabel: this.t('viewAfter'), propertyId: p.id, title: tnTitle, date: tn.startDate || '' });
+                            });
                         });
                     });
                     return list;
@@ -4355,7 +4408,7 @@
                 promptDeleteRoutine(id) { this.itemToDelete = { type: 'routine', id }; },
                 isBuySellUsage(usage) { return !!(usage && (usage.usageType === 'purchased' || usage.usageType === 'sold')); },
                 showsUsageProfessionals(usage) { return !!(usage && (usage.usageType === 'purchased' || usage.usageType === 'sold' || usage.usageType === 'rental')); },
-                showsUsageConditionPhotos(usage) { return !!(usage && (usage.usageType === 'purchased' || usage.usageType === 'sold' || usage.usageType === 'rental' || usage.usageType === 'short_term')); },
+                showsUsageConditionPhotos(usage) { return !!(usage && (usage.usageType === 'purchased' || usage.usageType === 'sold')); },
                 openUsageModal(usageItem = null) {
                     this.activeModal = 'usage';
                     if (usageItem) {
@@ -4403,15 +4456,29 @@
                 },
                 openTenantModal(parentUsage, tenantItem = null) {
                     this.parentRentalUsage = parentUsage; this.activeModal = 'tenantSub';
-                    if (tenantItem) { this.editingTenantSubId = tenantItem.id; this.formTenantSub = { ...tenantItem }; } 
-                    else { this.editingTenantSubId = null; this.formTenantSub = { id: 'ut_' + Date.now(), usageId: parentUsage.id, contactId: '', name: '', room: '', rent: '', startDate: parentUsage.startDate || this.todayIso(), endDate: '', notes: '' }; }
+                    if (tenantItem) {
+                        this.editingTenantSubId = tenantItem.id;
+                        this.formTenantSub = {
+                            ...tenantItem,
+                            beforePhotos: [...(tenantItem.beforePhotos || [])],
+                            afterPhotos: [...(tenantItem.afterPhotos || [])]
+                        };
+                    } else {
+                        this.editingTenantSubId = null;
+                        this.formTenantSub = { id: 'ut_' + Date.now(), usageId: parentUsage.id, contactId: '', name: '', room: '', rent: '', startDate: parentUsage.startDate || this.todayIso(), endDate: '', notes: '', beforePhotos: [], afterPhotos: [] };
+                    }
                 },
                 onCrmTenantSelectChange() { if (this.formTenantSub.contactId) { const found = this.contacts.find(c => c.id === this.formTenantSub.contactId); if (found) this.formTenantSub.name = found.name; } },
                 async saveTenantSub() {
                     if (!this.formTenantSub.name || !this.parentRentalUsage) return;
                     if (!this.parentRentalUsage.tenants) this.parentRentalUsage.tenants = [];
-                    if (this.editingTenantSubId) { const idx = this.parentRentalUsage.tenants.findIndex(t => t.id === this.editingTenantSubId); if (idx !== -1) this.parentRentalUsage.tenants[idx] = { ...this.formTenantSub }; } 
-                    else { this.parentRentalUsage.tenants.push({ ...this.formTenantSub }); }
+                    const payload = {
+                        ...this.formTenantSub,
+                        beforePhotos: [...(this.formTenantSub.beforePhotos || [])],
+                        afterPhotos: [...(this.formTenantSub.afterPhotos || [])]
+                    };
+                    if (this.editingTenantSubId) { const idx = this.parentRentalUsage.tenants.findIndex(t => t.id === this.editingTenantSubId); if (idx !== -1) this.parentRentalUsage.tenants[idx] = payload; }
+                    else { this.parentRentalUsage.tenants.push(payload); }
                     await this.saveToStorage(); this.closeModal(); this.showToast(this.t('toastTenantSubSaved'));
                 },
                 async deleteTenantSub(parentUsage, tenantId) { if (!parentUsage || !parentUsage.tenants) return; parentUsage.tenants = parentUsage.tenants.filter(t => t.id !== tenantId); await this.saveToStorage(); this.showToast(this.t('toastTenantSubDeleted')); },
@@ -4568,6 +4635,15 @@
                             const dataUrl = await this.compressImage(file);
                             if (dataUrl && this.formUsage[arrKey].length < maxN) this.formUsage[arrKey].push(dataUrl);
                         }
+                    } else if (this.activeModal === 'tenantSub') {
+                        const arrKey = this.currentUploadType === 'after' ? 'afterPhotos' : 'beforePhotos';
+                        if (!Array.isArray(this.formTenantSub[arrKey])) this.formTenantSub[arrKey] = [];
+                        const maxN = this.usagePhotoMax || 20;
+                        const availableSlots = maxN - this.formTenantSub[arrKey].length; const filesToProcess = accepted.slice(0, availableSlots);
+                        for (const file of filesToProcess) {
+                            const dataUrl = await this.compressImage(file);
+                            if (dataUrl && this.formTenantSub[arrKey].length < maxN) this.formTenantSub[arrKey].push(dataUrl);
+                        }
                     }
                     event.target.value = '';
                 },
@@ -4619,6 +4695,7 @@
                     this.tasks.forEach(t => this.harvestRecordPhotos(t));
                     this.repairs.forEach(r => this.harvestRecordPhotos(r));
                     this.properties.forEach(p => (p.usages || []).forEach(u => this.harvestRecordPhotos(u)));
+                    this.properties.forEach(p => (p.usages || []).forEach(u => (u.tenants || []).forEach(tn => this.harvestRecordPhotos(tn))));
                     (this.propertyDocs || []).forEach(d => { if (d.fileRef) d.fileRef = this.ingestMediaUrl(d.fileRef); });
                 },
                 docCategoryLabel(key) {
@@ -4706,6 +4783,7 @@
                 removeTaskBeforePhoto(idx) { this.formTask.beforePhotos.splice(idx, 1); },
                 removeRepairPhoto(type, idx) { const arrKey = type === 'before' ? 'beforePhotos' : (type === 'after' ? 'afterPhotos' : 'receiptPhotos'); if (this.formRepair[arrKey]) this.formRepair[arrKey].splice(idx, 1); },
                 removeUsagePhoto(type, idx) { const arrKey = type === 'after' ? 'afterPhotos' : 'beforePhotos'; if (this.formUsage[arrKey]) this.formUsage[arrKey].splice(idx, 1); },
+                removeTenantPhoto(type, idx) { const arrKey = type === 'after' ? 'afterPhotos' : 'beforePhotos'; if (this.formTenantSub[arrKey]) this.formTenantSub[arrKey].splice(idx, 1); },
                 openImageViewer(imgs, initialIndex = 0) {
                     if (!imgs) return;
                     const arr = Array.isArray(imgs) ? imgs : [imgs];
@@ -4981,6 +5059,10 @@
                         (p.usages || []).forEach(u => {
                             this.ensurePhotoArray(u, 'beforePhotos');
                             this.ensurePhotoArray(u, 'afterPhotos');
+                            (u.tenants || []).forEach(tn => {
+                                this.ensurePhotoArray(tn, 'beforePhotos');
+                                this.ensurePhotoArray(tn, 'afterPhotos');
+                            });
                         });
                     });
                 },
@@ -5007,6 +5089,17 @@
                         const u = prop && (prop.usages || []).find(x => x.id === item.parentId);
                         if (item.type === 'after') spliceField(u, 'afterPhotos', null, item.index);
                         else spliceField(u, 'beforePhotos', null, item.index);
+                    } else if (item.parentType === 'tenant') {
+                        let tn = null;
+                        for (const p of this.properties) {
+                            for (const u of (p.usages || [])) {
+                                tn = (u.tenants || []).find(x => x.id === item.parentId);
+                                if (tn) break;
+                            }
+                            if (tn) break;
+                        }
+                        if (item.type === 'after') spliceField(tn, 'afterPhotos', null, item.index);
+                        else spliceField(tn, 'beforePhotos', null, item.index);
                     } else if (item.parentType === 'doc') {
                         const doc = (this.propertyDocs || []).find(d => d.id === item.parentId);
                         if (doc && doc.fileRef) this.deleteBlobRef(doc.fileRef);
@@ -5022,6 +5115,15 @@
                     if (item.parentType === 'usage') {
                         const prop = this.properties.find(p => p.id === item.propertyId);
                         rec = prop && (prop.usages || []).find(x => x.id === item.parentId);
+                    }
+                    if (item.parentType === 'tenant') {
+                        for (const p of this.properties) {
+                            for (const u of (p.usages || [])) {
+                                rec = (u.tenants || []).find(x => x.id === item.parentId);
+                                if (rec) break;
+                            }
+                            if (rec) break;
+                        }
                     }
                     const key = item.type === 'after' ? 'afterPhotos' : (item.type === 'receipt' ? 'receiptPhotos' : 'beforePhotos');
                     if (rec && Array.isArray(rec[key]) && rec[key][item.index]) return rec[key][item.index];
@@ -5039,7 +5141,10 @@
                     const walk = (arr) => { (arr || []).forEach(u => { if (this.isFileRef(u)) ids.add(this.fileRefId(u)); }); };
                     this.tasks.forEach(t => walk(t.beforePhotos));
                     this.repairs.forEach(r => { walk(r.beforePhotos); walk(r.afterPhotos); walk(r.receiptPhotos); });
-                    this.properties.forEach(p => (p.usages || []).forEach(u => { walk(u.beforePhotos); walk(u.afterPhotos); }));
+                    this.properties.forEach(p => (p.usages || []).forEach(u => {
+                        walk(u.beforePhotos); walk(u.afterPhotos);
+                        (u.tenants || []).forEach(tn => { walk(tn.beforePhotos); walk(tn.afterPhotos); });
+                    }));
                     (this.propertyDocs || []).forEach(d => { if (d.fileRef && this.isFileRef(d.fileRef)) ids.add(this.fileRefId(d.fileRef)); });
                     return ids;
                 },
