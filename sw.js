@@ -1,5 +1,5 @@
 /* PocketProp service worker — keep VERSION in sync with APP_VERSION in index.html */
-const VERSION = '2026.09.23-d';
+const VERSION = '2026.09.27-a';
 const CACHE_NAME = 'pocketprop-shell-' + VERSION;
 
 const PRECACHE_URLS = [
@@ -62,6 +62,7 @@ self.addEventListener('fetch', (event) => {
 
   const url = request.url;
 
+  // App shell: network-first so GitHub Pages deploys show up after a cold relaunch
   if (isNavigationRequest(request) || url.endsWith('/index.html') || url.endsWith('/')) {
     event.respondWith((async () => {
       try {
@@ -78,6 +79,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Map tiles: network-first, cache a copy for flaky mobile data
   if (isMapTile(url)) {
     event.respondWith((async () => {
       try {
@@ -94,6 +96,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Vendor scripts/fonts: cache-first
   if (isCdnAsset(url)) {
     event.respondWith((async () => {
       const cached = await caches.match(request);
@@ -106,6 +109,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Same-origin static (icons, manifest): cache-first
   event.respondWith((async () => {
     const cached = await caches.match(request);
     if (cached) return cached;
