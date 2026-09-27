@@ -157,6 +157,13 @@
             <!-- ====== TAB 1: DASHBOARD (PROPERTIES) ====== -->
             <div v-show="currentTab === 'dashboard'" class="fade-enter-active flex-1 flex flex-col">
                 
+                <div v-if="!viewingPropertyId && backupIsStale" class="mb-3 px-3.5 py-2.5 rounded-2xl bg-amber-500/10 border border-amber-500/25 flex items-start gap-2.5 flex-shrink-0">
+                    <i class="fa-solid fa-triangle-exclamation text-amber-400 mt-0.5"></i>
+                    <div class="min-w-0 flex-1">
+                        <p class="text-[12px] text-amber-100/95 leading-relaxed">{{ t('backupStaleHint') }}</p>
+                        <button type="button" @click="settingsSection = 'daily'; openModal('settings')" class="mt-1.5 text-[11px] font-bold text-amber-300 underline underline-offset-2">{{ t('exportBackupFull') }}</button>
+                    </div>
+                </div>
                 <div v-if="!viewingPropertyId && enabledViews.length > 1" class="flex justify-between items-center mb-3 bg-slate-800/80 p-1 rounded-2xl border border-slate-700/50 flex-shrink-0">
                     <button v-if="enabledViews.includes('list')" @click="switchDashboardView('list')" class="flex-1 py-2 text-[11px] sm:text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5" :class="dashboardViewMode === 'list' ? 'bg-brand-500 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'">
                         <i class="fa-solid fa-list-ul"></i> {{ t('viewModeList') }}
@@ -333,6 +340,71 @@
                         </div>
                     </div>
 
+                    <!-- This-year health -->
+                    <div v-if="propertyYearHealth" class="bg-slate-800/90 rounded-3xl p-5 border border-slate-700/50 shadow-sm">
+                        <div class="flex items-end justify-between gap-3 mb-3">
+                            <div>
+                                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                                    <i class="fa-solid fa-heart-pulse text-rose-400"></i>
+                                    {{ t('yearHealth') }} · {{ propertyYearHealth.year }}
+                                </h3>
+                                <p class="text-[11px] text-slate-400 mt-1 leading-relaxed">{{ t('yearHealthHint') }}</p>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2.5">
+                            <div class="bg-slate-900/70 rounded-2xl p-3 border border-slate-700/50">
+                                <p class="text-[10px] font-bold text-emerald-400 uppercase tracking-wider mb-1">{{ t('yearIncome') }}</p>
+                                <p v-if="propertyYearHealth.incomeHint" class="text-lg font-black text-slate-500">—</p>
+                                <p v-else class="text-lg font-black text-emerald-300">${{ formatMoney(propertyYearHealth.income) }}</p>
+                                <p v-if="propertyYearHealth.incomeHint" class="text-[10px] text-slate-500 mt-1">{{ t('yearIncomeDashHint') }}</p>
+                            </div>
+                            <div class="bg-slate-900/70 rounded-2xl p-3 border border-slate-700/50">
+                                <p class="text-[10px] font-bold text-sky-400 uppercase tracking-wider mb-1">{{ t('yearOperating') }}</p>
+                                <p class="text-lg font-black text-sky-300">${{ formatMoney(propertyYearHealth.operating) }}</p>
+                            </div>
+                            <div class="bg-slate-900/70 rounded-2xl p-3 border border-slate-700/50">
+                                <p class="text-[10px] font-bold text-amber-400 uppercase tracking-wider mb-1">{{ t('yearCapital') }}</p>
+                                <p class="text-lg font-black text-amber-300">${{ formatMoney(propertyYearHealth.capital) }}</p>
+                            </div>
+                            <button type="button" @click="jumpToSoftGaps(viewingPropertyId)" class="bg-slate-900/70 rounded-2xl p-3 border border-slate-700/50 text-left active:scale-[0.99] transition-all">
+                                <p class="text-[10px] font-bold text-rose-400 uppercase tracking-wider mb-1">{{ t('yearMissingReceipts') }}</p>
+                                <p class="text-lg font-black text-white">{{ propertyYearHealth.missingReceipts }}</p>
+                            </button>
+                            <button type="button" @click="jumpToPropertyTodos(viewingPropertyId)" class="bg-slate-900/70 rounded-2xl p-3 border border-slate-700/50 text-left active:scale-[0.99] transition-all col-span-2">
+                                <p class="text-[10px] font-bold text-brand-400 uppercase tracking-wider mb-1">{{ t('yearIncompleteTodos') }}</p>
+                                <p class="text-lg font-black text-white">{{ propertyYearHealth.incompleteTodos }}</p>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Soft checklist (property-scoped) -->
+                    <div class="bg-slate-800/90 rounded-3xl p-5 border border-slate-700/50 shadow-sm">
+                        <button type="button" class="w-full flex items-center justify-between gap-3" @click="gapListExpanded = !gapListExpanded">
+                            <div class="text-left min-w-0">
+                                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                                    <i class="fa-solid fa-list-check text-amber-400"></i>
+                                    {{ t('gapListTitle') }}
+                                </h3>
+                                <p class="text-[11px] text-slate-400 mt-1">{{ t('gapListHint') }}</p>
+                            </div>
+                            <span class="text-[11px] font-black px-2.5 py-1 rounded-lg border flex-shrink-0" :class="propertySoftGaps.length ? 'bg-amber-500/15 text-amber-300 border-amber-500/30' : 'bg-slate-900 text-slate-500 border-slate-700'">{{ propertySoftGaps.length }}</span>
+                        </button>
+                        <div v-if="gapListExpanded || propertySoftGaps.length" class="mt-3 space-y-2">
+                            <div v-if="propertySoftGaps.length === 0" class="text-[12px] text-slate-500 text-center py-3">{{ t('gapEmpty') }}</div>
+                            <button v-for="gap in propertySoftGaps" :key="gap.id" type="button" @click="openGapRepair(gap)"
+                                    class="w-full flex items-start justify-between gap-3 bg-slate-900/70 rounded-2xl p-3 border border-slate-700/50 text-left active:scale-[0.99] transition-all">
+                                <div class="min-w-0">
+                                    <p class="text-[10px] font-bold uppercase tracking-wider mb-0.5" :class="gap.kind === 'receipt' ? 'text-rose-400' : 'text-amber-400'">
+                                        {{ gap.kind === 'receipt' ? t('gapMissingReceipt') : t('gapMissingAfter') }}
+                                    </p>
+                                    <p class="text-[13px] font-bold text-white truncate">{{ gap.title }}</p>
+                                    <p class="text-[11px] text-slate-500 mt-0.5">{{ gap.date || '—' }}</p>
+                                </div>
+                                <i class="fa-solid fa-chevron-right text-slate-600 text-xs mt-1.5"></i>
+                            </button>
+                        </div>
+                    </div>
+
                     <!-- Usage Timeline -->
                     <div class="bg-slate-800/90 rounded-3xl p-5 border border-slate-700/50 shadow-sm relative overflow-hidden">
                         <div class="flex justify-between items-center mb-4">
@@ -479,6 +551,36 @@
                             <div v-if="getSortedUsages(viewingPropertyId).length === 0" class="text-xs text-slate-500 py-3 text-center">
                                 {{ t('noUsageHistory') }}
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- Property history (房史) -->
+                    <div class="bg-slate-800/90 rounded-3xl p-5 border border-slate-700/50 shadow-sm relative overflow-hidden">
+                        <div class="mb-4">
+                            <h3 class="text-base font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-book-open text-violet-400"></i>
+                                {{ t('propertyHistory') }}
+                            </h3>
+                            <p class="text-[11px] text-slate-400 mt-1">{{ t('propertyHistoryHint') }}</p>
+                        </div>
+                        <div class="relative pl-6 space-y-3 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-700/60">
+                            <button v-for="ev in propertyHistoryEvents" :key="ev.id" type="button" @click="openHistoryEvent(ev)"
+                                    class="relative w-full text-left group">
+                                <div class="absolute -left-6 top-2.5 w-3 h-3 rounded-full border-2 border-slate-900 shadow"
+                                     :class="ev.kind === 'capital' ? 'bg-amber-400' : (ev.kind === 'repair' ? 'bg-sky-400' : (ev.kind.indexOf('tenant') === 0 ? 'bg-amber-300' : 'bg-brand-400'))"></div>
+                                <div class="bg-slate-900/80 rounded-2xl p-3 border border-slate-700/50 active:scale-[0.99] transition-all">
+                                    <div class="flex items-center justify-between gap-2 mb-1">
+                                        <span class="text-[10px] font-bold uppercase tracking-wider"
+                                              :class="ev.kind === 'capital' ? 'text-amber-400' : (ev.kind === 'repair' ? 'text-sky-400' : (ev.kind.indexOf('tenant') === 0 ? 'text-amber-300' : 'text-brand-400'))">
+                                            {{ ev.kind === 'capital' ? t('histCapital') : (ev.kind === 'repair' ? t('histRepair') : (ev.kind === 'tenant_in' ? t('histTenantIn') : (ev.kind === 'tenant_out' ? t('histTenantOut') : t('histUsage')))) }}
+                                        </span>
+                                        <span class="text-[11px] text-slate-500 flex-shrink-0">{{ ev.date || '—' }}</span>
+                                    </div>
+                                    <p class="text-[13px] font-bold text-white truncate">{{ ev.title }}</p>
+                                    <p v-if="ev.detail" class="text-[11px] text-slate-400 mt-0.5 truncate">{{ ev.detail }}</p>
+                                </div>
+                            </button>
+                            <div v-if="propertyHistoryEvents.length === 0" class="text-xs text-slate-500 py-3 text-center">{{ t('propertyHistoryEmpty') }}</div>
                         </div>
                     </div>
 
@@ -1839,12 +1941,56 @@
 
                             <div v-show="settingsSection === 'daily'" class="space-y-3 pt-2 border-t border-slate-800">
                                 <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider pl-1">{{ t('settingsDataBackup') }}</h4>
+                                <div class="bg-slate-800/80 p-4 rounded-2xl border border-slate-700/60 space-y-2">
+                                    <div class="flex items-center justify-between gap-3">
+                                        <div class="min-w-0">
+                                            <p class="text-sm font-bold text-white">{{ t('backupLastFull') }}</p>
+                                            <p class="text-[11px] mt-0.5" :class="backupIsStale ? 'text-amber-300' : 'text-slate-400'">{{ lastFullBackupLabel }}</p>
+                                        </div>
+                                        <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" :class="backupIsStale ? 'bg-amber-500/20 text-amber-400' : 'bg-emerald-500/20 text-emerald-400'">
+                                            <i class="fa-solid" :class="backupIsStale ? 'fa-triangle-exclamation' : 'fa-shield-halved'"></i>
+                                        </div>
+                                    </div>
+                                    <p v-if="backupIsStale" class="text-[11px] text-amber-200/90 leading-relaxed bg-amber-500/10 border border-amber-500/20 rounded-xl p-2.5">{{ t('backupStaleHint') }}</p>
+                                </div>
+                                <div class="bg-slate-800/80 p-4 rounded-2xl border border-slate-700/60 space-y-2">
+                                    <div class="flex items-center justify-between gap-2">
+                                        <div class="min-w-0">
+                                            <p class="text-sm font-bold text-white flex items-center gap-2"><i class="fa-solid fa-list-check text-amber-400"></i>{{ t('gapListTitle') }}</p>
+                                            <p class="text-[11px] text-slate-400 mt-0.5">{{ t('gapListHint') }}</p>
+                                        </div>
+                                        <span class="text-[11px] font-black px-2 py-1 rounded-lg border flex-shrink-0" :class="globalSoftGaps.length ? 'bg-amber-500/15 text-amber-300 border-amber-500/30' : 'bg-slate-900 text-slate-500 border-slate-700'">{{ globalSoftGaps.length }}</span>
+                                    </div>
+                                    <div v-if="globalSoftGaps.length === 0" class="text-[12px] text-slate-500 text-center py-2">{{ t('gapEmpty') }}</div>
+                                    <button v-for="gap in globalSoftGaps.slice(0, 12)" :key="'g_'+gap.id" type="button" @click="openGapRepair(gap)"
+                                            class="w-full flex items-start justify-between gap-3 bg-slate-900/70 rounded-xl p-2.5 border border-slate-700/50 text-left active:scale-[0.99]">
+                                        <div class="min-w-0">
+                                            <p class="text-[10px] font-bold uppercase tracking-wider" :class="gap.kind === 'receipt' ? 'text-rose-400' : 'text-amber-400'">
+                                                {{ gap.kind === 'receipt' ? t('gapMissingReceipt') : t('gapMissingAfter') }}
+                                            </p>
+                                            <p class="text-[12px] font-bold text-white truncate">{{ gap.title }}</p>
+                                            <p class="text-[10px] text-slate-500">{{ getPropertyName(gap.repair.propertyId) }} · {{ gap.date || '—' }}</p>
+                                        </div>
+                                        <i class="fa-solid fa-chevron-right text-slate-600 text-xs mt-1"></i>
+                                    </button>
+                                    <p v-if="globalSoftGaps.length > 12" class="text-[10px] text-slate-500 text-center">+{{ globalSoftGaps.length - 12 }}</p>
+                                </div>
                                 <button @click="openTaxExport" class="w-full bg-slate-800/80 hover:bg-slate-800 p-4 rounded-2xl border border-slate-700/60 flex items-center justify-between group active:scale-[0.99] transition-all text-left">
                                     <div class="flex items-center gap-3">
                                         <div class="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center"><i class="fa-solid fa-file-invoice text-base"></i></div>
                                         <div>
                                             <p class="text-sm font-bold text-white group-hover:text-brand-400 transition-colors">{{ t('exportTaxPdf') }}</p>
                                             <p class="text-[11px] text-slate-400 mt-0.5">{{ t('exportTaxPdfDesc') }}</p>
+                                        </div>
+                                    </div>
+                                    <i class="fa-solid fa-chevron-right text-slate-600 text-xs"></i>
+                                </button>
+                                <button @click="openAccountingCsv" class="w-full bg-slate-800/80 hover:bg-slate-800 p-4 rounded-2xl border border-slate-700/60 flex items-center justify-between group active:scale-[0.99] transition-all text-left">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-9 h-9 rounded-xl bg-violet-500/20 text-violet-400 flex items-center justify-center"><i class="fa-solid fa-file-csv text-base"></i></div>
+                                        <div>
+                                            <p class="text-sm font-bold text-white group-hover:text-brand-400 transition-colors">{{ t('exportAccountingCsv') }}</p>
+                                            <p class="text-[11px] text-slate-400 mt-0.5">{{ t('exportAccountingCsvDesc') }}</p>
                                         </div>
                                     </div>
                                     <i class="fa-solid fa-chevron-right text-slate-600 text-xs"></i>
@@ -2172,6 +2318,33 @@
             </div>
         </transition>
 
+        <div v-if="showAccountingCsv" class="fixed inset-0 z-[85] bg-slate-950 flex flex-col">
+            <div class="flex-shrink-0 px-4 py-3 border-b border-slate-800 flex items-center justify-between gap-2" style="padding-top: max(12px, env(safe-area-inset-top, 0px));">
+                <button @click="showAccountingCsv = false" class="px-3 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold">{{ t('btnCancel') }}</button>
+                <p class="text-sm font-bold text-white truncate">{{ t('exportCsvTitle') }}</p>
+                <button @click="exportAccountingCsvFile" class="px-3 py-2 rounded-xl bg-brand-500 text-white text-xs font-bold">{{ t('exportCsvDownload') }}</button>
+            </div>
+            <div class="px-4 py-3 grid grid-cols-2 gap-2 bg-slate-900 border-b border-slate-800">
+                <label class="text-[11px] font-bold text-slate-400">{{ t('exportTaxYear') }}
+                    <select v-model="accountingCsvYear" class="mt-1 w-full bg-slate-800 text-white rounded-xl px-2 py-2 text-[13px]">
+                        <option value="ALL">{{ t('allTime') }}</option>
+                        <option v-for="y in accountingCsvYearOptions" :key="'csv_'+y" :value="y">{{ y }}</option>
+                    </select>
+                </label>
+                <label class="text-[11px] font-bold text-slate-400">{{ t('modalProperty') }}
+                    <select v-model="accountingCsvPropertyId" class="mt-1 w-full bg-slate-800 text-white rounded-xl px-2 py-2 text-[13px]">
+                        <option value="ALL">{{ t('allProperties') }}</option>
+                        <option v-for="p in properties" :key="'csv_p_'+p.id" :value="p.id">{{ p.name }}</option>
+                    </select>
+                </label>
+            </div>
+            <div class="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+                <p class="text-[12px] text-slate-400 leading-relaxed border border-slate-700/60 rounded-2xl p-3 bg-slate-900/60">{{ t('exportAccountingDisclaimer') }}</p>
+                <p class="text-[11px] text-slate-500">propertyId, propertyName, year, date, title, category, taxKind, amount, hasReceipt, contractorName, repairId</p>
+                <button @click="exportAccountingCsvFile" class="w-full py-3.5 rounded-2xl bg-brand-500 hover:bg-brand-600 text-white font-bold text-sm active:scale-[0.99]">{{ t('exportCsvDownload') }}</button>
+            </div>
+        </div>
+
         <div v-if="showTaxExport" class="tax-print-sheet fixed inset-0 z-[85] bg-slate-950 flex flex-col">
             <div class="tax-print-actions flex-shrink-0 px-4 py-3 border-b border-slate-800 flex items-center justify-between gap-2" style="padding-top: max(12px, env(safe-area-inset-top, 0px));">
                 <button @click="showTaxExport = false" class="px-3 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold">{{ t('btnCancel') }}</button>
@@ -2353,6 +2526,7 @@
                 settingsTitle: 'Settings', settingsPreferences: 'Preferences', settingsLanguage: 'Language', settingsTheme: 'Colour theme', settingsThemeHint: 'Harbor for downtown condos. Brick for houses. Fir for land and cottages.', themeHarbor: 'Harbor', themeBrick: 'Brick', themeFir: 'Fir', themeSky: 'Harbor', themeCedar: 'Brick', themePine: 'Fir', settingsGPS: 'Location services', settingsGPSDesc: 'Used to place you on the property map. Location is only requested when you tap locate. Address lookup is sent to OpenStreetMap Nominatim.', geocodePrivacy: 'This sends the address to OpenStreetMap to place a pin. Nothing else from the house file is sent.', appLockTitle: 'App lock', appLockHint: 'Optional PIN when opening PocketProp. This hides the screen only — it does not encrypt the database.', appLockOff: 'Off. Anyone with this phone can open the app.', appLockOn: 'On. The screen locks when you leave the app.', appLockSet: 'Set PIN', appLockChange: 'Change PIN', appLockTurnOff: 'Turn off lock', appLockGate: 'Enter PIN to open', appLockPinPh: 'PIN', appLockUnlock: 'Unlock', appLockCurrent: 'Current PIN', appLockNew: 'New PIN (4–8 digits)', appLockAgain: 'Type new PIN again', toastPinBad: 'PIN is incorrect.', toastPinWeak: 'Use 4 to 8 digits.', toastPinMismatch: 'The two PINs do not match.', toastPinOn: 'App lock is on.', toastPinOff: 'App lock is off.', toastPinChanged: 'PIN updated.',
                 settingsDashboardViews: 'Home views', minOneViewRequired: 'Keep at least one view turned on.', settingsPropertyOrder: 'Property order',
                 settingsContactRoles: 'Contact types', addRoleCategory: 'Add type', roleCategoryName: 'Type name', toastRoleAdded: 'Type added', toastRoleDeleted: 'Type removed',
+                yearHealth: 'Year health', yearHealthHint: 'Calendar year of today. Income = rental cashflow ×12 when mode is Rental; operating/capital from repairs this year.', yearIncome: 'Income', yearOperating: 'Operating', yearCapital: 'Capital', yearMissingReceipts: 'Missing receipts', yearIncompleteTodos: 'Open todos', yearIncomeDashHint: 'Income needs rental cashflow mode', gapListTitle: 'Soft checklist', gapListHint: 'Reminders only — you can still save without after photos or a receipt.', gapMissingAfter: 'Missing after photos', gapMissingReceipt: 'Missing receipt', gapEmpty: 'No gaps right now.', gapCountLabel: '{n} soft gaps', backupLastFull: 'Last full backup', backupNeverFull: 'Never fully backed up', backupStaleHint: 'Full backup is older than 14 days (or never). Export a full backup when you can — nothing is deleted.', propertyHistory: 'Property history', propertyHistoryHint: 'Usage, tenants, and repairs in one timeline', propertyHistoryEmpty: 'No history events yet.', histUsage: 'Usage', histTenantIn: 'Tenant in', histTenantOut: 'Tenant out', histRepair: 'Repair', histCapital: 'Capital', exportAccountingCsv: 'Accounting CSV', exportAccountingCsvDesc: 'All repairs (with or without receipt). For your accountant — not a tax filing.', exportAccountingDisclaimer: 'This CSV is a local export from PocketProp. It is not a CRA return and not tax advice. Gaps show as hasReceipt=false.', exportCsvDownload: 'Download CSV', exportCsvTitle: 'Accounting export', toastCsvExported: 'Accounting CSV saved',
                 settingsDataBackup: 'Backup & restore', exportBackup: 'Export JSON backup', exportBackupLight: 'Light backup', exportBackupLightDesc: 'Houses, work and ledger only — no photos. Optional passphrase encrypts the file.', exportBackupFull: 'Full backup', exportBackupFullDesc: 'Includes photos and receipts. Optional passphrase recommended. File can be large.', backupPassTitle: 'Backup passphrase', backupPassHint: 'Leave blank to save a plain JSON file. A passphrase encrypts it on this phone — PocketProp cannot recover a forgotten one.', backupPassLabel: 'Passphrase (optional)', backupPassAgain: 'Type it again', backupPassSkip: 'Save without passphrase', backupPassSave: 'Save encrypted backup', backupUnlockTitle: 'Encrypted backup', backupUnlockHint: 'This file was saved with a passphrase.', backupUnlockLabel: 'Passphrase', backupUnlockBtn: 'Unlock and restore', toastBackupPassMismatch: 'The two passphrases do not match.', toastBackupBadPass: 'That passphrase does not open this file.', toastBackupTooBig: 'Backup file is too large to restore on this phone.', toastBackupUnsafeMedia: 'Ignored {n} unsafe attachments.', toastExportEncrypted: 'Encrypted backup saved', confirmImportCounts: 'This file has {p} properties, {w} work logs, {c} contacts. Restore replaces everything on this phone. Continue?', exportTaxPdf: 'Tax worksheet (PDF)', exportTaxPdfDesc: 'Receipted operating vs capital repairs. Print or Save as PDF.', exportTaxPrint: 'Print / Save PDF', exportTaxLang: 'PDF language', exportTaxYear: 'Year', exportTaxTitle: 'Repair tax worksheet', exportTaxGenerated: 'Prepared', exportTaxDisclaimer: 'This is a local worksheet from PocketProp. It is not a CRA T776 and not tax advice. Only records with a receipt are listed.', exportTaxEmpty: 'No receipted repair records in this filter.', exportTaxFooter: 'Capital cost allowance class is not assigned yet. Receipt images stay in the app.', importBackup: 'Restore JSON Backup', toastExportLight: 'Light backup saved (no photos)', toastExportFull: 'Full backup saved', toastImportLightNoPhotos: 'Restored text. Photos live in a full backup.', settingsDaily: 'General', settingsAdvanced: 'Advanced', settingsLangHint: 'Language is switched from the button at the top of Home. Only built-in labels change. Names you added or edited stay as written.', deadline: 'Deadline', itemAlertOn: 'Red-dot reminder for this item', workDotsTitle: 'Work red dots', workDotsHint: 'Turn on, then choose red for overdue and yellow for coming due.', cycleSoonDays: 'Days before cycle due', taskSoonDays: 'Days before task deadline', dotOverdueRed: 'Overdue: red dot', dotSoonYellow: 'Coming due: yellow dot', confirmNextDueTitle: 'Confirm next due date', cleanupUnusedPhotos: 'Clear unused photos', cleanupUnusedPhotosDesc: 'Remove photo files no record points to.', toastCleanupDone: 'Cleared {n} unused files', photoInFullBackup: 'In full backup', toastAddPropertyFirst: 'Add a property first', routineDotPromptTitle: 'A cycle is overdue', routineDotPromptBody: 'Show a small red dot on Work when something is due?', toastImportSuccess: 'Data restored successfully!', toastImportFailed: 'Invalid backup file format.', confirmImportMsg: 'Restoring from backup will overwrite all existing local data. Continue?',
                 loadDemoData: 'Reset Demo Data', loadDemoDataDesc: 'Overwrites current data with multi-property sample dataset.', confirmDemoDataMsg: 'Are you sure you want to load sample data? Current data will be replaced.', toastDemoLoaded: 'Demo data loaded', wipeAllData: 'Erase all data', wipeAllDataDesc: 'Permanently remove every property, work item and photo on this phone.', wipeStep1: 'This cannot be undone. Export a backup first if you might need this data again.', wipeBackupSoon: 'No backup exported in this step yet. You can still continue.', wipeBackupDone: 'A backup file was saved from this phone.', wipeContinue: 'Continue', wipeStep2: 'Check the box and type ERASE to go to the last step.', wipeAck: 'I understand this deletes everything on this phone and cannot be undone.', wipeTypeHint: 'Type ERASE', wipeStep3: 'Last step. This removes houses, work, people and photos stored by PocketProp.', wipeConfirmFinal: 'Erase everything now', toastWiped: 'All local data removed',
                 settingsFileManager: 'Media & File Storage', fileManagerTitle: 'Repair photos & receipts', filesCount: 'Files', storageUsed: 'Used', btnManageFiles: 'Open Gallery', noMediaFiles: 'No photo or document files match.', toastMediaDeleted: 'File removed from local storage.', fileTypeAll: 'All Files', fileLibraryHint: 'Grouped by work date. Tap a file, then swipe to browse.', fileSearchPh: 'Search title or property', viewerSwipeHint: 'Swipe left / right to switch', fileLibraryUpload: 'Upload', fileLibraryTitlePh: 'Name (optional)', fileLibraryUploadHint: 'Pick a property above first, then upload. Stored on this phone.', fileCatDeal: 'Closing / title', fileCatInsurance: 'Insurance', fileCatLease: 'Lease', fileCatMaintenance: 'Repairs', fileCatOther: 'Other', toastPickPropertyFirst: 'Choose a property first', toastLibraryUploaded: 'File added',
@@ -2401,6 +2575,7 @@
                 settingsTitle: '系统设置', settingsPreferences: '偏好设置', settingsLanguage: '界面语言', settingsTheme: '色彩主题', settingsThemeHint: '港湾适合市区公寓。砖色适合独立屋。冷杉适合土地和度假屋。', themeHarbor: '港湾', themeBrick: '砖色', themeFir: '冷杉', themeSky: '港湾', themeCedar: '砖色', themePine: '冷杉', settingsGPS: 'GPS 定位服务', settingsGPSDesc: '开启后可在房屋地图中定位当前位置及导航。只有你点定位才会向系统要位置。按地址解析会把地址发给 OpenStreetMap Nominatim。', geocodePrivacy: '这一步会把地址发给 OpenStreetMap 来打点。房屋档案里的其它内容不会送出。', appLockTitle: '应用锁', appLockHint: '可选 PIN，打开 App 时挡住界面。只锁屏幕，不加密数据库。', appLockOff: '已关闭。能打开这台手机的人都能进 App。', appLockOn: '已开启。离开 App 后再次进入需输入 PIN。', appLockSet: '设置 PIN', appLockChange: '更换 PIN', appLockTurnOff: '关闭应用锁', appLockGate: '输入 PIN 后进入', appLockPinPh: 'PIN', appLockUnlock: '解锁', appLockCurrent: '当前 PIN', appLockNew: '新 PIN（4–8 位数字）', appLockAgain: '再输入一次新 PIN', toastPinBad: 'PIN 不正确。', toastPinWeak: '请使用 4 到 8 位数字。', toastPinMismatch: '两次 PIN 不一致。', toastPinOn: '应用锁已打开。', toastPinOff: '应用锁已关闭。', toastPinChanged: 'PIN 已更新。',
                 settingsDashboardViews: '仪表盘视图设置', minOneViewRequired: '必须至少保留一个视图模式。', settingsPropertyOrder: '房屋卡片排序',
                 settingsContactRoles: '人员类别设置', addRoleCategory: '新增类别', roleCategoryName: '类别名称', toastRoleAdded: '已新增人员类别', toastRoleDeleted: '已删除人员类别',
+                yearHealth: '本年健康', yearHealthHint: '按今天所在公历年汇总。收入=出租账本月租金×12；运营/资本支出来自本年维修记录。', yearIncome: '本年收入', yearOperating: '运营支出', yearCapital: '资本开支', yearMissingReceipts: '缺收据', yearIncompleteTodos: '未完成待办', yearIncomeDashHint: '收入需切换为出租账本', gapListTitle: '软清单', gapListHint: '仅提醒，无完工照或收据仍可保存。', gapMissingAfter: '缺完工照', gapMissingReceipt: '缺收据', gapEmpty: '当前没有缺口。', gapCountLabel: '{n} 条软提醒', backupLastFull: '上次完整备份', backupNeverFull: '从未完整备份', backupStaleHint: '完整备份已超过 14 天（或从未备份）。有空时导出一份完整备份即可，不会删除任何数据。', propertyHistory: '房史', propertyHistoryHint: '用途、租客与维修合成一条时间线', propertyHistoryEmpty: '还没有房史事件。', histUsage: '用途', histTenantIn: '入住', histTenantOut: '退租', histRepair: '维修', histCapital: '资本', exportAccountingCsv: '会计 CSV', exportAccountingCsvDesc: '导出全部维修（含无收据）。给会计用——不是报税文件。', exportAccountingDisclaimer: '本 CSV 由 PocketProp 在本机导出，不是 CRA 报税表，也不是税务意见。无收据记录以 hasReceipt=false 标出。', exportCsvDownload: '下载 CSV', exportCsvTitle: '会计导出', toastCsvExported: '已导出会计 CSV',
                 settingsDataBackup: '数据备份与恢复 (离线)', exportBackup: '导出 JSON 备份文件', exportBackupLight: '轻备份', exportBackupLightDesc: '只含房屋、工作和账本，不含照片。可加口令加密。', exportBackupFull: '完整备份', exportBackupFullDesc: '含照片和收据，建议加口令。文件可能很大。', backupPassTitle: '备份口令', backupPassHint: '留空则保存普通 JSON。设置口令后文件在本机加密，口令遗忘无法找回。', backupPassLabel: '口令（可选）', backupPassAgain: '再输入一次', backupPassSkip: '不加密，直接保存', backupPassSave: '保存加密备份', backupUnlockTitle: '加密备份', backupUnlockHint: '这份文件导出时加了口令。', backupUnlockLabel: '口令', backupUnlockBtn: '解锁并恢复', toastBackupPassMismatch: '两次口令不一致。', toastBackupBadPass: '口令无法打开这份文件。', toastBackupTooBig: '备份文件过大，这台手机无法恢复。', toastBackupUnsafeMedia: '已忽略 {n} 个不安全附件。', toastExportEncrypted: '已保存加密备份', confirmImportCounts: '这份备份含 {p} 套房、{w} 条工作记录、{c} 位联系人。恢复会覆盖本机全部数据。继续？', exportTaxPdf: '税务备查 PDF', exportTaxPdfDesc: '只汇总有收据的维修保养与资产改良。用系统打印或存储为 PDF。', exportTaxPrint: '打印 / 存 PDF', exportTaxLang: 'PDF 语言', exportTaxYear: '年份', exportTaxTitle: '维修税务备查表', exportTaxGenerated: '生成日期', exportTaxDisclaimer: '本表由 PocketProp 在本机生成，不是 CRA T776，也不是税务意见。仅列入有收据的记录。', exportTaxEmpty: '当前筛选没有带收据的维修记录。', exportTaxFooter: '尚未标注 CCA 类别。收据原件仍在 App 里。', importBackup: '恢复 JSON 备份文件', toastExportLight: '已导出轻备份（不含照片）', toastExportFull: '已导出完整备份', toastImportLightNoPhotos: '文字已恢复。照片在完整备份里。', settingsDaily: '日常', settingsAdvanced: '进阶', settingsLangHint: '语言在首页右上角切换。仅更换系统预设文字。凡自行新增或编辑过的项目，系统不会主动翻译。', deadline: '截止日期', itemAlertOn: '此项显示小红点', workDotsTitle: '工作小红点', workDotsHint: '打开后，再分别选择过期红点和快到期黄点。', cycleSoonDays: '周期提前几天', taskSoonDays: '待办提前几天', dotOverdueRed: '过期：红点', dotSoonYellow: '快到期：黄点', confirmNextDueTitle: '确认下次日期', cleanupUnusedPhotos: '清理未用照片', cleanupUnusedPhotosDesc: '删掉没有记录再引用的图片文件。', toastCleanupDone: '已清理 {n} 个未用文件', photoInFullBackup: '图在完整备份', toastAddPropertyFirst: '请先添加一套房子', routineDotPromptTitle: '有周期已经过期', routineDotPromptBody: '要不要在工作页用小红点标出到期项？', toastImportSuccess: '数据恢复成功！', toastImportFailed: '恢复失败，文件格式错误。', confirmImportMsg: '导入备份将覆盖当前所有本地数据，确定继续吗？',
                 loadDemoData: '加载示例演示数据', loadDemoDataDesc: '重置并重新加载包含多处房屋资产的完整示例数据。', confirmDemoDataMsg: '确定要重新载入演示数据吗？当前修改将被覆盖。', toastDemoLoaded: '示例数据已加载', wipeAllData: '清空全部数据', wipeAllDataDesc: '永久删除本机全部房屋、工作和照片。', wipeStep1: '此操作无法撤销。若以后可能还要用，请先导出备份。', wipeBackupSoon: '这一步里还没有导出备份，仍可继续。', wipeBackupDone: '已从本机保存了一份备份文件。', wipeContinue: '继续', wipeStep2: '勾选确认，并输入 ERASE，才能进入最后一步。', wipeAck: '我明白这会删掉本机全部数据，而且无法恢复。', wipeTypeHint: '输入 ERASE', wipeStep3: '最后一步。将删除 PocketProp 保存在本机的房屋、工作、联系人和照片。', wipeConfirmFinal: '立即全部清空', toastWiped: '本机数据已清空',
                 settingsFileManager: '维修照片与收据', fileManagerTitle: '维修照片与收据', filesCount: '个文件', storageUsed: '已用容量', btnManageFiles: '打开', noMediaFiles: '未匹配到媒体文件。', toastMediaDeleted: '文件已彻底删除。', fileTypeAll: '全部文件', fileLibraryHint: '按工单日期排列。点开后左右滑动切换。', fileSearchPh: '搜索名称或房屋', viewerSwipeHint: '左右滑动切换文件', fileLibraryUpload: '上传', fileLibraryTitlePh: '名称（可选）', fileLibraryUploadHint: '先点选上方一套房屋，再上传。文件只存在这台手机。', fileCatDeal: '交易产权', fileCatInsurance: '保险', fileCatLease: '租约', fileCatMaintenance: '维修', fileCatOther: '其他', toastPickPropertyFirst: '请先选择一套房屋', toastLibraryUploaded: '文件已加入',
@@ -3203,7 +3378,7 @@
             return { properties, tasks, repairs, contacts, customRoles, userZones: zones };
         }
 
-        const APP_VERSION = '2026.09.23-d';
+        const APP_VERSION = '2026.09.27-a';
 
         const app = createApp({
             data() {
@@ -3305,6 +3480,11 @@
                     taxExportYear: 'ALL',
                     taxExportLang: 'zh',
                     taxExportPropertyId: 'ALL',
+                    showAccountingCsv: false,
+                    accountingCsvYear: 'ALL',
+                    accountingCsvPropertyId: 'ALL',
+                    lastFullBackupAt: null,
+                    gapListExpanded: false,
                     formRepair: { propertyId: '', titleSelect: '', title: '', zone: '', category: '', cost: '', date: '', warrantyEndDate: '', contractorId: '', taxKind: 'operating', hasReceipt: true, receiptPhotos: [], beforePhotos: [], afterPhotos: [] },
                     formContact: { id: null, role: 'tenant', name: '', trade: '', propertyId: '', propertyIds: [], phone: '', wechat: '', email: '', notes: '' },
                     formNewRole: { name: '' },
@@ -3532,6 +3712,41 @@
                         operatingTotal: groups.reduce((s, g) => s + g.operatingTotal, 0),
                         capitalTotal: groups.reduce((s, g) => s + g.capitalTotal, 0)
                     };
+                },
+                propertyYearHealth() {
+                    if (!this.viewingPropertyId) return null;
+                    return this.getPropertyYearHealth(this.viewingPropertyId);
+                },
+                propertySoftGaps() {
+                    if (!this.viewingPropertyId) return [];
+                    return this.getSoftGaps(this.viewingPropertyId);
+                },
+                globalSoftGaps() {
+                    return this.getSoftGaps(null);
+                },
+                propertyHistoryEvents() {
+                    if (!this.viewingPropertyId) return [];
+                    return this.getPropertyHistory(this.viewingPropertyId);
+                },
+                hasRealLocalData() {
+                    return (this.properties || []).length > 0
+                        || (this.repairs || []).length > 0
+                        || (this.tasks || []).length > 0
+                        || (this.routines || []).length > 0;
+                },
+                backupIsStale() {
+                    if (!this.hasRealLocalData) return false;
+                    if (!this.lastFullBackupAt) return true;
+                    const t = Date.parse(this.lastFullBackupAt);
+                    if (!Number.isFinite(t)) return true;
+                    return (Date.now() - t) > (14 * 24 * 60 * 60 * 1000);
+                },
+                lastFullBackupLabel() {
+                    if (!this.lastFullBackupAt) return this.t('backupNeverFull');
+                    return this.formatBackupAt(this.lastFullBackupAt);
+                },
+                accountingCsvYearOptions() {
+                    return this.taxExportYearOptions;
                 },
                 showTaxCapitalHint() {
                     const cost = Number(this.formRepair && this.formRepair.cost) || 0;
@@ -4991,6 +5206,193 @@
                 formatMoney(n) {
                     return (Number(n) || 0).toLocaleString();
                 },
+                currentCalendarYear() {
+                    return String(new Date().getFullYear());
+                },
+                getPropertyYearHealth(propId) {
+                    const year = this.currentCalendarYear();
+                    const prop = this.getProp(propId);
+                    let income = null;
+                    let incomeHint = false;
+                    if (prop && prop.cashflowMode === 'rental') {
+                        income = (Number((prop.cashflow || {}).rentalIncome) || 0) * 12;
+                    } else {
+                        income = null;
+                        incomeHint = true;
+                    }
+                    const yearRepairs = (this.repairs || []).filter(r => r.propertyId === propId && String(r.date || '').slice(0, 4) === year);
+                    let operating = 0, capital = 0;
+                    yearRepairs.forEach(r => {
+                        const cost = Number(r.cost) || 0;
+                        if (r.taxKind === 'capital') capital += cost;
+                        else operating += cost;
+                    });
+                    const missingReceipts = (this.repairs || []).filter(r => r.propertyId === propId && (Number(r.cost) || 0) > 0 && !this.repairHasReceipt(r)).length;
+                    const incompleteTodos = (this.tasks || []).filter(t => t.propertyId === propId && !t.completed).length;
+                    return { year, income, incomeHint, operating, capital, missingReceipts, incompleteTodos };
+                },
+                repairNeedsAfterPhotos(r) {
+                    if (!r) return false;
+                    const isMeaningful = (Number(r.cost) || 0) > 0 || r.completed === true;
+                    if (!isMeaningful) return false;
+                    return !((r.afterPhotos || []).length);
+                },
+                getSoftGaps(propId) {
+                    const list = [];
+                    (this.repairs || []).forEach(r => {
+                        if (propId && r.propertyId !== propId) return;
+                        if (this.repairNeedsAfterPhotos(r)) {
+                            list.push({ id: 'after_' + r.id, kind: 'after', repairId: r.id, repair: r, date: r.date || '', title: r.title || '—' });
+                        }
+                        if ((Number(r.cost) || 0) > 0 && !this.repairHasReceipt(r)) {
+                            list.push({ id: 'receipt_' + r.id, kind: 'receipt', repairId: r.id, repair: r, date: r.date || '', title: r.title || '—' });
+                        }
+                    });
+                    return list.sort((a, b) => String(b.date).localeCompare(String(a.date)));
+                },
+                getPropertyHistory(propId) {
+                    const events = [];
+                    const prop = this.getProp(propId);
+                    if (!prop) return events;
+                    (prop.usages || []).forEach(u => {
+                        const label = (this.getUsageConfig(u.usageType) || {}).label || u.usageType || this.t('histUsage');
+                        if (u.startDate) {
+                            events.push({ id: 'u_s_' + u.id, date: u.startDate, sort: u.startDate, kind: 'usage', title: label, detail: u.endDate ? (u.startDate + ' → ' + u.endDate) : (u.startDate + ' → ' + this.t('ongoing')), usageId: u.id });
+                        }
+                        if (u.endDate) {
+                            events.push({ id: 'u_e_' + u.id, date: u.endDate, sort: u.endDate, kind: 'usage', title: label + ' · ' + this.t('endDate'), detail: u.endDate, usageId: u.id });
+                        }
+                        (u.tenants || []).forEach(tn => {
+                            if (tn.startDate) {
+                                events.push({ id: 'tn_i_' + tn.id, date: tn.startDate, sort: tn.startDate, kind: 'tenant_in', title: this.t('histTenantIn') + ' · ' + (tn.name || '—'), detail: (tn.room ? tn.room + ' · ' : '') + (tn.rent ? ('$' + tn.rent + '/mo') : ''), usageId: u.id, tenantId: tn.id });
+                            }
+                            if (tn.endDate) {
+                                events.push({ id: 'tn_o_' + tn.id, date: tn.endDate, sort: tn.endDate, kind: 'tenant_out', title: this.t('histTenantOut') + ' · ' + (tn.name || '—'), detail: tn.endDate, usageId: u.id, tenantId: tn.id });
+                            }
+                        });
+                    });
+                    (this.repairs || []).filter(r => r.propertyId === propId).forEach(r => {
+                        const cost = Number(r.cost) || 0;
+                        const isCapital = r.taxKind === 'capital' || cost >= 2000;
+                        const kind = isCapital ? 'capital' : 'repair';
+                        const taxLabel = r.taxKind === 'capital' ? this.t('taxCapitalShort') : this.t('taxOperatingShort');
+                        events.push({
+                            id: 'r_' + r.id,
+                            date: r.date || '',
+                            sort: r.date || '',
+                            kind,
+                            title: (isCapital ? this.t('histCapital') : this.t('histRepair')) + ' · ' + (r.title || '—'),
+                            detail: taxLabel + (cost ? (' · $' + this.formatMoney(cost)) : ''),
+                            repairId: r.id,
+                            cost
+                        });
+                    });
+                    return events.sort((a, b) => String(b.sort || '').localeCompare(String(a.sort || '')));
+                },
+                formatBackupAt(iso) {
+                    try {
+                        const d = new Date(iso);
+                        if (!Number.isFinite(d.getTime())) return String(iso);
+                        return d.toLocaleString(this.currentLang === 'zh' ? 'zh-CN' : 'en-CA', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                    } catch (e) { return String(iso); }
+                },
+                async markFullBackupDone() {
+                    this.lastFullBackupAt = new Date().toISOString();
+                    await this.saveToStorage();
+                },
+                jumpToPropertyTodos(propId) {
+                    this.selectedPropertyId = propId || 'ALL';
+                    this.workSubTab = 'tasks';
+                    this.currentTab = 'work';
+                    this.viewingZone = null;
+                },
+                jumpToSoftGaps(propId) {
+                    this.gapListExpanded = true;
+                    if (propId) {
+                        this.viewingPropertyId = propId;
+                        this.viewingZone = null;
+                        this.currentTab = 'dashboard';
+                        return;
+                    }
+                    this.settingsSection = 'daily';
+                    this.openModal('settings');
+                },
+                openGapRepair(gap) {
+                    const r = gap && (gap.repair || this.repairs.find(x => x.id === gap.repairId));
+                    if (r) this.editRepair(r);
+                },
+                openHistoryEvent(ev) {
+                    if (!ev) return;
+                    if (ev.repairId) {
+                        const r = this.repairs.find(x => x.id === ev.repairId);
+                        if (r) this.editRepair(r);
+                        return;
+                    }
+                    if (ev.usageId) {
+                        const prop = this.getProp(this.viewingPropertyId);
+                        const u = prop && (prop.usages || []).find(x => x.id === ev.usageId);
+                        if (!u) return;
+                        if (ev.tenantId) {
+                            const tn = (u.tenants || []).find(x => x.id === ev.tenantId);
+                            this.openTenantModal(u, tn || null);
+                        } else {
+                            this.openUsageModal(u);
+                        }
+                    }
+                },
+                openAccountingCsv() {
+                    this.accountingCsvYear = String(new Date().getFullYear());
+                    this.accountingCsvPropertyId = this.viewingPropertyId || 'ALL';
+                    this.showAccountingCsv = true;
+                    this.closeModal();
+                },
+                csvEscape(val) {
+                    const s = String(val == null ? '' : val);
+                    if (/[",\n\r]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+                    return s;
+                },
+                exportAccountingCsvFile() {
+                    const year = this.accountingCsvYear;
+                    const propId = this.accountingCsvPropertyId;
+                    const cols = ['propertyId','propertyName','year','date','title','category','taxKind','amount','hasReceipt','contractorName','repairId'];
+                    const rows = (this.repairs || []).filter(r => {
+                        if (propId !== 'ALL' && r.propertyId !== propId) return false;
+                        if (year !== 'ALL' && String(r.date || '').slice(0, 4) !== year) return false;
+                        return true;
+                    }).slice().sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
+                    const lines = [];
+                    lines.push('# ' + this.t('exportAccountingDisclaimer'));
+                    lines.push('# PocketProp accounting export · ' + this.todayIso());
+                    lines.push(cols.join(','));
+                    rows.forEach(r => {
+                        const prop = this.getProp(r.propertyId);
+                        const amt = Number(r.cost) || 0;
+                        const y = String(r.date || '').slice(0, 4) || '';
+                        const vals = [
+                            r.propertyId || '',
+                            prop ? prop.name : '',
+                            y,
+                            r.date || '',
+                            r.title || '',
+                            r.category || '',
+                            r.taxKind === 'capital' ? 'capital' : 'operating',
+                            amt,
+                            this.repairHasReceipt(r) ? 'true' : 'false',
+                            this.getContactName(r.contractorId) || '',
+                            r.id || ''
+                        ];
+                        lines.push(vals.map(v => this.csvEscape(v)).join(','));
+                    });
+                    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    const tag = (year === 'ALL' ? 'all' : year) + '_' + (propId === 'ALL' ? 'all' : propId);
+                    a.download = 'pocketprop_accounting_' + tag + '_' + this.todayIso() + '.csv';
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    this.showToast(this.t('toastCsvExported'));
+                },
                 repairHasReceipt(repair) {
                     if (!repair) return false;
                     if (repair.hasReceipt === false) return false;
@@ -5188,6 +5590,7 @@
                     this.mediaBlobs = {};
                     this.userCatalog = cloneDefaultCatalog();
                     this.userZones = getDefaultZones(this.currentLang);
+                    this.lastFullBackupAt = null;
                     this.viewingPropertyId = null;
                     this.viewingZone = null;
                     this.selectedPropertyId = 'ALL';
@@ -5259,7 +5662,8 @@
                             taskSoonDays: this.taskSoonDays,
                             routineNotifyAsked: this.routineNotifyAsked,
                             routineNotifyPhone: this.routineNotifyPhone,
-                            routineNotifyEmail: this.routineNotifyEmail
+                            routineNotifyEmail: this.routineNotifyEmail,
+                            lastFullBackupAt: this.lastFullBackupAt || null
                         }));
                         await localforage.setItem('pocket_prop_data', data);
                     }
@@ -5289,6 +5693,7 @@
                             if (data.routineNotifyAsked != null) this.routineNotifyAsked = !!data.routineNotifyAsked;
                             if (data.routineNotifyPhone != null) this.routineNotifyPhone = data.routineNotifyPhone;
                             if (data.routineNotifyEmail != null) this.routineNotifyEmail = data.routineNotifyEmail;
+                            if (data.lastFullBackupAt) this.lastFullBackupAt = data.lastFullBackupAt;
                             if (data.userZones && data.userZones.length > 0) {
                                 this.userZones = data.userZones;
                             } else {
@@ -5381,7 +5786,8 @@
                         routineNotify: this.routineNotify,
                         routineNotifyAsked: this.routineNotifyAsked,
                         routineNotifyPhone: this.routineNotifyPhone,
-                        routineNotifyEmail: this.routineNotifyEmail
+                        routineNotifyEmail: this.routineNotifyEmail,
+                        lastFullBackupAt: this.lastFullBackupAt || null
                     };
                     if (includeBlobs) data.blobs = { ...this.mediaBlobs };
                     return data;
@@ -5405,6 +5811,7 @@
                     const data = this.buildBackupObject(includeBlobs);
                     this.downloadBackupText(JSON.stringify(data), includeBlobs, false);
                     this.closeBackupDlg();
+                    if (includeBlobs) this.markFullBackupDone();
                     this.showToast(includeBlobs ? this.t('toastExportFull') : this.t('toastExportLight'));
                 },
                 async confirmEncryptedExport() {
@@ -5418,6 +5825,7 @@
                     const wrap = await this.encryptBackupPayload(this.buildBackupObject(includeBlobs), pass);
                     this.downloadBackupText(JSON.stringify(wrap), includeBlobs, true);
                     this.closeBackupDlg();
+                    if (includeBlobs) this.markFullBackupDone();
                     this.showToast(this.t('toastExportEncrypted'));
                 },
                 triggerImport() {
@@ -5483,6 +5891,7 @@
                     if (data.routineNotifyAsked != null) this.routineNotifyAsked = !!data.routineNotifyAsked;
                     if (data.routineNotifyPhone != null) this.routineNotifyPhone = data.routineNotifyPhone;
                     if (data.routineNotifyEmail != null) this.routineNotifyEmail = data.routineNotifyEmail;
+                    if (data.lastFullBackupAt) this.lastFullBackupAt = data.lastFullBackupAt;
                     this.normalizePhotoFields();
                     if (data.blobs) await this.importMediaBlobs(data.blobs);
                     await this.loadMediaBlobs();
