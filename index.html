@@ -527,6 +527,22 @@
                                                                         <i class="fa-solid fa-image"></i> {{ t('viewAfter') }} ({{ tenant.afterPhotos.length }})
                                                                     </span>
                                                                 </div>
+                                                                <div v-if="getRepairsForTenant(usage, tenant).length" class="mt-2 space-y-1">
+                                                                    <button v-for="repair in getRepairsForTenant(usage, tenant)" :key="'tr_'+repair.id" type="button" @click.stop="editRepair(repair)"
+                                                                            class="w-full text-left rounded-md px-2 py-1.5 border border-sky-500/25 bg-sky-500/10 active:scale-[0.99] transition-all">
+                                                                        <div class="flex items-center justify-between gap-2">
+                                                                            <span class="text-[10px] font-bold text-sky-300 truncate flex items-center gap-1 min-w-0">
+                                                                                <i class="fa-solid fa-wrench text-[8px]"></i>
+                                                                                <span class="truncate">{{ repair.title || '—' }}</span>
+                                                                            </span>
+                                                                            <span class="text-[9px] text-slate-500 flex-shrink-0">{{ repair.date || '—' }}</span>
+                                                                        </div>
+                                                                        <div class="flex items-center gap-1.5 mt-0.5">
+                                                                            <span class="text-[9px] font-black uppercase tracking-wide" :class="repair.taxKind === 'capital' ? 'text-amber-300' : 'text-slate-400'">{{ repair.taxKind === 'capital' ? t('taxCapitalShort') : t('taxOperatingShort') }}</span>
+                                                                            <span v-if="repair.cost" class="text-[10px] font-bold text-brand-400">${{ formatMoney(repair.cost) }}</span>
+                                                                        </div>
+                                                                    </button>
+                                                                </div>
                                                             </div>
                                                             <div class="flex gap-1 flex-shrink-0">
                                                                 <button @click.stop="openTenantModal(usage, tenant)" class="w-5 h-5 rounded bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center text-[8px] transition-colors">
@@ -545,42 +561,38 @@
                                             </div>
                                         </div>
                                     </div>
+
+                                    <!-- Usage-level repairs (no tenants, or unmatched to a tenant) -->
+                                    <div v-if="getUsageLevelRepairs(usage).length" class="mt-2 pt-2.5 border-t border-slate-800/80 w-full">
+                                        <div class="flex items-center mb-2">
+                                            <span class="text-[11px] font-bold text-sky-400 flex items-center gap-1.5">
+                                                <i class="fa-solid fa-wrench text-xs"></i>
+                                                {{ t('timelineRepairs') }}
+                                            </span>
+                                        </div>
+                                        <div class="relative pl-3 space-y-1.5 border-l-2 border-sky-500/40 ml-1">
+                                            <button v-for="repair in getUsageLevelRepairs(usage)" :key="'ur_'+repair.id" type="button" @click.stop="editRepair(repair)"
+                                                    class="relative w-full text-left">
+                                                <div class="absolute -left-[17px] top-2.5 w-2 h-2 rounded-full border border-slate-900 bg-sky-400 shadow"></div>
+                                                <div class="rounded-lg px-2.5 py-2 border border-sky-500/30 bg-sky-500/10 active:scale-[0.99] transition-all">
+                                                    <div class="flex items-center justify-between gap-2">
+                                                        <span class="text-[11px] font-bold text-white truncate min-w-0">{{ repair.title || '—' }}</span>
+                                                        <span class="text-[10px] text-slate-500 flex-shrink-0">{{ repair.date || '—' }}</span>
+                                                    </div>
+                                                    <div class="flex items-center gap-1.5 mt-0.5">
+                                                        <span class="text-[9px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded border" :class="repair.taxKind === 'capital' ? 'bg-amber-500/15 text-amber-300 border-amber-500/30' : 'bg-slate-700/80 text-slate-300 border-slate-600'">{{ repair.taxKind === 'capital' ? t('taxCapitalShort') : t('taxOperatingShort') }}</span>
+                                                        <span v-if="repair.cost" class="text-[11px] font-bold text-brand-400">${{ formatMoney(repair.cost) }}</span>
+                                                    </div>
+                                                </div>
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
                             <div v-if="getSortedUsages(viewingPropertyId).length === 0" class="text-xs text-slate-500 py-3 text-center">
                                 {{ t('noUsageHistory') }}
                             </div>
-                        </div>
-                    </div>
-
-                    <!-- Property history (房史) -->
-                    <div class="bg-slate-800/90 rounded-3xl p-5 border border-slate-700/50 shadow-sm relative overflow-hidden">
-                        <div class="mb-4">
-                            <h3 class="text-base font-bold text-white flex items-center gap-2">
-                                <i class="fa-solid fa-book-open text-violet-400"></i>
-                                {{ t('propertyHistory') }}
-                            </h3>
-                            <p class="text-[11px] text-slate-400 mt-1">{{ t('propertyHistoryHint') }}</p>
-                        </div>
-                        <div class="relative pl-6 space-y-3 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-700/60">
-                            <button v-for="ev in propertyHistoryEvents" :key="ev.id" type="button" @click="openHistoryEvent(ev)"
-                                    class="relative w-full text-left group">
-                                <div class="absolute -left-6 top-2.5 w-3 h-3 rounded-full border-2 border-slate-900 shadow"
-                                     :class="ev.kind === 'capital' ? 'bg-amber-400' : (ev.kind === 'repair' ? 'bg-sky-400' : (ev.kind.indexOf('tenant') === 0 ? 'bg-amber-300' : 'bg-brand-400'))"></div>
-                                <div class="bg-slate-900/80 rounded-2xl p-3 border border-slate-700/50 active:scale-[0.99] transition-all">
-                                    <div class="flex items-center justify-between gap-2 mb-1">
-                                        <span class="text-[10px] font-bold uppercase tracking-wider"
-                                              :class="ev.kind === 'capital' ? 'text-amber-400' : (ev.kind === 'repair' ? 'text-sky-400' : (ev.kind.indexOf('tenant') === 0 ? 'text-amber-300' : 'text-brand-400'))">
-                                            {{ ev.kind === 'capital' ? t('histCapital') : (ev.kind === 'repair' ? t('histRepair') : (ev.kind === 'tenant_in' ? t('histTenantIn') : (ev.kind === 'tenant_out' ? t('histTenantOut') : t('histUsage')))) }}
-                                        </span>
-                                        <span class="text-[11px] text-slate-500 flex-shrink-0">{{ ev.date || '—' }}</span>
-                                    </div>
-                                    <p class="text-[13px] font-bold text-white truncate">{{ ev.title }}</p>
-                                    <p v-if="ev.detail" class="text-[11px] text-slate-400 mt-0.5 truncate">{{ ev.detail }}</p>
-                                </div>
-                            </button>
-                            <div v-if="propertyHistoryEvents.length === 0" class="text-xs text-slate-500 py-3 text-center">{{ t('propertyHistoryEmpty') }}</div>
                         </div>
                     </div>
 
@@ -2526,7 +2538,7 @@
                 settingsTitle: 'Settings', settingsPreferences: 'Preferences', settingsLanguage: 'Language', settingsTheme: 'Colour theme', settingsThemeHint: 'Harbor for downtown condos. Brick for houses. Fir for land and cottages.', themeHarbor: 'Harbor', themeBrick: 'Brick', themeFir: 'Fir', themeSky: 'Harbor', themeCedar: 'Brick', themePine: 'Fir', settingsGPS: 'Location services', settingsGPSDesc: 'Used to place you on the property map. Location is only requested when you tap locate. Address lookup is sent to OpenStreetMap Nominatim.', geocodePrivacy: 'This sends the address to OpenStreetMap to place a pin. Nothing else from the house file is sent.', appLockTitle: 'App lock', appLockHint: 'Optional PIN when opening PocketProp. This hides the screen only — it does not encrypt the database.', appLockOff: 'Off. Anyone with this phone can open the app.', appLockOn: 'On. The screen locks when you leave the app.', appLockSet: 'Set PIN', appLockChange: 'Change PIN', appLockTurnOff: 'Turn off lock', appLockGate: 'Enter PIN to open', appLockPinPh: 'PIN', appLockUnlock: 'Unlock', appLockCurrent: 'Current PIN', appLockNew: 'New PIN (4–8 digits)', appLockAgain: 'Type new PIN again', toastPinBad: 'PIN is incorrect.', toastPinWeak: 'Use 4 to 8 digits.', toastPinMismatch: 'The two PINs do not match.', toastPinOn: 'App lock is on.', toastPinOff: 'App lock is off.', toastPinChanged: 'PIN updated.',
                 settingsDashboardViews: 'Home views', minOneViewRequired: 'Keep at least one view turned on.', settingsPropertyOrder: 'Property order',
                 settingsContactRoles: 'Contact types', addRoleCategory: 'Add type', roleCategoryName: 'Type name', toastRoleAdded: 'Type added', toastRoleDeleted: 'Type removed',
-                yearHealth: 'Year health', yearHealthHint: 'Calendar year of today. Income = rental cashflow ×12 when mode is Rental; operating/capital from repairs this year.', yearIncome: 'Income', yearOperating: 'Operating', yearCapital: 'Capital', yearMissingReceipts: 'Missing receipts', yearIncompleteTodos: 'Open todos', yearIncomeDashHint: 'Income needs rental cashflow mode', gapListTitle: 'Soft checklist', gapListHint: 'Reminders only — you can still save without after photos or a receipt.', gapMissingAfter: 'Missing after photos', gapMissingReceipt: 'Missing receipt', gapEmpty: 'No gaps right now.', gapCountLabel: '{n} soft gaps', backupLastFull: 'Last full backup', backupNeverFull: 'Never fully backed up', backupStaleHint: 'Full backup is older than 14 days (or never). Export a full backup when you can — nothing is deleted.', propertyHistory: 'Property history', propertyHistoryHint: 'Usage, tenants, and repairs in one timeline', propertyHistoryEmpty: 'No history events yet.', histUsage: 'Usage', histTenantIn: 'Tenant in', histTenantOut: 'Tenant out', histRepair: 'Repair', histCapital: 'Capital', exportAccountingCsv: 'Accounting CSV', exportAccountingCsvDesc: 'All repairs (with or without receipt). For your accountant — not a tax filing.', exportAccountingDisclaimer: 'This CSV is a local export from PocketProp. It is not a CRA return and not tax advice. Gaps show as hasReceipt=false.', exportCsvDownload: 'Download CSV', exportCsvTitle: 'Accounting export', toastCsvExported: 'Accounting CSV saved',
+                yearHealth: 'Year health', yearHealthHint: 'Calendar year of today. Income = rental cashflow ×12 when mode is Rental; operating/capital from repairs this year.', yearIncome: 'Income', yearOperating: 'Operating', yearCapital: 'Capital', yearMissingReceipts: 'Missing receipts', yearIncompleteTodos: 'Open todos', yearIncomeDashHint: 'Income needs rental cashflow mode', gapListTitle: 'Soft checklist', gapListHint: 'Reminders only — you can still save without after photos or a receipt.', gapMissingAfter: 'Missing after photos', gapMissingReceipt: 'Missing receipt', gapEmpty: 'No gaps right now.', gapCountLabel: '{n} soft gaps', backupLastFull: 'Last full backup', backupNeverFull: 'Never fully backed up', backupStaleHint: 'Full backup is older than 14 days (or never). Export a full backup when you can — nothing is deleted.', timelineRepairs: 'Repairs', exportAccountingCsv: 'Accounting CSV', exportAccountingCsvDesc: 'All repairs (with or without receipt). For your accountant — not a tax filing.', exportAccountingDisclaimer: 'This CSV is a local export from PocketProp. It is not a CRA return and not tax advice. Gaps show as hasReceipt=false.', exportCsvDownload: 'Download CSV', exportCsvTitle: 'Accounting export', toastCsvExported: 'Accounting CSV saved',
                 settingsDataBackup: 'Backup & restore', exportBackup: 'Export JSON backup', exportBackupLight: 'Light backup', exportBackupLightDesc: 'Houses, work and ledger only — no photos. Optional passphrase encrypts the file.', exportBackupFull: 'Full backup', exportBackupFullDesc: 'Includes photos and receipts. Optional passphrase recommended. File can be large.', backupPassTitle: 'Backup passphrase', backupPassHint: 'Leave blank to save a plain JSON file. A passphrase encrypts it on this phone — PocketProp cannot recover a forgotten one.', backupPassLabel: 'Passphrase (optional)', backupPassAgain: 'Type it again', backupPassSkip: 'Save without passphrase', backupPassSave: 'Save encrypted backup', backupUnlockTitle: 'Encrypted backup', backupUnlockHint: 'This file was saved with a passphrase.', backupUnlockLabel: 'Passphrase', backupUnlockBtn: 'Unlock and restore', toastBackupPassMismatch: 'The two passphrases do not match.', toastBackupBadPass: 'That passphrase does not open this file.', toastBackupTooBig: 'Backup file is too large to restore on this phone.', toastBackupUnsafeMedia: 'Ignored {n} unsafe attachments.', toastExportEncrypted: 'Encrypted backup saved', confirmImportCounts: 'This file has {p} properties, {w} work logs, {c} contacts. Restore replaces everything on this phone. Continue?', exportTaxPdf: 'Tax worksheet (PDF)', exportTaxPdfDesc: 'Receipted operating vs capital repairs. Print or Save as PDF.', exportTaxPrint: 'Print / Save PDF', exportTaxLang: 'PDF language', exportTaxYear: 'Year', exportTaxTitle: 'Repair tax worksheet', exportTaxGenerated: 'Prepared', exportTaxDisclaimer: 'This is a local worksheet from PocketProp. It is not a CRA T776 and not tax advice. Only records with a receipt are listed.', exportTaxEmpty: 'No receipted repair records in this filter.', exportTaxFooter: 'Capital cost allowance class is not assigned yet. Receipt images stay in the app.', importBackup: 'Restore JSON Backup', toastExportLight: 'Light backup saved (no photos)', toastExportFull: 'Full backup saved', toastImportLightNoPhotos: 'Restored text. Photos live in a full backup.', settingsDaily: 'General', settingsAdvanced: 'Advanced', settingsLangHint: 'Language is switched from the button at the top of Home. Only built-in labels change. Names you added or edited stay as written.', deadline: 'Deadline', itemAlertOn: 'Red-dot reminder for this item', workDotsTitle: 'Work red dots', workDotsHint: 'Turn on, then choose red for overdue and yellow for coming due.', cycleSoonDays: 'Days before cycle due', taskSoonDays: 'Days before task deadline', dotOverdueRed: 'Overdue: red dot', dotSoonYellow: 'Coming due: yellow dot', confirmNextDueTitle: 'Confirm next due date', cleanupUnusedPhotos: 'Clear unused photos', cleanupUnusedPhotosDesc: 'Remove photo files no record points to.', toastCleanupDone: 'Cleared {n} unused files', photoInFullBackup: 'In full backup', toastAddPropertyFirst: 'Add a property first', routineDotPromptTitle: 'A cycle is overdue', routineDotPromptBody: 'Show a small red dot on Work when something is due?', toastImportSuccess: 'Data restored successfully!', toastImportFailed: 'Invalid backup file format.', confirmImportMsg: 'Restoring from backup will overwrite all existing local data. Continue?',
                 loadDemoData: 'Reset Demo Data', loadDemoDataDesc: 'Overwrites current data with multi-property sample dataset.', confirmDemoDataMsg: 'Are you sure you want to load sample data? Current data will be replaced.', toastDemoLoaded: 'Demo data loaded', wipeAllData: 'Erase all data', wipeAllDataDesc: 'Permanently remove every property, work item and photo on this phone.', wipeStep1: 'This cannot be undone. Export a backup first if you might need this data again.', wipeBackupSoon: 'No backup exported in this step yet. You can still continue.', wipeBackupDone: 'A backup file was saved from this phone.', wipeContinue: 'Continue', wipeStep2: 'Check the box and type ERASE to go to the last step.', wipeAck: 'I understand this deletes everything on this phone and cannot be undone.', wipeTypeHint: 'Type ERASE', wipeStep3: 'Last step. This removes houses, work, people and photos stored by PocketProp.', wipeConfirmFinal: 'Erase everything now', toastWiped: 'All local data removed',
                 settingsFileManager: 'Media & File Storage', fileManagerTitle: 'Repair photos & receipts', filesCount: 'Files', storageUsed: 'Used', btnManageFiles: 'Open Gallery', noMediaFiles: 'No photo or document files match.', toastMediaDeleted: 'File removed from local storage.', fileTypeAll: 'All Files', fileLibraryHint: 'Grouped by work date. Tap a file, then swipe to browse.', fileSearchPh: 'Search title or property', viewerSwipeHint: 'Swipe left / right to switch', fileLibraryUpload: 'Upload', fileLibraryTitlePh: 'Name (optional)', fileLibraryUploadHint: 'Pick a property above first, then upload. Stored on this phone.', fileCatDeal: 'Closing / title', fileCatInsurance: 'Insurance', fileCatLease: 'Lease', fileCatMaintenance: 'Repairs', fileCatOther: 'Other', toastPickPropertyFirst: 'Choose a property first', toastLibraryUploaded: 'File added',
@@ -2575,7 +2587,7 @@
                 settingsTitle: '系统设置', settingsPreferences: '偏好设置', settingsLanguage: '界面语言', settingsTheme: '色彩主题', settingsThemeHint: '港湾适合市区公寓。砖色适合独立屋。冷杉适合土地和度假屋。', themeHarbor: '港湾', themeBrick: '砖色', themeFir: '冷杉', themeSky: '港湾', themeCedar: '砖色', themePine: '冷杉', settingsGPS: 'GPS 定位服务', settingsGPSDesc: '开启后可在房屋地图中定位当前位置及导航。只有你点定位才会向系统要位置。按地址解析会把地址发给 OpenStreetMap Nominatim。', geocodePrivacy: '这一步会把地址发给 OpenStreetMap 来打点。房屋档案里的其它内容不会送出。', appLockTitle: '应用锁', appLockHint: '可选 PIN，打开 App 时挡住界面。只锁屏幕，不加密数据库。', appLockOff: '已关闭。能打开这台手机的人都能进 App。', appLockOn: '已开启。离开 App 后再次进入需输入 PIN。', appLockSet: '设置 PIN', appLockChange: '更换 PIN', appLockTurnOff: '关闭应用锁', appLockGate: '输入 PIN 后进入', appLockPinPh: 'PIN', appLockUnlock: '解锁', appLockCurrent: '当前 PIN', appLockNew: '新 PIN（4–8 位数字）', appLockAgain: '再输入一次新 PIN', toastPinBad: 'PIN 不正确。', toastPinWeak: '请使用 4 到 8 位数字。', toastPinMismatch: '两次 PIN 不一致。', toastPinOn: '应用锁已打开。', toastPinOff: '应用锁已关闭。', toastPinChanged: 'PIN 已更新。',
                 settingsDashboardViews: '仪表盘视图设置', minOneViewRequired: '必须至少保留一个视图模式。', settingsPropertyOrder: '房屋卡片排序',
                 settingsContactRoles: '人员类别设置', addRoleCategory: '新增类别', roleCategoryName: '类别名称', toastRoleAdded: '已新增人员类别', toastRoleDeleted: '已删除人员类别',
-                yearHealth: '本年健康', yearHealthHint: '按今天所在公历年汇总。收入=出租账本月租金×12；运营/资本支出来自本年维修记录。', yearIncome: '本年收入', yearOperating: '运营支出', yearCapital: '资本开支', yearMissingReceipts: '缺收据', yearIncompleteTodos: '未完成待办', yearIncomeDashHint: '收入需切换为出租账本', gapListTitle: '软清单', gapListHint: '仅提醒，无完工照或收据仍可保存。', gapMissingAfter: '缺完工照', gapMissingReceipt: '缺收据', gapEmpty: '当前没有缺口。', gapCountLabel: '{n} 条软提醒', backupLastFull: '上次完整备份', backupNeverFull: '从未完整备份', backupStaleHint: '完整备份已超过 14 天（或从未备份）。有空时导出一份完整备份即可，不会删除任何数据。', propertyHistory: '房史', propertyHistoryHint: '用途、租客与维修合成一条时间线', propertyHistoryEmpty: '还没有房史事件。', histUsage: '用途', histTenantIn: '入住', histTenantOut: '退租', histRepair: '维修', histCapital: '资本', exportAccountingCsv: '会计 CSV', exportAccountingCsvDesc: '导出全部维修（含无收据）。给会计用——不是报税文件。', exportAccountingDisclaimer: '本 CSV 由 PocketProp 在本机导出，不是 CRA 报税表，也不是税务意见。无收据记录以 hasReceipt=false 标出。', exportCsvDownload: '下载 CSV', exportCsvTitle: '会计导出', toastCsvExported: '已导出会计 CSV',
+                yearHealth: '本年健康', yearHealthHint: '按今天所在公历年汇总。收入=出租账本月租金×12；运营/资本支出来自本年维修记录。', yearIncome: '本年收入', yearOperating: '运营支出', yearCapital: '资本开支', yearMissingReceipts: '缺收据', yearIncompleteTodos: '未完成待办', yearIncomeDashHint: '收入需切换为出租账本', gapListTitle: '软清单', gapListHint: '仅提醒，无完工照或收据仍可保存。', gapMissingAfter: '缺完工照', gapMissingReceipt: '缺收据', gapEmpty: '当前没有缺口。', gapCountLabel: '{n} 条软提醒', backupLastFull: '上次完整备份', backupNeverFull: '从未完整备份', backupStaleHint: '完整备份已超过 14 天（或从未备份）。有空时导出一份完整备份即可，不会删除任何数据。', timelineRepairs: '维修', exportAccountingCsv: '会计 CSV', exportAccountingCsvDesc: '导出全部维修（含无收据）。给会计用——不是报税文件。', exportAccountingDisclaimer: '本 CSV 由 PocketProp 在本机导出，不是 CRA 报税表，也不是税务意见。无收据记录以 hasReceipt=false 标出。', exportCsvDownload: '下载 CSV', exportCsvTitle: '会计导出', toastCsvExported: '已导出会计 CSV',
                 settingsDataBackup: '数据备份与恢复 (离线)', exportBackup: '导出 JSON 备份文件', exportBackupLight: '轻备份', exportBackupLightDesc: '只含房屋、工作和账本，不含照片。可加口令加密。', exportBackupFull: '完整备份', exportBackupFullDesc: '含照片和收据，建议加口令。文件可能很大。', backupPassTitle: '备份口令', backupPassHint: '留空则保存普通 JSON。设置口令后文件在本机加密，口令遗忘无法找回。', backupPassLabel: '口令（可选）', backupPassAgain: '再输入一次', backupPassSkip: '不加密，直接保存', backupPassSave: '保存加密备份', backupUnlockTitle: '加密备份', backupUnlockHint: '这份文件导出时加了口令。', backupUnlockLabel: '口令', backupUnlockBtn: '解锁并恢复', toastBackupPassMismatch: '两次口令不一致。', toastBackupBadPass: '口令无法打开这份文件。', toastBackupTooBig: '备份文件过大，这台手机无法恢复。', toastBackupUnsafeMedia: '已忽略 {n} 个不安全附件。', toastExportEncrypted: '已保存加密备份', confirmImportCounts: '这份备份含 {p} 套房、{w} 条工作记录、{c} 位联系人。恢复会覆盖本机全部数据。继续？', exportTaxPdf: '税务备查 PDF', exportTaxPdfDesc: '只汇总有收据的维修保养与资产改良。用系统打印或存储为 PDF。', exportTaxPrint: '打印 / 存 PDF', exportTaxLang: 'PDF 语言', exportTaxYear: '年份', exportTaxTitle: '维修税务备查表', exportTaxGenerated: '生成日期', exportTaxDisclaimer: '本表由 PocketProp 在本机生成，不是 CRA T776，也不是税务意见。仅列入有收据的记录。', exportTaxEmpty: '当前筛选没有带收据的维修记录。', exportTaxFooter: '尚未标注 CCA 类别。收据原件仍在 App 里。', importBackup: '恢复 JSON 备份文件', toastExportLight: '已导出轻备份（不含照片）', toastExportFull: '已导出完整备份', toastImportLightNoPhotos: '文字已恢复。照片在完整备份里。', settingsDaily: '日常', settingsAdvanced: '进阶', settingsLangHint: '语言在首页右上角切换。仅更换系统预设文字。凡自行新增或编辑过的项目，系统不会主动翻译。', deadline: '截止日期', itemAlertOn: '此项显示小红点', workDotsTitle: '工作小红点', workDotsHint: '打开后，再分别选择过期红点和快到期黄点。', cycleSoonDays: '周期提前几天', taskSoonDays: '待办提前几天', dotOverdueRed: '过期：红点', dotSoonYellow: '快到期：黄点', confirmNextDueTitle: '确认下次日期', cleanupUnusedPhotos: '清理未用照片', cleanupUnusedPhotosDesc: '删掉没有记录再引用的图片文件。', toastCleanupDone: '已清理 {n} 个未用文件', photoInFullBackup: '图在完整备份', toastAddPropertyFirst: '请先添加一套房子', routineDotPromptTitle: '有周期已经过期', routineDotPromptBody: '要不要在工作页用小红点标出到期项？', toastImportSuccess: '数据恢复成功！', toastImportFailed: '恢复失败，文件格式错误。', confirmImportMsg: '导入备份将覆盖当前所有本地数据，确定继续吗？',
                 loadDemoData: '加载示例演示数据', loadDemoDataDesc: '重置并重新加载包含多处房屋资产的完整示例数据。', confirmDemoDataMsg: '确定要重新载入演示数据吗？当前修改将被覆盖。', toastDemoLoaded: '示例数据已加载', wipeAllData: '清空全部数据', wipeAllDataDesc: '永久删除本机全部房屋、工作和照片。', wipeStep1: '此操作无法撤销。若以后可能还要用，请先导出备份。', wipeBackupSoon: '这一步里还没有导出备份，仍可继续。', wipeBackupDone: '已从本机保存了一份备份文件。', wipeContinue: '继续', wipeStep2: '勾选确认，并输入 ERASE，才能进入最后一步。', wipeAck: '我明白这会删掉本机全部数据，而且无法恢复。', wipeTypeHint: '输入 ERASE', wipeStep3: '最后一步。将删除 PocketProp 保存在本机的房屋、工作、联系人和照片。', wipeConfirmFinal: '立即全部清空', toastWiped: '本机数据已清空',
                 settingsFileManager: '维修照片与收据', fileManagerTitle: '维修照片与收据', filesCount: '个文件', storageUsed: '已用容量', btnManageFiles: '打开', noMediaFiles: '未匹配到媒体文件。', toastMediaDeleted: '文件已彻底删除。', fileTypeAll: '全部文件', fileLibraryHint: '按工单日期排列。点开后左右滑动切换。', fileSearchPh: '搜索名称或房屋', viewerSwipeHint: '左右滑动切换文件', fileLibraryUpload: '上传', fileLibraryTitlePh: '名称（可选）', fileLibraryUploadHint: '先点选上方一套房屋，再上传。文件只存在这台手机。', fileCatDeal: '交易产权', fileCatInsurance: '保险', fileCatLease: '租约', fileCatMaintenance: '维修', fileCatOther: '其他', toastPickPropertyFirst: '请先选择一套房屋', toastLibraryUploaded: '文件已加入',
@@ -3378,7 +3390,7 @@
             return { properties, tasks, repairs, contacts, customRoles, userZones: zones };
         }
 
-        const APP_VERSION = '2026.09.27-a';
+        const APP_VERSION = '2026.09.27-b';
 
         const app = createApp({
             data() {
@@ -3723,10 +3735,6 @@
                 },
                 globalSoftGaps() {
                     return this.getSoftGaps(null);
-                },
-                propertyHistoryEvents() {
-                    if (!this.viewingPropertyId) return [];
-                    return this.getPropertyHistory(this.viewingPropertyId);
                 },
                 hasRealLocalData() {
                     return (this.properties || []).length > 0
@@ -5250,44 +5258,42 @@
                     });
                     return list.sort((a, b) => String(b.date).localeCompare(String(a.date)));
                 },
-                getPropertyHistory(propId) {
-                    const events = [];
-                    const prop = this.getProp(propId);
-                    if (!prop) return events;
-                    (prop.usages || []).forEach(u => {
-                        const label = (this.getUsageConfig(u.usageType) || {}).label || u.usageType || this.t('histUsage');
-                        if (u.startDate) {
-                            events.push({ id: 'u_s_' + u.id, date: u.startDate, sort: u.startDate, kind: 'usage', title: label, detail: u.endDate ? (u.startDate + ' → ' + u.endDate) : (u.startDate + ' → ' + this.t('ongoing')), usageId: u.id });
-                        }
-                        if (u.endDate) {
-                            events.push({ id: 'u_e_' + u.id, date: u.endDate, sort: u.endDate, kind: 'usage', title: label + ' · ' + this.t('endDate'), detail: u.endDate, usageId: u.id });
-                        }
-                        (u.tenants || []).forEach(tn => {
-                            if (tn.startDate) {
-                                events.push({ id: 'tn_i_' + tn.id, date: tn.startDate, sort: tn.startDate, kind: 'tenant_in', title: this.t('histTenantIn') + ' · ' + (tn.name || '—'), detail: (tn.room ? tn.room + ' · ' : '') + (tn.rent ? ('$' + tn.rent + '/mo') : ''), usageId: u.id, tenantId: tn.id });
-                            }
-                            if (tn.endDate) {
-                                events.push({ id: 'tn_o_' + tn.id, date: tn.endDate, sort: tn.endDate, kind: 'tenant_out', title: this.t('histTenantOut') + ' · ' + (tn.name || '—'), detail: tn.endDate, usageId: u.id, tenantId: tn.id });
-                            }
-                        });
-                    });
-                    (this.repairs || []).filter(r => r.propertyId === propId).forEach(r => {
-                        const cost = Number(r.cost) || 0;
-                        const isCapital = r.taxKind === 'capital' || cost >= 2000;
-                        const kind = isCapital ? 'capital' : 'repair';
-                        const taxLabel = r.taxKind === 'capital' ? this.t('taxCapitalShort') : this.t('taxOperatingShort');
-                        events.push({
-                            id: 'r_' + r.id,
-                            date: r.date || '',
-                            sort: r.date || '',
-                            kind,
-                            title: (isCapital ? this.t('histCapital') : this.t('histRepair')) + ' · ' + (r.title || '—'),
-                            detail: taxLabel + (cost ? (' · $' + this.formatMoney(cost)) : ''),
-                            repairId: r.id,
-                            cost
-                        });
-                    });
-                    return events.sort((a, b) => String(b.sort || '').localeCompare(String(a.sort || '')));
+                dateInPeriod(dateStr, startDate, endDate, singleDate) {
+                    if (!dateStr) return false;
+                    const d = String(dateStr);
+                    const start = startDate ? String(startDate) : '';
+                    if (singleDate) return !!start && d === start;
+                    if (start && d < start) return false;
+                    if (endDate && d > String(endDate)) return false;
+                    return true;
+                },
+                getPropertyRepairs(propId) {
+                    const id = propId || this.viewingPropertyId;
+                    if (!id) return [];
+                    return (this.repairs || [])
+                        .filter(r => r.propertyId === id)
+                        .slice()
+                        .sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
+                },
+                getRepairsForUsage(usage) {
+                    if (!usage) return [];
+                    const single = this.isSingleDateType(usage.usageType);
+                    return this.getPropertyRepairs(this.viewingPropertyId).filter(r =>
+                        this.dateInPeriod(r.date, usage.startDate, usage.endDate, single)
+                    );
+                },
+                getRepairsForTenant(usage, tenant) {
+                    if (!usage || !tenant) return [];
+                    return this.getRepairsForUsage(usage).filter(r =>
+                        this.dateInPeriod(r.date, tenant.startDate, tenant.endDate, false)
+                    );
+                },
+                getUsageLevelRepairs(usage) {
+                    if (!usage) return [];
+                    const inUsage = this.getRepairsForUsage(usage);
+                    const tenants = (usage.tenants || []).filter(Boolean);
+                    if (!tenants.length) return inUsage;
+                    return inUsage.filter(r => !tenants.some(tn => this.dateInPeriod(r.date, tn.startDate, tn.endDate, false)));
                 },
                 formatBackupAt(iso) {
                     try {
@@ -5320,25 +5326,6 @@
                 openGapRepair(gap) {
                     const r = gap && (gap.repair || this.repairs.find(x => x.id === gap.repairId));
                     if (r) this.editRepair(r);
-                },
-                openHistoryEvent(ev) {
-                    if (!ev) return;
-                    if (ev.repairId) {
-                        const r = this.repairs.find(x => x.id === ev.repairId);
-                        if (r) this.editRepair(r);
-                        return;
-                    }
-                    if (ev.usageId) {
-                        const prop = this.getProp(this.viewingPropertyId);
-                        const u = prop && (prop.usages || []).find(x => x.id === ev.usageId);
-                        if (!u) return;
-                        if (ev.tenantId) {
-                            const tn = (u.tenants || []).find(x => x.id === ev.tenantId);
-                            this.openTenantModal(u, tn || null);
-                        } else {
-                            this.openUsageModal(u);
-                        }
-                    }
                 },
                 openAccountingCsv() {
                     this.accountingCsvYear = String(new Date().getFullYear());
