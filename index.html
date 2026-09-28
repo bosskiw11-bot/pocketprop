@@ -454,9 +454,12 @@
                                                                     {{ tenant.startDate || '?' }} <span class="text-slate-500">➔</span> {{ tenant.endDate || t('ongoing') }}
                                                                 </p>
                                                                 <p v-if="tenant.notes" class="text-[10px] text-slate-400 italic mt-0.5 truncate">"{{ tenant.notes }}"</p>
-                                                                <div v-if="(tenant.beforePhotos || []).length" class="flex flex-wrap items-center gap-1.5 mt-2">
+                                                                <div v-if="(tenant.beforePhotos || []).length || (tenant.afterPhotos || []).length" class="flex flex-wrap items-center gap-1.5 mt-2">
                                                                     <span v-if="(tenant.beforePhotos || []).length" @click.stop="openImageViewer(resolveMediaList(tenant.beforePhotos))" class="text-[10px] bg-slate-700/50 text-brand-400 px-2 py-0.5 rounded flex items-center gap-1 border border-slate-600 active:bg-slate-600 cursor-pointer">
                                                                         <i class="fa-solid fa-camera"></i> {{ t('viewBefore') }} ({{ tenant.beforePhotos.length }})
+                                                                    </span>
+                                                                    <span v-if="(tenant.afterPhotos || []).length" @click.stop="openImageViewer(resolveMediaList(tenant.afterPhotos))" class="text-[10px] bg-slate-700/50 text-emerald-400 px-2 py-0.5 rounded flex items-center gap-1 border border-slate-600 active:bg-slate-600 cursor-pointer">
+                                                                        <i class="fa-solid fa-image"></i> {{ t('viewMoveOut') }} ({{ tenant.afterPhotos.length }})
                                                                     </span>
                                                                 </div>
                                                                 <div v-if="getRepairsForTenant(usage, tenant).length" class="mt-2 space-y-1">
@@ -977,7 +980,7 @@
                         <button v-for="gap in workSoftGaps" :key="gap.id" type="button" @click="openGapTarget(gap)"
                                 class="w-full flex items-start justify-between gap-3 bg-slate-800 rounded-2xl p-3.5 border border-slate-700/50 text-left active:scale-[0.99] transition-all">
                             <div class="min-w-0">
-                                <p class="text-[10px] font-bold uppercase tracking-wider mb-0.5" :class="gap.kind === 'receipt' ? 'text-rose-400' : (gap.kind === 'handoverBefore' ? 'text-sky-400' : 'text-amber-400')">
+                                <p class="text-[10px] font-bold uppercase tracking-wider mb-0.5" :class="gap.kind === 'receipt' ? 'text-rose-400' : ((gap.kind === 'handoverBefore' || gap.kind === 'moveOutBefore') ? 'text-sky-400' : 'text-amber-400')">
                                     {{ gapKindLabel(gap.kind) }}
                                 </p>
                                 <p class="text-[14px] font-bold text-white truncate">{{ gap.title }}</p>
@@ -1355,6 +1358,34 @@
                                     </div>
                                     <div v-else class="bg-slate-800/50 rounded-2xl p-4 border border-slate-700/50 border-dashed text-center">
                                         <p class="text-[11px] text-slate-500 font-semibold flex items-center justify-center gap-1.5"><i class="fa-solid fa-image"></i> {{ t('noUsageBeforePhotosMsg') }}</p>
+                                    </div>
+                                </div>
+
+                                <div v-if="formTenantSub.endDate">
+                                    <div class="flex justify-between items-center mb-2 pl-1">
+                                        <div class="flex items-center gap-2">
+                                            <label class="text-[12px] font-bold text-slate-400 uppercase tracking-wider">{{ t('usagePhotosMoveOut') }}</label>
+                                            <span v-if="formTenantSub.hasAfterPhotos !== false" class="text-[11px] font-bold text-emerald-400">{{ (formTenantSub.afterPhotos || []).length }} / {{ usagePhotoMax }}</span>
+                                        </div>
+                                        <div class="flex bg-slate-900 rounded-lg p-0.5 border border-slate-700 shadow-inner">
+                                            <button type="button" @click="formTenantSub.hasAfterPhotos = true" class="px-2.5 py-1 text-[10px] font-bold rounded-md transition-all" :class="formTenantSub.hasAfterPhotos !== false ? 'bg-emerald-500 text-white shadow' : 'text-slate-500 hover:text-slate-300'">{{ t('hasMoveOutPhotos') }}</button>
+                                            <button type="button" @click="formTenantSub.hasAfterPhotos = false" class="px-2.5 py-1 text-[10px] font-bold rounded-md transition-all" :class="formTenantSub.hasAfterPhotos === false ? 'bg-slate-700 text-white shadow' : 'text-slate-500 hover:text-slate-300'">{{ t('noMoveOutPhotos') }}</button>
+                                        </div>
+                                    </div>
+                                    <div v-if="formTenantSub.hasAfterPhotos !== false" class="grid grid-cols-3 gap-3">
+                                        <div v-for="(photo, idx) in (formTenantSub.afterPhotos || [])" :key="'ta_'+idx" class="relative aspect-square bg-slate-800 rounded-2xl p-1 border border-slate-700 flex items-center justify-center overflow-hidden">
+                                            <img :src="resolveMediaUrl(photo)" @click="openImageViewer(resolveMediaList(formTenantSub.afterPhotos), idx)" class="max-h-full max-w-full rounded-xl object-contain cursor-pointer">
+                                            <button @click.stop="removeTenantPhoto('after', idx)" type="button" class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg active:scale-90 text-[10px]">
+                                                <i class="fa-solid fa-xmark"></i>
+                                            </button>
+                                        </div>
+                                        <div v-if="(formTenantSub.afterPhotos || []).length < usagePhotoMax" @click="triggerFileInput('after', true)" class="aspect-square bg-slate-800/50 border-2 border-dashed border-slate-600 rounded-2xl flex flex-col items-center justify-center text-slate-400 cursor-pointer active:bg-slate-800 transition-colors p-1 text-center">
+                                            <i class="fa-solid fa-camera text-xl mb-1 text-emerald-400"></i>
+                                            <span class="text-[10px] font-bold leading-tight">{{ t('addPhoto') }}</span>
+                                        </div>
+                                    </div>
+                                    <div v-else class="bg-slate-800/50 rounded-2xl p-4 border border-slate-700/50 border-dashed text-center">
+                                        <p class="text-[11px] text-slate-500 font-semibold flex items-center justify-center gap-1.5"><i class="fa-solid fa-image"></i> {{ t('noMoveOutPhotosMsg') }}</p>
                                     </div>
                                 </div>
 
@@ -2517,8 +2548,8 @@
                 btnSave: 'Save', back: 'Back', backToProperties: 'All properties', allTime: 'All years', zoneLayout: 'Rooms & areas',
                 toastPropSaved: 'Property saved', toastPropUpdated: 'Property updated', toastPropertyDeleted: 'Property and linked work removed', toastTaskSaved: 'Task saved', toastTaskDeleted: 'Task deleted', toastRepairLogged: 'Repair logged', toastRepairDeleted: 'History record deleted', toastContactSaved: 'Contact saved', toastContactDeleted: 'Contact deleted', toastCopied: 'Copied!',
                 uploadReceipt: 'Receipts (Max 6)', viewReceipt: 'Receipts', remove: 'Remove', toastFileTooLarge: 'File over 20 MB, skipped', storageWarn: 'Local photos are getting large. Export a full backup or remove unused files.',
-                uploadBefore: 'Before Photos (Max 6)', uploadAfter: 'After Photos (Max 6)', addPhoto: 'Add Photo', viewBefore: 'Before', viewAfter: 'After',
-                taxKind: 'Tax treatment', taxOperating: 'Repairs & maintenance', taxCapital: 'Capital improvement', taxOperatingShort: 'Maintenance', taxCapitalShort: 'Capital', taxCapitalHint: 'This looks like a larger upgrade. Choose capital improvement if it replaces a system or adds lasting value.', hasReceipt: 'Receipt on file', noReceipt: 'No receipt', noReceiptMsg: 'This record will be saved without a receipt.', hasBeforePhotos: 'Before on file', noBeforePhotos: 'No before', noBeforePhotosMsg: 'This record will be saved without before photos.', hasAfterPhotos: 'After on file', noAfterPhotos: 'No after', noAfterPhotosMsg: 'This record will be saved without after photos.', hasUsageBeforePhotos: 'Before on file', noUsageBeforePhotos: 'No photos', noUsageBeforePhotosMsg: 'This period will be saved without handover before photos.',
+                uploadBefore: 'Before Photos (Max 6)', uploadAfter: 'After Photos (Max 6)', addPhoto: 'Add Photo', viewBefore: 'Before', viewAfter: 'After', viewMoveOut: 'Move-out',
+                taxKind: 'Tax treatment', taxOperating: 'Repairs & maintenance', taxCapital: 'Capital improvement', taxOperatingShort: 'Maintenance', taxCapitalShort: 'Capital', taxCapitalHint: 'This looks like a larger upgrade. Choose capital improvement if it replaces a system or adds lasting value.', hasReceipt: 'Receipt on file', noReceipt: 'No receipt', noReceiptMsg: 'This record will be saved without a receipt.', hasBeforePhotos: 'Before on file', noBeforePhotos: 'No before', noBeforePhotosMsg: 'This record will be saved without before photos.', hasAfterPhotos: 'After on file', noAfterPhotos: 'No after', noAfterPhotosMsg: 'This record will be saved without after photos.', hasUsageBeforePhotos: 'Before on file', noUsageBeforePhotos: 'No photos', noUsageBeforePhotosMsg: 'This period will be saved without handover before photos.', hasMoveOutPhotos: 'Move-out on file', noMoveOutPhotos: 'No photos', noMoveOutPhotosMsg: 'This lease will be saved without move-out photos.',
                 viewModeList: 'List', viewModeMap: 'Map', viewModeGrid: 'Grid', openPropertyDetails: 'View property', recenterMap: 'Show all pins',
                 btnGeocode: 'Locate Address', geocoding: 'Locating...', geocodeSuccess: 'Address located!', geocodeFailed: 'Address not found',
                 gpsEnabled: 'GPS Enabled', gpsDisabled: 'GPS Disabled', enableGPS: 'Enable GPS', locateMe: 'My Location', gpsOffMsg: 'GPS is disabled',
@@ -2526,7 +2557,7 @@
                 usageTimeline: 'Property history', startDate: 'Start Date', endDate: 'End Date', addUsagePeriod: 'Add Event/Period', editUsagePeriod: 'Edit Event/Period', modalAddUsage: 'Add Event or Usage Period', ongoing: 'Present',
                 usageNotes: 'Period Notes / Price / Tenant Info', noUsageHistory: 'No timeline events logged yet.',
                 usageRealtor: 'Realtor', usageLawyer: 'Lawyer', usageManager: 'Property manager', noneAssigned: 'None',
-                usagePhotosBefore: 'Before photos (max 20)', usagePhotosAfter: 'After photos (max 20)',
+                usagePhotosBefore: 'Before photos (max 20)', usagePhotosAfter: 'After photos (max 20)', usagePhotosMoveOut: 'Move-out photos (max 20)',
                 linkedFromProperties: 'Linked properties', linkedFromHint: 'Shown after this person is selected in the property history.',
                 tenantSubTimeline: 'Tenants', addTenantSub: 'Add tenant', editTenantSub: 'Edit tenant', monthlyRent: 'Monthly rent', selectCrmTenant: 'Choose a saved tenant', tenantName: 'Tenant name', roomName: 'Unit / room', roomHint: 'e.g. Primary bedroom, Unit A', entireHouse: 'Whole property', leasesCount: 'leases',
                 toastTenantSubSaved: 'Tenant lease saved', toastTenantSubDeleted: 'Tenant lease deleted', toastUsageSaved: 'Timeline updated', toastUsageDeleted: 'Timeline record deleted',
@@ -2534,7 +2565,7 @@
                 settingsTitle: 'Settings', settingsPreferences: 'Preferences', settingsLanguage: 'Language', settingsTheme: 'Colour theme', settingsThemeHint: 'Harbor for downtown condos. Brick for houses. Fir for land and cottages.', themeHarbor: 'Harbor', themeBrick: 'Brick', themeFir: 'Fir', themeSky: 'Harbor', themeCedar: 'Brick', themePine: 'Fir', settingsGPS: 'Location services', settingsGPSDesc: 'Used to place you on the property map. Location is only requested when you tap locate. Address lookup is sent to OpenStreetMap Nominatim.', geocodePrivacy: 'This sends the address to OpenStreetMap to place a pin. Nothing else from the house file is sent.', appLockTitle: 'App lock', appLockHint: 'Optional PIN when opening PocketProp. This hides the screen only — it does not encrypt the database.', appLockOff: 'Off. Anyone with this phone can open the app.', appLockOn: 'On. The screen locks when you leave the app.', appLockSet: 'Set PIN', appLockChange: 'Change PIN', appLockTurnOff: 'Turn off lock', appLockGate: 'Enter PIN to open', appLockPinPh: 'PIN', appLockUnlock: 'Unlock', appLockCurrent: 'Current PIN', appLockNew: 'New PIN (4–8 digits)', appLockAgain: 'Type new PIN again', toastPinBad: 'PIN is incorrect.', toastPinWeak: 'Use 4 to 8 digits.', toastPinMismatch: 'The two PINs do not match.', toastPinOn: 'App lock is on.', toastPinOff: 'App lock is off.', toastPinChanged: 'PIN updated.',
                 settingsDashboardViews: 'Home views', minOneViewRequired: 'Keep at least one view turned on.', settingsPropertyOrder: 'Property order',
                 settingsContactRoles: 'Contact types', addRoleCategory: 'Add type', roleCategoryName: 'Type name', toastRoleAdded: 'Type added', toastRoleDeleted: 'Type removed',
-                yearHealth: 'Year health', yearHealthHint: 'Calendar year of today. Income = rental cashflow ×12 when mode is Rental; operating/capital from repairs this year.', yearHealthExperimental: 'Experimental · Year health', yearHealthExperimentalHint: 'Rental books are incomplete — these numbers can mislead. Not advice. Expand only for a rough calendar-year snapshot.', yearIncome: 'Income', yearOperating: 'Operating', yearCapital: 'Capital', yearMissingReceipts: 'Missing receipts', yearIncompleteTodos: 'Open todos', yearIncomeDashHint: 'Income needs rental cashflow mode', gapListTitle: 'Record check', gapListHint: 'Soft check for missing repair before/after photos, receipts, and purchase/rental handover before photos — not a todo queue. You can still save without filling them.', gapMissingBefore: 'Missing before photos', gapMissingAfter: 'Missing after photos', gapMissingReceipt: 'Missing receipt', gapMissingHandoverBefore: 'Missing handover before', gapEmpty: 'No gaps right now.', gapCountLabel: '{n} gaps', toastGapsNotQueue: 'Open a row to fix a record', backupLastFull: 'Last full backup', backupNeverFull: 'Never fully backed up', backupStaleHint: 'Full backup is older than 14 days (or never). Export a full backup when you can — nothing is deleted.', timelineRepairs: 'Repairs', exportAccountingCsv: 'Accounting CSV', exportAccountingCsvDesc: 'All repairs (with or without receipt). For your accountant — not a tax filing.', exportAccountingDisclaimer: 'This CSV is a local export from PocketProp. It is not a CRA return and not tax advice. Gaps show as hasReceipt=false.', exportCsvDownload: 'Download CSV', exportCsvTitle: 'Accounting export', toastCsvExported: 'Accounting CSV saved',
+                yearHealth: 'Year health', yearHealthHint: 'Calendar year of today. Income = rental cashflow ×12 when mode is Rental; operating/capital from repairs this year.', yearHealthExperimental: 'Experimental · Year health', yearHealthExperimentalHint: 'Rental books are incomplete — these numbers can mislead. Not advice. Expand only for a rough calendar-year snapshot.', yearIncome: 'Income', yearOperating: 'Operating', yearCapital: 'Capital', yearMissingReceipts: 'Missing receipts', yearIncompleteTodos: 'Open todos', yearIncomeDashHint: 'Income needs rental cashflow mode', gapListTitle: 'Record check', gapListHint: 'Soft check for missing repair before/after photos, receipts, purchase/sold/rental handover before photos, and lease move-out photos — not a todo queue. You can still save without filling them.', gapMissingBefore: 'Missing before photos', gapMissingAfter: 'Missing after photos', gapMissingReceipt: 'Missing receipt', gapMissingHandoverBefore: 'Missing handover before', gapMissingMoveOut: 'Missing move-out photos', gapEmpty: 'No gaps right now.', gapCountLabel: '{n} gaps', toastGapsNotQueue: 'Open a row to fix a record', backupLastFull: 'Last full backup', backupNeverFull: 'Never fully backed up', backupStaleHint: 'Full backup is older than 14 days (or never). Export a full backup when you can — nothing is deleted.', timelineRepairs: 'Repairs', exportAccountingCsv: 'Accounting CSV', exportAccountingCsvDesc: 'All repairs (with or without receipt). For your accountant — not a tax filing.', exportAccountingDisclaimer: 'This CSV is a local export from PocketProp. It is not a CRA return and not tax advice. Gaps show as hasReceipt=false.', exportCsvDownload: 'Download CSV', exportCsvTitle: 'Accounting export', toastCsvExported: 'Accounting CSV saved',
                 settingsDataBackup: 'Backup & restore', exportBackup: 'Export JSON backup', exportBackupLight: 'Light backup', exportBackupLightDesc: 'Houses, work and ledger only — no photos. Optional passphrase encrypts the file.', exportBackupFull: 'Full backup', exportBackupFullDesc: 'Includes photos and receipts. Optional passphrase recommended. File can be large.', backupPassTitle: 'Backup passphrase', backupPassHint: 'Leave blank to save a plain JSON file. A passphrase encrypts it on this phone — PocketProp cannot recover a forgotten one.', backupPassLabel: 'Passphrase (optional)', backupPassAgain: 'Type it again', backupPassSkip: 'Save without passphrase', backupPassSave: 'Save encrypted backup', backupUnlockTitle: 'Encrypted backup', backupUnlockHint: 'This file was saved with a passphrase.', backupUnlockLabel: 'Passphrase', backupUnlockBtn: 'Unlock and restore', toastBackupPassMismatch: 'The two passphrases do not match.', toastBackupBadPass: 'That passphrase does not open this file.', toastBackupTooBig: 'Backup file is too large to restore on this phone.', toastBackupUnsafeMedia: 'Ignored {n} unsafe attachments.', toastExportEncrypted: 'Encrypted backup saved', confirmImportCounts: 'This file has {p} properties, {w} work logs, {c} contacts. Restore replaces everything on this phone. Continue?', exportTaxPdf: 'Tax worksheet (PDF)', exportTaxPdfDesc: 'Receipted operating vs capital repairs. Print or Save as PDF.', exportTaxPrint: 'Print / Save PDF', exportTaxLang: 'PDF language', exportTaxYear: 'Year', exportTaxTitle: 'Repair tax worksheet', exportTaxGenerated: 'Prepared', exportTaxDisclaimer: 'This is a local worksheet from PocketProp. It is not a CRA T776 and not tax advice. Only records with a receipt are listed.', exportTaxEmpty: 'No receipted repair records in this filter.', exportTaxFooter: 'Capital cost allowance class is not assigned yet. Receipt images stay in the app.', importBackup: 'Restore JSON Backup', toastExportLight: 'Light backup saved (no photos)', toastExportFull: 'Full backup saved', toastImportLightNoPhotos: 'Restored text. Photos live in a full backup.', settingsDaily: 'General', settingsAdvanced: 'Advanced', settingsLangHint: 'Language is switched from the button at the top of Home. Only built-in labels change. Names you added or edited stay as written.', deadline: 'Deadline', itemAlertOn: 'Red-dot reminder for this item', workDotsTitle: 'Work red dots', workDotsHint: 'Turn on, then choose red for overdue and yellow for coming due.', cycleSoonDays: 'Days before cycle due', taskSoonDays: 'Days before task deadline', dotOverdueRed: 'Overdue: red dot', dotSoonYellow: 'Coming due: yellow dot', confirmNextDueTitle: 'Confirm next due date', cleanupUnusedPhotos: 'Clear unused photos', cleanupUnusedPhotosDesc: 'Remove photo files no record points to.', toastCleanupDone: 'Cleared {n} unused files', photoInFullBackup: 'In full backup', toastAddPropertyFirst: 'Add a property first', routineDotPromptTitle: 'A cycle is overdue', routineDotPromptBody: 'Show a small red dot on Work when something is due?', toastImportSuccess: 'Data restored successfully!', toastImportFailed: 'Invalid backup file format.', confirmImportMsg: 'Restoring from backup will overwrite all existing local data. Continue?',
                 loadDemoData: 'Reset Demo Data', loadDemoDataDesc: 'Overwrites current data with multi-property sample dataset.', confirmDemoDataMsg: 'Are you sure you want to load sample data? Current data will be replaced.', toastDemoLoaded: 'Demo data loaded', wipeAllData: 'Erase all data', wipeAllDataDesc: 'Permanently remove every property, work item and photo on this phone.', wipeStep1: 'This cannot be undone. Export a backup first if you might need this data again.', wipeBackupSoon: 'No backup exported in this step yet. You can still continue.', wipeBackupDone: 'A backup file was saved from this phone.', wipeContinue: 'Continue', wipeStep2: 'Check the box and type ERASE to go to the last step.', wipeAck: 'I understand this deletes everything on this phone and cannot be undone.', wipeTypeHint: 'Type ERASE', wipeStep3: 'Last step. This removes houses, work, people and photos stored by PocketProp.', wipeConfirmFinal: 'Erase everything now', toastWiped: 'All local data removed',
                 settingsFileManager: 'Media & File Storage', fileManagerTitle: 'Repair photos & receipts', filesCount: 'Files', storageUsed: 'Used', btnManageFiles: 'Open Gallery', noMediaFiles: 'No photo or document files match.', toastMediaDeleted: 'File removed from local storage.', fileTypeAll: 'All Files', fileLibraryHint: 'Grouped by work date. Tap a file, then swipe to browse.', fileSearchPh: 'Search title or property', viewerSwipeHint: 'Swipe left / right to switch', fileLibraryUpload: 'Upload', fileLibraryTitlePh: 'Name (optional)', fileLibraryUploadHint: 'Pick a property above first, then upload. Stored on this phone.', fileCatDeal: 'Closing / title', fileCatInsurance: 'Insurance', fileCatLease: 'Lease', fileCatMaintenance: 'Repairs', fileCatOther: 'Other', toastPickPropertyFirst: 'Choose a property first', toastLibraryUploaded: 'File added',
@@ -2566,8 +2597,8 @@
                 btnSave: '保存', back: '返回', backToProperties: '返回房屋列表', allTime: '全部历年', zoneLayout: '房间与区域',
                 toastPropSaved: '房屋已保存', toastPropUpdated: '房屋信息已更新', toastPropertyDeleted: '房屋及关联工作已删除', toastTaskSaved: '待办已保存', toastTaskDeleted: '待办任务已删除', toastRepairLogged: '记录已保存', toastRepairDeleted: '历史记录已删除', toastContactSaved: '联系人已保存', toastContactDeleted: '联系人已删除', toastCopied: '已复制!',
                 uploadReceipt: '票据照片 (最多6张)', viewReceipt: '票据', remove: '移除', toastFileTooLarge: '超过 20MB，已跳过', storageWarn: '本机照片较多。建议导出完整备份或清理未用文件。',
-                uploadBefore: '修前照片 (最多6张)', uploadAfter: '修后照片 (最多6张)', toastFileTooLarge: '超过 20MB，已跳过', storageWarn: '本机照片较多。建议导出完整备份或清理未用文件。', addPhoto: '添加照片', viewBefore: '修前', viewAfter: '修后',
-                taxKind: '税务分类', taxOperating: '维修保养（当年）', taxCapital: '资产改良（需折旧）', taxOperatingShort: '维修保养', taxCapitalShort: '资产改良', taxCapitalHint: '金额或工程看起来比较大。若是整项更换或明显增值，请改选资产改良。', hasReceipt: '有票据', noReceipt: '无单据', noReceiptMsg: '本次记录不包含任何票据或发票', hasBeforePhotos: '有修前照', noBeforePhotos: '无修前照', noBeforePhotosMsg: '本次不保存修前照', hasAfterPhotos: '有修后照', noAfterPhotos: '无修后照', noAfterPhotosMsg: '本次不保存修后照', hasUsageBeforePhotos: '有交接前照', noUsageBeforePhotos: '无交接前照', noUsageBeforePhotosMsg: '本次不保存交接前照',
+                uploadBefore: '修前照片 (最多6张)', uploadAfter: '修后照片 (最多6张)', toastFileTooLarge: '超过 20MB，已跳过', storageWarn: '本机照片较多。建议导出完整备份或清理未用文件。', addPhoto: '添加照片', viewBefore: '修前', viewAfter: '修后', viewMoveOut: '退租前',
+                taxKind: '税务分类', taxOperating: '维修保养（当年）', taxCapital: '资产改良（需折旧）', taxOperatingShort: '维修保养', taxCapitalShort: '资产改良', taxCapitalHint: '金额或工程看起来比较大。若是整项更换或明显增值，请改选资产改良。', hasReceipt: '有票据', noReceipt: '无单据', noReceiptMsg: '本次记录不包含任何票据或发票', hasBeforePhotos: '有修前照', noBeforePhotos: '无修前照', noBeforePhotosMsg: '本次不保存修前照', hasAfterPhotos: '有修后照', noAfterPhotos: '无修后照', noAfterPhotosMsg: '本次不保存修后照', hasUsageBeforePhotos: '有交接前照', noUsageBeforePhotos: '无交接前照', noUsageBeforePhotosMsg: '本次不保存交接前照', hasMoveOutPhotos: '有退租前照', noMoveOutPhotos: '无照片', noMoveOutPhotosMsg: '本次不保存退租前照',
                 viewModeList: '卡片', viewModeMap: '地图模式', viewModeGrid: '网格', openPropertyDetails: '查看房间', recenterMap: '全览所有房屋',
                 btnGeocode: '根据地址定位', geocoding: '正在解析地址...', geocodeSuccess: '已成功定位该地址！', geocodeFailed: '未找到该地址',
                 gpsEnabled: 'GPS 定位已开启', gpsDisabled: 'GPS 定位已关闭', enableGPS: '开启 GPS', locateMe: '当前位置', gpsOffMsg: 'GPS 定位功能已关闭',
@@ -2575,7 +2606,7 @@
                 usageTimeline: '房史', startDate: '开始日期', endDate: '结束日期', addUsagePeriod: '添加一段用途', editUsagePeriod: '编辑这段用途', modalAddUsage: '添加买入、自住、出租等', ongoing: '至今',
                 usageNotes: '备注 / 价格 / 租客情况', noUsageHistory: '还没有用途记录。',
                 usageRealtor: '经纪', usageLawyer: '律师', usageManager: '托管', noneAssigned: '未指定',
-                usagePhotosBefore: '交接前照片 (最多20张)', usagePhotosAfter: '交接后照片 (最多20张)',
+                usagePhotosBefore: '交接前照片 (最多20张)', usagePhotosAfter: '交接后照片 (最多20张)', usagePhotosMoveOut: '退租前照片 (最多20张)',
                 linkedFromProperties: '关联房屋', linkedFromHint: '在房子的房史里选中此人后，房子会出现在这里。',
                 tenantSubTimeline: '这期间的租客', addTenantSub: '添加租客', editTenantSub: '编辑租客', monthlyRent: '月租金', selectCrmTenant: '从联系人里选租客', tenantName: '租客姓名', roomName: '房间', roomHint: '例如：主卧、A房、地下室', entireHouse: '整套出租', leasesCount: '次租约',
                 toastTenantSubSaved: '租客已保存', toastTenantSubDeleted: '租客已删除', toastUsageSaved: '用途已保存', toastUsageDeleted: '用途已删除',
@@ -2583,7 +2614,7 @@
                 settingsTitle: '系统设置', settingsPreferences: '偏好设置', settingsLanguage: '界面语言', settingsTheme: '色彩主题', settingsThemeHint: '港湾适合市区公寓。砖色适合独立屋。冷杉适合土地和度假屋。', themeHarbor: '港湾', themeBrick: '砖色', themeFir: '冷杉', themeSky: '港湾', themeCedar: '砖色', themePine: '冷杉', settingsGPS: 'GPS 定位服务', settingsGPSDesc: '开启后可在房屋地图中定位当前位置及导航。只有你点定位才会向系统要位置。按地址解析会把地址发给 OpenStreetMap Nominatim。', geocodePrivacy: '这一步会把地址发给 OpenStreetMap 来打点。房屋档案里的其它内容不会送出。', appLockTitle: '应用锁', appLockHint: '可选 PIN，打开 App 时挡住界面。只锁屏幕，不加密数据库。', appLockOff: '已关闭。能打开这台手机的人都能进 App。', appLockOn: '已开启。离开 App 后再次进入需输入 PIN。', appLockSet: '设置 PIN', appLockChange: '更换 PIN', appLockTurnOff: '关闭应用锁', appLockGate: '输入 PIN 后进入', appLockPinPh: 'PIN', appLockUnlock: '解锁', appLockCurrent: '当前 PIN', appLockNew: '新 PIN（4–8 位数字）', appLockAgain: '再输入一次新 PIN', toastPinBad: 'PIN 不正确。', toastPinWeak: '请使用 4 到 8 位数字。', toastPinMismatch: '两次 PIN 不一致。', toastPinOn: '应用锁已打开。', toastPinOff: '应用锁已关闭。', toastPinChanged: 'PIN 已更新。',
                 settingsDashboardViews: '仪表盘视图设置', minOneViewRequired: '必须至少保留一个视图模式。', settingsPropertyOrder: '房屋卡片排序',
                 settingsContactRoles: '人员类别设置', addRoleCategory: '新增类别', roleCategoryName: '类别名称', toastRoleAdded: '已新增人员类别', toastRoleDeleted: '已删除人员类别',
-                yearHealth: '本年健康', yearHealthHint: '按今天所在公历年汇总。收入=出租账本月租金×12；运营/资本支出来自本年维修记录。', yearHealthExperimental: '实验 · 本年健康', yearHealthExperimentalHint: '账本尚不完整，数字可能误导，仅供参考，不是建议。', yearIncome: '本年收入', yearOperating: '运营支出', yearCapital: '资本开支', yearMissingReceipts: '缺收据', yearIncompleteTodos: '未完成待办', yearIncomeDashHint: '收入需切换为出租账本', gapListTitle: '记录检查', gapListHint: '软检查缺修前/修后照、缺收据、以及买入/出租缺交接前照——不是新的待办。仍可不补全就保存。', gapMissingBefore: '缺修前照', gapMissingAfter: '缺完工照', gapMissingReceipt: '缺收据', gapMissingHandoverBefore: '缺交接前照', gapEmpty: '当前没有缺口。', gapCountLabel: '{n} 条缺口', toastGapsNotQueue: '完善度是检查工具，点条目去补记录', backupLastFull: '上次完整备份', backupNeverFull: '从未完整备份', backupStaleHint: '完整备份已超过 14 天（或从未备份）。有空时导出一份完整备份即可，不会删除任何数据。', timelineRepairs: '维修', exportAccountingCsv: '会计 CSV', exportAccountingCsvDesc: '导出全部维修（含无收据）。给会计用——不是报税文件。', exportAccountingDisclaimer: '本 CSV 由 PocketProp 在本机导出，不是 CRA 报税表，也不是税务意见。无收据记录以 hasReceipt=false 标出。', exportCsvDownload: '下载 CSV', exportCsvTitle: '会计导出', toastCsvExported: '已导出会计 CSV',
+                yearHealth: '本年健康', yearHealthHint: '按今天所在公历年汇总。收入=出租账本月租金×12；运营/资本支出来自本年维修记录。', yearHealthExperimental: '实验 · 本年健康', yearHealthExperimentalHint: '账本尚不完整，数字可能误导，仅供参考，不是建议。', yearIncome: '本年收入', yearOperating: '运营支出', yearCapital: '资本开支', yearMissingReceipts: '缺收据', yearIncompleteTodos: '未完成待办', yearIncomeDashHint: '收入需切换为出租账本', gapListTitle: '记录检查', gapListHint: '软检查缺修前/修后照、缺收据、买入/卖出/出租缺交接前照、以及退租缺退租前照——不是新的待办。仍可不补全就保存。', gapMissingBefore: '缺修前照', gapMissingAfter: '缺完工照', gapMissingReceipt: '缺收据', gapMissingHandoverBefore: '缺交接前照', gapMissingMoveOut: '缺退租前照', gapEmpty: '当前没有缺口。', gapCountLabel: '{n} 条缺口', toastGapsNotQueue: '完善度是检查工具，点条目去补记录', backupLastFull: '上次完整备份', backupNeverFull: '从未完整备份', backupStaleHint: '完整备份已超过 14 天（或从未备份）。有空时导出一份完整备份即可，不会删除任何数据。', timelineRepairs: '维修', exportAccountingCsv: '会计 CSV', exportAccountingCsvDesc: '导出全部维修（含无收据）。给会计用——不是报税文件。', exportAccountingDisclaimer: '本 CSV 由 PocketProp 在本机导出，不是 CRA 报税表，也不是税务意见。无收据记录以 hasReceipt=false 标出。', exportCsvDownload: '下载 CSV', exportCsvTitle: '会计导出', toastCsvExported: '已导出会计 CSV',
                 settingsDataBackup: '数据备份与恢复 (离线)', exportBackup: '导出 JSON 备份文件', exportBackupLight: '轻备份', exportBackupLightDesc: '只含房屋、工作和账本，不含照片。可加口令加密。', exportBackupFull: '完整备份', exportBackupFullDesc: '含照片和收据，建议加口令。文件可能很大。', backupPassTitle: '备份口令', backupPassHint: '留空则保存普通 JSON。设置口令后文件在本机加密，口令遗忘无法找回。', backupPassLabel: '口令（可选）', backupPassAgain: '再输入一次', backupPassSkip: '不加密，直接保存', backupPassSave: '保存加密备份', backupUnlockTitle: '加密备份', backupUnlockHint: '这份文件导出时加了口令。', backupUnlockLabel: '口令', backupUnlockBtn: '解锁并恢复', toastBackupPassMismatch: '两次口令不一致。', toastBackupBadPass: '口令无法打开这份文件。', toastBackupTooBig: '备份文件过大，这台手机无法恢复。', toastBackupUnsafeMedia: '已忽略 {n} 个不安全附件。', toastExportEncrypted: '已保存加密备份', confirmImportCounts: '这份备份含 {p} 套房、{w} 条工作记录、{c} 位联系人。恢复会覆盖本机全部数据。继续？', exportTaxPdf: '税务备查 PDF', exportTaxPdfDesc: '只汇总有收据的维修保养与资产改良。用系统打印或存储为 PDF。', exportTaxPrint: '打印 / 存 PDF', exportTaxLang: 'PDF 语言', exportTaxYear: '年份', exportTaxTitle: '维修税务备查表', exportTaxGenerated: '生成日期', exportTaxDisclaimer: '本表由 PocketProp 在本机生成，不是 CRA T776，也不是税务意见。仅列入有收据的记录。', exportTaxEmpty: '当前筛选没有带收据的维修记录。', exportTaxFooter: '尚未标注 CCA 类别。收据原件仍在 App 里。', importBackup: '恢复 JSON 备份文件', toastExportLight: '已导出轻备份（不含照片）', toastExportFull: '已导出完整备份', toastImportLightNoPhotos: '文字已恢复。照片在完整备份里。', settingsDaily: '日常', settingsAdvanced: '进阶', settingsLangHint: '语言在首页右上角切换。仅更换系统预设文字。凡自行新增或编辑过的项目，系统不会主动翻译。', deadline: '截止日期', itemAlertOn: '此项显示小红点', workDotsTitle: '工作小红点', workDotsHint: '打开后，再分别选择过期红点和快到期黄点。', cycleSoonDays: '周期提前几天', taskSoonDays: '待办提前几天', dotOverdueRed: '过期：红点', dotSoonYellow: '快到期：黄点', confirmNextDueTitle: '确认下次日期', cleanupUnusedPhotos: '清理未用照片', cleanupUnusedPhotosDesc: '删掉没有记录再引用的图片文件。', toastCleanupDone: '已清理 {n} 个未用文件', photoInFullBackup: '图在完整备份', toastAddPropertyFirst: '请先添加一套房子', routineDotPromptTitle: '有周期已经过期', routineDotPromptBody: '要不要在工作页用小红点标出到期项？', toastImportSuccess: '数据恢复成功！', toastImportFailed: '恢复失败，文件格式错误。', confirmImportMsg: '导入备份将覆盖当前所有本地数据，确定继续吗？',
                 loadDemoData: '加载示例演示数据', loadDemoDataDesc: '重置并重新加载包含多处房屋资产的完整示例数据。', confirmDemoDataMsg: '确定要重新载入演示数据吗？当前修改将被覆盖。', toastDemoLoaded: '示例数据已加载', wipeAllData: '清空全部数据', wipeAllDataDesc: '永久删除本机全部房屋、工作和照片。', wipeStep1: '此操作无法撤销。若以后可能还要用，请先导出备份。', wipeBackupSoon: '这一步里还没有导出备份，仍可继续。', wipeBackupDone: '已从本机保存了一份备份文件。', wipeContinue: '继续', wipeStep2: '勾选确认，并输入 ERASE，才能进入最后一步。', wipeAck: '我明白这会删掉本机全部数据，而且无法恢复。', wipeTypeHint: '输入 ERASE', wipeStep3: '最后一步。将删除 PocketProp 保存在本机的房屋、工作、联系人和照片。', wipeConfirmFinal: '立即全部清空', toastWiped: '本机数据已清空',
                 settingsFileManager: '维修照片与收据', fileManagerTitle: '维修照片与收据', filesCount: '个文件', storageUsed: '已用容量', btnManageFiles: '打开', noMediaFiles: '未匹配到媒体文件。', toastMediaDeleted: '文件已彻底删除。', fileTypeAll: '全部文件', fileLibraryHint: '按工单日期排列。点开后左右滑动切换。', fileSearchPh: '搜索名称或房屋', viewerSwipeHint: '左右滑动切换文件', fileLibraryUpload: '上传', fileLibraryTitlePh: '名称（可选）', fileLibraryUploadHint: '先点选上方一套房屋，再上传。文件只存在这台手机。', fileCatDeal: '交易产权', fileCatInsurance: '保险', fileCatLease: '租约', fileCatMaintenance: '维修', fileCatOther: '其他', toastPickPropertyFirst: '请先选择一套房屋', toastLibraryUploaded: '文件已加入',
@@ -3386,7 +3417,7 @@
             return { properties, tasks, repairs, contacts, customRoles, userZones: zones };
         }
 
-        const APP_VERSION = '2026.09.27-e';
+        const APP_VERSION = '2026.09.27-f';
 
         const app = createApp({
             data() {
@@ -3482,7 +3513,7 @@
                     cashflowDraft: { rentalIncome: '', mortgage: '', insurance: '', propertyTax: '', propertyManagement: '', hoa: '', hydro: '', gas: '', water: '', internet: '', groceries: '', transit: '', childcare: '', health: '', subscriptions: '', reserve: '', others: '' },
                     formProperty: { name: '', buildingType: 'detached', address: '', intro: '', lat: null, lng: null },
                     formUsage: { id: null, usageType: 'primary', startDate: '', endDate: '', notes: '', realtorId: '', lawyerId: '', managerId: '', hasBeforePhotos: true, beforePhotos: [], afterPhotos: [] },
-                    formTenantSub: { id: null, usageId: null, contactId: '', name: '', room: '', rent: '', startDate: '', endDate: '', notes: '', hasBeforePhotos: true, beforePhotos: [], afterPhotos: [] },
+                    formTenantSub: { id: null, usageId: null, contactId: '', name: '', room: '', rent: '', startDate: '', endDate: '', notes: '', hasBeforePhotos: true, hasAfterPhotos: true, beforePhotos: [], afterPhotos: [] },
                     formTask: { propertyId: '', titleSelect: '', title: '', zone: '', category: '', issueDate: '', deadline: '', alertOn: false, beforePhotos: [] },
                     showTaxExport: false,
                     taxExportYear: 'ALL',
@@ -3540,7 +3571,7 @@
                             (u.tenants || []).forEach(tn => {
                                 const tnTitle = tn.room ? ((tn.name || '') + ' · ' + tn.room) : (tn.name || '');
                                 pushRefs(tn.beforePhotos, { id: `tn_${tn.id}_b_`, parentId: tn.id, parentType: 'tenant', type: 'before', bucket: 'before', typeLabel: this.t('viewBefore'), propertyId: p.id, title: tnTitle, date: tn.startDate || '' });
-                                pushRefs(tn.afterPhotos, { id: `tn_${tn.id}_a_`, parentId: tn.id, parentType: 'tenant', type: 'after', bucket: 'after', typeLabel: this.t('viewAfter'), propertyId: p.id, title: tnTitle, date: tn.startDate || '' });
+                                pushRefs(tn.afterPhotos, { id: `tn_${tn.id}_a_`, parentId: tn.id, parentType: 'tenant', type: 'after', bucket: 'after', typeLabel: this.t('viewMoveOut'), propertyId: p.id, title: tnTitle, date: tn.startDate || '' });
                             });
                         });
                     });
@@ -4681,12 +4712,13 @@
                         this.formTenantSub = {
                             ...tenantItem,
                             hasBeforePhotos: tenantItem.hasBeforePhotos !== false,
+                            hasAfterPhotos: tenantItem.hasAfterPhotos !== false,
                             beforePhotos: [...(tenantItem.beforePhotos || [])],
                             afterPhotos: [...(tenantItem.afterPhotos || [])]
                         };
                     } else {
                         this.editingTenantSubId = null;
-                        this.formTenantSub = { id: 'ut_' + Date.now(), usageId: parentUsage.id, contactId: '', name: '', room: '', rent: '', startDate: parentUsage.startDate || this.todayIso(), endDate: '', notes: '', hasBeforePhotos: true, beforePhotos: [], afterPhotos: [] };
+                        this.formTenantSub = { id: 'ut_' + Date.now(), usageId: parentUsage.id, contactId: '', name: '', room: '', rent: '', startDate: parentUsage.startDate || this.todayIso(), endDate: '', notes: '', hasBeforePhotos: true, hasAfterPhotos: true, beforePhotos: [], afterPhotos: [] };
                     }
                 },
                 onCrmTenantSelectChange() { if (this.formTenantSub.contactId) { const found = this.contacts.find(c => c.id === this.formTenantSub.contactId); if (found) this.formTenantSub.name = found.name; } },
@@ -4696,6 +4728,7 @@
                     const payload = {
                         ...this.formTenantSub,
                         hasBeforePhotos: this.formTenantSub.hasBeforePhotos !== false,
+                        hasAfterPhotos: this.formTenantSub.hasAfterPhotos !== false,
                         beforePhotos: [...(this.formTenantSub.beforePhotos || [])],
                         afterPhotos: [...(this.formTenantSub.afterPhotos || [])]
                     };
@@ -5259,6 +5292,7 @@
                     if (kind === 'after') return this.t('gapMissingAfter');
                     if (kind === 'receipt') return this.t('gapMissingReceipt');
                     if (kind === 'handoverBefore') return this.t('gapMissingHandoverBefore');
+                    if (kind === 'moveOutBefore') return this.t('gapMissingMoveOut');
                     return kind || '—';
                 },
                 getSoftGaps(propId) {
@@ -5291,6 +5325,18 @@
                                     title: typeLabel + (u.notes ? ' · ' + u.notes : '')
                                 });
                             }
+                            if (u.usageType === 'sold' && u.hasBeforePhotos !== false && !((u.beforePhotos || []).length)) {
+                                const typeLabel = (this.t('usageSold') || 'Sold');
+                                list.push({
+                                    id: 'ubefore_' + u.id,
+                                    kind: 'handoverBefore',
+                                    propertyId: p.id,
+                                    usageId: u.id,
+                                    usage: u,
+                                    date: u.startDate || '',
+                                    title: typeLabel + (u.notes ? ' · ' + u.notes : '')
+                                });
+                            }
                             if (u.usageType === 'rental') {
                                 (u.tenants || []).forEach(tn => {
                                     if (tn.hasBeforePhotos !== false && !((tn.beforePhotos || []).length)) {
@@ -5304,6 +5350,20 @@
                                             usage: u,
                                             tenant: tn,
                                             date: tn.startDate || '',
+                                            title: name
+                                        });
+                                    }
+                                    if (tn.endDate && tn.hasAfterPhotos !== false && !((tn.afterPhotos || []).length)) {
+                                        const name = tn.name || tn.room || '—';
+                                        list.push({
+                                            id: 'tafter_' + tn.id,
+                                            kind: 'moveOutBefore',
+                                            propertyId: p.id,
+                                            usageId: u.id,
+                                            tenantId: tn.id,
+                                            usage: u,
+                                            tenant: tn,
+                                            date: tn.endDate || tn.startDate || '',
                                             title: name
                                         });
                                     }
