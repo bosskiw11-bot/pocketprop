@@ -16,7 +16,16 @@ jobs:
           set -euo pipefail
           git fetch origin main
           git show origin/main:index.html > index.html
-          cat .ci/np0.b64 .ci/np1.b64 .ci/np2.b64 .ci/np3.b64 .ci/np4.b64 .ci/np5.b64 .ci/np6.b64 .ci/np7.b64 > /tmp/patch.gz.b64
+          python3 - <<'PY'
+from pathlib import Path
+parts = []
+for i in range(8):
+    hx = Path(f'.ci/np{i}a.hex').read_text().strip() + Path(f'.ci/np{i}b.hex').read_text().strip()
+    parts.append(bytes.fromhex(hx).decode())
+b64 = ''.join(parts)
+Path('/tmp/patch.gz.b64').write_text(b64)
+print('b64 len', len(b64))
+PY
           base64 -d /tmp/patch.gz.b64 | gzip -d > /tmp/noise.patch
           patch -p1 < /tmp/noise.patch
           grep -q "2026.09.29-b" index.html
