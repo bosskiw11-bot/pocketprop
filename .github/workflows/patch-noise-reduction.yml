@@ -20,29 +20,17 @@ jobs:
           set -euo pipefail
           git fetch origin main
           git show origin/main:index.html > index.html
-          python3 - <<'PY'
-from pathlib import Path
-parts = [Path(f'.ci/np{i}.b64').read_text().replace(chr(10),'') for i in range(8)]
-b64 = ''.join(parts)
-fixes = [(7441,'U'),(7442,'s'),(10045,'U'),(10046,'s'),(15421,'6'),(16500,'U'),(16501,'s'),(17735,'q'),(17736,'d'),(19480,'U'),(19481,'s'),(20005,'U'),(20006,'s')]
-arr = list(b64)
-for pos, ch in fixes:
-    arr[pos] = ch
-b64 = ''.join(arr)
-Path('/tmp/patch.gz.b64').write_text(b64)
-print('b64 len', len(b64))
-PY
-          base64 -d /tmp/patch.gz.b64 | gzip -d > /tmp/noise.patch
-          patch -p1 < /tmp/noise.patch
-          grep -q "2026.09.29-b" index.html
-          ! grep -q "setRoutineNotify" index.html
-          python3 -c "from pathlib import Path; t=Path('index.html').read_text(); assert '2026.09.29-b' in t and 'mapVisible' in t; print('OK', len(t))"
+          echo 'CmZyb20gcGF0aGxpYiBpbXBvcnQgUGF0aAppbXBvcnQgYmFzZTY0LCBnemlwLCBzdWJwcm9jZXNzLCBzeXMKcGFydHMgPSBbUGF0aChmJy5jaS9ucHtpfS5iNjQnKS5yZWFkX3RleHQoKS5yZXBsYWNlKCdcbicsJycpIGZvciBpIGluIHJhbmdlKDgpXQpiNjQgPSAnJy5qb2luKHBhcnRzKQpmaXhlcyA9IFsoNzQ0MSwnVScpLCg3NDQyLCdzJyksKDEwMDQ1LCdVJyksKDEwMDQ2LCdzJyksKDE1NDIxLCc2JyksKDE2NTAwLCdVJyksKDE2NTAxLCdzJyksKDE3NzM1LCdxJyksKDE3NzM2LCdkJyksKDE5NDgwLCdVJyksKDE5NDgxLCdzJyksKDIwMDA1LCdVJyksKDIwMDA2LCdzJyldCmFyciA9IGxpc3QoYjY0KQpmb3IgcG9zLCBjaCBpbiBmaXhlczoKICAgIGFycltwb3NdID0gY2gKYjY0ID0gJycuam9pbihhcnIpCnJhdyA9IGJhc2U2NC5iNjRkZWNvZGUoYjY0KQpwYXRjaCA9IGd6aXAuZGVjb21wcmVzcyhyYXcpClBhdGgoJy90bXAvbm9pc2UucGF0Y2gnKS53cml0ZV9ieXRlcyhwYXRjaCkKcHJpbnQoJ3BhdGNoIGJ5dGVzJywgbGVuKHBhdGNoKSkKciA9IHN1YnByb2Nlc3MucnVuKFsncGF0Y2gnLCctcDEnXSwgaW5wdXQ9cGF0Y2gsIGNhcHR1cmVfb3V0cHV0PVRydWUpCnN5cy5zdGRvdXQud3JpdGUoci5zdGRvdXQuZGVjb2RlKCkpCnN5cy5zdGRlcnIud3JpdGUoci5zdGRlcnIuZGVjb2RlKCkpCmlmIHIucmV0dXJuY29kZSAhPSAwOgogICAgc3lzLmV4aXQoci5yZXR1cm5jb2RlKQp0ID0gUGF0aCgnaW5kZXguaHRtbCcpLnJlYWRfdGV4dChlbmNvZGluZz0ndXRmLTgnKQphc3NlcnQgJzIwMjYuMDkuMjktYicgaW4gdCBhbmQgJ21hcFZpc2libGUnIGluIHQKYXNzZXJ0ICdzZXRSb3V0aW5lTm90aWZ5JyBub3QgaW4gdApwcmludCgnT0snLCBsZW4odCkpCg==' | base64 -d > /tmp/noise_apply.py
+          python3 /tmp/noise_apply.py
       - name: Commit and push
         run: |
           set -euo pipefail
           git config user.name "bosskiw11-bot"
           git config user.email "bosskiw11@gmail.com"
           git add index.html
-          git diff --cached --quiet && echo "No changes" && exit 0
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
           git commit -m "fix: noise reduction pack UI (2026.09.29-b)"
           git push origin HEAD:fix/noise-reduction-pack
