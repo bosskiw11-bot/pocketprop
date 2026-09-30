@@ -1,0 +1,32 @@
+name: cleanup-binder-ci
+on:
+  workflow_dispatch:
+  push:
+    branches: [fix/tax-receipt-binder]
+    paths:
+      - '.ci/TRIGGER_CLEANUP'
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/tax-receipt-binder
+          fetch-depth: 0
+      - name: Remove temp binder CI artifacts
+        run: |
+          set -euo pipefail
+          git config user.name "bosskiw11-bot"
+          git config user.email "bosskiw11@gmail.com"
+          rm -f .github/workflows/patch-tax-binder.yml
+          rm -f .github/workflows/cleanup-binder-ci.yml
+          rm -rf .ci
+          git add -A
+          if git diff --cached --quiet; then
+            echo "nothing to clean"
+            exit 0
+          fi
+          git commit -m "ci: remove temporary binder patch artifacts"
+          git push origin HEAD:fix/tax-receipt-binder
