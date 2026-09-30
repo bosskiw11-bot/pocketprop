@@ -1,0 +1,46 @@
+name: patch-noise-reduction-index
+on:
+  workflow_dispatch:
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/noise-reduction-pack
+          fetch-depth: 0
+      - name: Apply noise-reduction index.html patch
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git show origin/main:index.html > index.html
+          test -f .ci/noise-index.patch.gz.b64
+          base64 -d .ci/noise-index.patch.gz.b64 | gzip -d > /tmp/noise.patch
+          patch -p1 < /tmp/noise.patch
+          grep -q "2026.09.29-b" index.html
+          grep -q "SHOW_YEAR_HEALTH_UI" index.html
+          grep -q "settingsDisplay" index.html
+          grep -q "toggleMapVisible" index.html
+          ! grep -q "setRoutineNotify" index.html
+          python3 - <<'PY'
+from pathlib import Path
+t = Path('index.html').read_text(encoding='utf-8')
+assert "const APP_VERSION = '2026.09.29-b';" in t
+assert 'mapVisible' in t and 'ledgerExpanded' in t and 'expertExpanded' in t
+print('index.html OK', Path('index.html').stat().st_size)
+PY
+      - name: Commit and push
+        run: |
+          set -euo pipefail
+          git config user.name "bosskiw11-bot"
+          git config user.email "bosskiw11@gmail.com"
+          git add index.html
+          git status
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git commit -m "fix: noise reduction pack UI (2026.09.29-b)"
+          git push origin HEAD:fix/noise-reduction-pack
