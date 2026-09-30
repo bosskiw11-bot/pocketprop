@@ -1,0 +1,44 @@
+name: patch-noise-reduction-index
+on:
+  workflow_dispatch:
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/noise-reduction-pack
+          fetch-depth: 0
+      - name: Apply noise-reduction index.html patch
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git show origin/main:index.html > index.html
+          python3 - <<'PY'
+from pathlib import Path
+parts = [Path(f'.ci/np{i}.b64').read_text().replace(chr(10),'') for i in range(8)]
+b64 = ''.join(parts)
+fixes = [(7441,'U'),(7442,'s'),(10045,'U'),(10046,'s'),(15421,'6'),(16500,'U'),(16501,'s'),(17735,'q'),(17736,'d'),(19480,'U'),(19481,'s'),(20005,'U'),(20006,'s')]
+arr = list(b64)
+for pos, ch in fixes:
+    arr[pos] = ch
+b64 = ''.join(arr)
+Path('/tmp/patch.gz.b64').write_text(b64)
+print('b64 len', len(b64))
+PY
+          base64 -d /tmp/patch.gz.b64 | gzip -d > /tmp/noise.patch
+          patch -p1 < /tmp/noise.patch
+          grep -q "2026.09.29-b" index.html
+          ! grep -q "setRoutineNotify" index.html
+          python3 -c "from pathlib import Path; t=Path('index.html').read_text(); assert '2026.09.29-b' in t and 'mapVisible' in t; print('OK', len(t))"
+      - name: Commit and push
+        run: |
+          set -euo pipefail
+          git config user.name "bosskiw11-bot"
+          git config user.email "bosskiw11@gmail.com"
+          git add index.html
+          git diff --cached --quiet && echo "No changes" && exit 0
+          git commit -m "fix: noise reduction pack UI (2026.09.29-b)"
+          git push origin HEAD:fix/noise-reduction-pack
