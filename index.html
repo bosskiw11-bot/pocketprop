@@ -710,7 +710,7 @@
                     <div>
                         <h3 class="text-lg font-bold text-white mb-3 px-1">{{ t('navTasks') }}</h3>
                         <div class="space-y-2.5">
-                            <div v-for="task in tasks.filter(t => t.propertyId === viewingPropertyId && t.zone === viewingZone && !t.completed)" :key="task.id" class="bg-slate-800 rounded-2xl p-3 border border-slate-700/50 transition-all">
+                            <div v-for="task in viewingZoneTasks" :key="task.id" class="bg-slate-800 rounded-2xl p-3 border border-slate-700/50 transition-all" :class="task.completed ? 'opacity-50' : ''">
                                 <div class="flex flex-col gap-1.5">
                                     <div class="flex items-start justify-between gap-2">
                                         <p class="text-[14px] font-bold leading-tight pr-2 flex-1 truncate min-w-0" :class="task.completed ? 'text-slate-400 line-through' : 'text-slate-200'">{{ task.title }}</p>
@@ -737,7 +737,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <p v-if="tasks.filter(t => t.propertyId === viewingPropertyId && t.zone === viewingZone && !t.completed).length === 0" class="text-[13px] text-slate-500 text-center py-4">{{ t('noTasks') }}</p>
+                            <p v-if="viewingZoneTasks.length === 0" class="text-[13px] text-slate-500 text-center py-4">{{ t('noTasks') }}</p>
                         </div>
                     </div>
                 </div>
@@ -3396,7 +3396,7 @@
             return { properties, tasks, repairs, contacts, customRoles, userZones: zones };
         }
 
-        const APP_VERSION = '2026.09.27-h';
+        const APP_VERSION = '2026.09.29-a';
 
         const app = createApp({
             data() {
@@ -3670,6 +3670,13 @@
                 filteredTasks() {
                     return this.tasks
                         .filter(t => !t.completed && (this.selectedPropertyId === 'ALL' || t.propertyId === this.selectedPropertyId))
+                        .slice()
+                        .sort((a, b) => (b.issueDate || '').localeCompare(a.issueDate || ''));
+                },
+                viewingZoneTasks() {
+                    if (!this.viewingPropertyId || !this.viewingZone) return [];
+                    return this.tasks
+                        .filter(t => t.propertyId === this.viewingPropertyId && t.zone === this.viewingZone)
                         .slice()
                         .sort((a, b) => (b.issueDate || '').localeCompare(a.issueDate || ''));
                 },

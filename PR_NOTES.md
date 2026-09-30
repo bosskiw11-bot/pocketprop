@@ -1,9 +1,15 @@
-# PR: Hide sold after-handover photos
+# Room/area detail: keep completed work visible (2026.09.29-a)
 
-**Version:** `2026.09.27-h`  
-**Base:** live `2026.09.27-g`
+## Summary
+On the Rooms & Areas zone detail page, the work list previously filtered to incomplete tasks only (`!t.completed`), so completed items vanished after entering the area. This release shows **all** tasks for that zone and sorts them newest → oldest by `issueDate`.
 
-## What
-- Sold: remove 交接后 upload UI + timeline after chip
-- Keep 卖房交接前照片 + 无照片 mark + before soft gap
-- Preserve existing afterPhotos data; purchase/rental/tenant/repair unchanged
+## Changes
+- New computed `viewingZoneTasks`: filter by `propertyId` + `zone` only (no completed filter); sort `issueDate` descending.
+- Zone detail template uses `viewingZoneTasks`; completed rows keep line-through + opacity.
+- **Unchanged:** `getZoneTaskCount` still counts incomplete only — property blueprint area ring / pulse still lights only when open work exists.
+- Version bump: `APP_VERSION` / SW `VERSION` → `2026.09.29-a`.
+
+## Test
+1. Open a property → Rooms & areas → enter a zone that has both open and completed tasks (demo data includes a completed task).
+2. Confirm completed tasks remain listed, newest first.
+3. Confirm area buttons on the property page still glow only when incomplete work exists.
