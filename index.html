@@ -104,8 +104,21 @@
             box-shadow: 0 10px 40px rgba(15, 23, 42, 0.18);
             box-sizing: border-box;
         }
+        .tax-checklist { margin: 14px 0 8px; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 10px; background: #f8fafc; }
+        .tax-checklist-title { font-size: 12px; font-weight: 800; margin: 0 0 6px; color: #0f172a; }
+        .tax-checklist ol { margin: 0; padding-left: 18px; }
+        .tax-checklist li { font-size: 11px; color: #334155; margin: 3px 0; line-height: 1.35; }
+        .tax-section-label { font-size: 13px; font-weight: 800; margin: 14px 0 6px; padding-bottom: 4px; border-bottom: 1px solid #e2e8f0; }
+        .tax-row-block { page-break-inside: avoid; margin: 0 0 10px; padding: 6px 0 8px; border-bottom: 1px dashed #e2e8f0; }
+        .tax-row-meta { display: flex; justify-content: space-between; gap: 10px; font-size: 11px; color: #0f172a; }
+        .tax-row-meta .amt { font-weight: 800; white-space: nowrap; }
+        .tax-receipt-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px; }
+        .tax-receipt-img { width: 100%; max-height: 260px; object-fit: contain; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff; }
+        .tax-receipt-note { font-size: 10px; color: #64748b; font-style: italic; margin-top: 4px; line-height: 1.35; }
+        .tax-binder-status { font-size: 10px; color: #64748b; margin: 8px 0 0; }
         @media (max-width: 480px) {
             .tax-a4 { padding: 18px 12px 24px; min-height: 0; margin: 8px auto; }
+            .tax-receipt-grid { grid-template-columns: 1fr; }
         }
         @page { size: A4 portrait; margin: 12mm; }
         @media print {
@@ -115,6 +128,8 @@
             .tax-print-actions { display: none !important; }
             .tax-print-body { background: #fff !important; padding: 0 !important; overflow: visible !important; }
             .tax-a4 { width: auto; min-height: 0; margin: 0; padding: 0; box-shadow: none; }
+            .tax-receipt-img { max-height: 220px; }
+            .tax-row-block { break-inside: avoid; page-break-inside: avoid; }
         }
     </style>
     <script>
@@ -2396,13 +2411,13 @@
             </div>
             <div class="tax-print-actions px-4 py-3 grid grid-cols-3 gap-2 bg-slate-900 border-b border-slate-800">
                 <label class="text-[11px] font-bold text-slate-400">{{ t('exportTaxYear') }}
-                    <select v-model="taxExportYear" class="mt-1 w-full bg-slate-800 text-white rounded-xl px-2 py-2 text-[13px]">
+                    <select v-model="taxExportYear" @change="prepareTaxBinderEmbeds" class="mt-1 w-full bg-slate-800 text-white rounded-xl px-2 py-2 text-[13px]">
                         <option value="ALL">{{ t('allTime') }}</option>
                         <option v-for="y in taxExportYearOptions" :key="y" :value="y">{{ y }}</option>
                     </select>
                 </label>
                 <label class="text-[11px] font-bold text-slate-400">{{ t('modalProperty') }}
-                    <select v-model="taxExportPropertyId" class="mt-1 w-full bg-slate-800 text-white rounded-xl px-2 py-2 text-[13px]">
+                    <select v-model="taxExportPropertyId" @change="prepareTaxBinderEmbeds" class="mt-1 w-full bg-slate-800 text-white rounded-xl px-2 py-2 text-[13px]">
                         <option value="ALL">{{ t('allProperties') }}</option>
                         <option v-for="p in properties" :key="p.id" :value="p.id">{{ p.name }}</option>
                     </select>
@@ -2414,17 +2429,33 @@
                     </select>
                 </label>
             </div>
+            <div class="tax-print-actions px-4 py-2 bg-slate-900 border-b border-slate-800" v-if="taxBinderPreparing">
+                <p class="text-[11px] text-amber-300 font-semibold">{{ t('exportTaxBinderPreparing') }}</p>
+            </div>
             <div class="tax-print-body flex-1 overflow-y-auto">
             <div class="tax-a4 text-slate-900">
                 <p class="text-[11px] font-bold tracking-widest uppercase text-slate-500">PocketProp</p>
                 <h2 class="text-xl font-black mt-1">{{ tTax('exportTaxTitle') }}</h2>
                 <p class="text-[12px] text-slate-600 mt-1">{{ taxExportRangeLabel }} · {{ tTax('exportTaxGenerated') }} {{ todayIso() }}</p>
+                <p class="text-[11px] text-slate-500 mt-1">{{ tTax('exportTaxBinderHint') }}</p>
                 <p class="text-[11px] text-slate-500 mt-3 leading-relaxed border border-slate-200 rounded-xl p-3 bg-slate-50">{{ tTax('exportTaxDisclaimer') }}</p>
-                <table v-if="taxExportPack.operatingTotal || taxExportPack.capitalTotal" class="tax-sheet-table mt-4">
+                <div class="tax-checklist">
+                    <p class="tax-checklist-title">{{ tTax('exportTaxChecklistTitle') }}</p>
+                    <ol>
+                        <li>{{ tTax('exportTaxCheck1') }}</li>
+                        <li>{{ tTax('exportTaxCheck2') }}</li>
+                        <li>{{ tTax('exportTaxCheck3') }}</li>
+                        <li>{{ tTax('exportTaxCheck4') }}</li>
+                        <li>{{ tTax('exportTaxCheck5') }}</li>
+                        <li>{{ tTax('exportTaxCheck6') }}</li>
+                    </ol>
+                </div>
+                <table v-if="taxExportPack.repairCount" class="tax-sheet-table mt-4">
                     <colgroup><col class="col-date"><col class="col-title"><col class="col-amt"></colgroup>
                     <tbody>
-                        <tr v-if="taxExportPack.operatingTotal"><td colspan="2" class="font-bold">{{ tTax('taxOperating') }}</td><td class="col-amt font-black">${{ formatMoney(taxExportPack.operatingTotal) }}</td></tr>
-                        <tr v-if="taxExportPack.capitalTotal"><td colspan="2" class="font-bold">{{ tTax('taxCapital') }}</td><td class="col-amt font-black">${{ formatMoney(taxExportPack.capitalTotal) }}</td></tr>
+                        <tr v-if="taxExportPack.operatingTotal || taxExportPack.operatingTotal === 0"><td colspan="2" class="font-bold">{{ tTax('taxOperating') }}</td><td class="col-amt font-black">${{ formatMoney(taxExportPack.operatingTotal) }}</td></tr>
+                        <tr><td colspan="2" class="font-bold">{{ tTax('taxCapital') }}</td><td class="col-amt font-black">${{ formatMoney(taxExportPack.capitalTotal) }}</td></tr>
+                        <tr><td colspan="2">{{ tTax('exportTaxMissingCount') }}</td><td class="col-amt">{{ taxExportPack.missingReceiptCount }}</td></tr>
                     </tbody>
                 </table>
                 <div v-if="taxExportPack.groups.length === 0" class="text-[13px] text-slate-500 text-center py-10">{{ tTax('exportTaxEmpty') }}</div>
@@ -2433,24 +2464,54 @@
                         <h3 class="text-[15px] font-black min-w-0 truncate">{{ group.name }}</h3>
                         <p v-if="group.address" class="text-[11px] text-slate-500 text-right min-w-0 truncate">{{ group.address }}</p>
                     </div>
-                    <table class="tax-sheet-table mt-2">
-                        <colgroup><col class="col-date"><col class="col-title"><col class="col-amt"></colgroup>
-                        <thead><tr class="text-slate-500 border-b border-slate-200"><th class="text-left col-date">{{ tTax('modalDate') }}</th><th class="text-left col-title">{{ tTax('modalRepairTitle') }}</th><th class="col-amt">$</th></tr></thead>
-                        <tbody>
-                            <tr v-if="group.operating.length" class="border-t border-slate-200"><td colspan="2" class="font-bold pt-3">{{ tTax('taxOperating') }}</td><td class="col-amt font-bold pt-3">${{ formatMoney(group.operatingTotal) }}</td></tr>
-                            <tr v-for="row in group.operating" :key="row.id" class="border-t border-slate-100">
-                                <td class="col-date">{{ row.date || '—' }}</td>
-                                <td class="col-title"><span v-if="row.category" class="text-slate-500">{{ row.category }} · </span>{{ row.title }}</td>
-                                <td class="col-amt">{{ formatMoney(row.cost) }}</td>
-                            </tr>
-                            <tr v-if="group.capital.length" class="border-t border-slate-200"><td colspan="2" class="font-bold pt-3">{{ tTax('taxCapital') }}</td><td class="col-amt font-bold pt-3">${{ formatMoney(group.capitalTotal) }}</td></tr>
-                            <tr v-for="row in group.capital" :key="'c'+row.id" class="border-t border-slate-100">
-                                <td class="col-date">{{ row.date || '—' }}</td>
-                                <td class="col-title"><span v-if="row.category" class="text-slate-500">{{ row.category }} · </span>{{ row.title }}</td>
-                                <td class="col-amt">{{ formatMoney(row.cost) }}</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <template v-if="group.operating.length">
+                        <p class="tax-section-label">{{ tTax('taxOperating') }} · ${{ formatMoney(group.operatingTotal) }}</p>
+                        <div v-for="row in group.operating" :key="row.id" class="tax-row-block">
+                            <div class="tax-row-meta">
+                                <span class="min-w-0"><span class="text-slate-500">{{ row.date || '—' }}</span><span v-if="row.category"> · {{ row.category }}</span> · {{ row.title }}</span>
+                                <span class="amt">${{ formatMoney(row.cost) }}</span>
+                            </div>
+                            <template v-if="row.markedNoReceipt">
+                                <p class="tax-receipt-note">{{ tTax('exportTaxNoReceiptNote') }}</p>
+                            </template>
+                            <template v-else-if="binderEmbedsFor(row.id).length">
+                                <div class="tax-receipt-grid">
+                                    <template v-for="(emb, ei) in binderEmbedsFor(row.id)" :key="row.id + '_e_' + ei">
+                                        <img v-if="emb.kind === 'image'" :src="emb.src" class="tax-receipt-img" alt="">
+                                        <p v-else-if="emb.kind === 'pdf'" class="tax-receipt-note">{{ tTax('exportTaxPdfAttachNote') }}</p>
+                                        <p v-else-if="emb.kind === 'skipped'" class="tax-receipt-note">{{ tTax('exportTaxReceiptSkipped') }}</p>
+                                    </template>
+                                </div>
+                            </template>
+                            <template v-else>
+                                <p class="tax-receipt-note">{{ tTax('exportTaxMarkedNoImage') }}</p>
+                            </template>
+                        </div>
+                    </template>
+                    <template v-if="group.capital.length">
+                        <p class="tax-section-label">{{ tTax('taxCapital') }} · ${{ formatMoney(group.capitalTotal) }}</p>
+                        <div v-for="row in group.capital" :key="'c'+row.id" class="tax-row-block">
+                            <div class="tax-row-meta">
+                                <span class="min-w-0"><span class="text-slate-500">{{ row.date || '—' }}</span><span v-if="row.category"> · {{ row.category }}</span> · {{ row.title }}</span>
+                                <span class="amt">${{ formatMoney(row.cost) }}</span>
+                            </div>
+                            <template v-if="row.markedNoReceipt">
+                                <p class="tax-receipt-note">{{ tTax('exportTaxNoReceiptNote') }}</p>
+                            </template>
+                            <template v-else-if="binderEmbedsFor(row.id).length">
+                                <div class="tax-receipt-grid">
+                                    <template v-for="(emb, ei) in binderEmbedsFor(row.id)" :key="'c'+row.id + '_e_' + ei">
+                                        <img v-if="emb.kind === 'image'" :src="emb.src" class="tax-receipt-img" alt="">
+                                        <p v-else-if="emb.kind === 'pdf'" class="tax-receipt-note">{{ tTax('exportTaxPdfAttachNote') }}</p>
+                                        <p v-else-if="emb.kind === 'skipped'" class="tax-receipt-note">{{ tTax('exportTaxReceiptSkipped') }}</p>
+                                    </template>
+                                </div>
+                            </template>
+                            <template v-else>
+                                <p class="tax-receipt-note">{{ tTax('exportTaxMarkedNoImage') }}</p>
+                            </template>
+                        </div>
+                    </template>
                 </div>
                 <p class="text-[10px] text-slate-400 mt-8">{{ tTax('exportTaxFooter') }}</p>
             </div>
@@ -2570,7 +2631,7 @@
                 settingsDashboardViews: 'Home views', minOneViewRequired: 'Keep at least one view turned on.', settingsPropertyOrder: 'Property order',
                 settingsContactRoles: 'Contact types', addRoleCategory: 'Add type', roleCategoryName: 'Type name', toastRoleAdded: 'Type added', toastRoleDeleted: 'Type removed',
                 yearHealth: 'Year health', yearHealthHint: 'Calendar year of today. Income = rental cashflow ×12 when mode is Rental; operating/capital from repairs this year.', yearHealthExperimental: 'Experimental · Year health', yearHealthExperimentalHint: 'Rental books are incomplete — these numbers can mislead. Not advice. Expand only for a rough calendar-year snapshot.', yearIncome: 'Income', yearOperating: 'Operating', yearCapital: 'Capital', yearMissingReceipts: 'Missing receipts', yearIncompleteTodos: 'Open todos', yearIncomeDashHint: 'Income needs rental cashflow mode', gapListTitle: 'Record check', gapListHint: 'Soft check for missing repair before/after photos, receipts, purchase move-in / sale handover / tenant move-in photos, and tenant move-out photos — not a todo queue. You can still save without filling them.', gapMissingBefore: 'Missing before photos', gapMissingAfter: 'Missing after photos', gapMissingReceipt: 'Missing receipt', gapMissingHandoverBefore: 'Missing handover before', gapMissingPurchase: 'Missing purchase move-in photos', gapMissingSold: 'Missing sale handover photos', gapMissingTenantMoveIn: 'Missing tenant move-in photos', gapMissingMoveOut: 'Missing tenant move-out photos', gapEmpty: 'No gaps right now.', gapCountLabel: '{n} gaps', toastGapsNotQueue: 'Open a row to fix a record', backupLastFull: 'Last full backup', backupNeverFull: 'Never fully backed up', backupStaleHint: 'Full backup is older than 14 days (or never). Export a full backup when you can — nothing is deleted.', timelineRepairs: 'Repairs', exportAccountingCsv: 'Accounting CSV', exportAccountingCsvDesc: 'All repairs (with or without receipt). For your accountant — not a tax filing.', exportAccountingDisclaimer: 'This CSV is a local export from PocketProp. It is not a CRA return and not tax advice. Gaps show as hasReceipt=false.', exportCsvDownload: 'Download CSV', exportCsvTitle: 'Accounting export', toastCsvExported: 'Accounting CSV saved',
-                settingsDataBackup: 'Backup & restore', exportBackup: 'Export JSON backup', exportBackupLight: 'Light backup', exportBackupLightDesc: 'Houses, work and ledger only — no photos. Optional passphrase encrypts the file.', exportBackupFull: 'Full backup', exportBackupFullDesc: 'Includes photos and receipts. Optional passphrase recommended. File can be large.', backupPassTitle: 'Backup passphrase', backupPassHint: 'Leave blank to save a plain JSON file. A passphrase encrypts it on this phone — PocketProp cannot recover a forgotten one.', backupPassLabel: 'Passphrase (optional)', backupPassAgain: 'Type it again', backupPassSkip: 'Save without passphrase', backupPassSave: 'Save encrypted backup', backupUnlockTitle: 'Encrypted backup', backupUnlockHint: 'This file was saved with a passphrase.', backupUnlockLabel: 'Passphrase', backupUnlockBtn: 'Unlock and restore', toastBackupPassMismatch: 'The two passphrases do not match.', toastBackupBadPass: 'That passphrase does not open this file.', toastBackupTooBig: 'Backup file is too large to restore on this phone.', toastBackupUnsafeMedia: 'Ignored {n} unsafe attachments.', toastExportEncrypted: 'Encrypted backup saved', confirmImportCounts: 'This file has {p} properties, {w} work logs, {c} contacts. Restore replaces everything on this phone. Continue?', exportTaxPdf: 'Tax worksheet (PDF)', exportTaxPdfDesc: 'Receipted operating vs capital repairs. Print or Save as PDF.', exportTaxPrint: 'Print / Save PDF', exportTaxLang: 'PDF language', exportTaxYear: 'Year', exportTaxTitle: 'Repair tax worksheet', exportTaxGenerated: 'Prepared', exportTaxDisclaimer: 'This is a local worksheet from PocketProp. It is not a CRA T776 and not tax advice. Only records with a receipt are listed.', exportTaxEmpty: 'No receipted repair records in this filter.', exportTaxFooter: 'Capital cost allowance class is not assigned yet. Receipt images stay in the app.', importBackup: 'Restore JSON Backup', toastExportLight: 'Light backup saved (no photos)', toastExportFull: 'Full backup saved', toastImportLightNoPhotos: 'Restored text. Photos live in a full backup.', settingsDaily: 'General', settingsAdvanced: 'Advanced', settingsDisplay: 'Display', settingsMap: 'Property map', settingsMapDesc: 'Show the map on the home screen. Hidden by default.', settingsExpert: 'Advanced · Expert', settingsExpertHint: 'Work catalog, cashflow lines, zones, demo and erase.', exportSecondary: 'Secondary', settingsLangHint: 'Language is switched from the button at the top of Home. Only built-in labels change. Names you added or edited stay as written.', deadline: 'Deadline', itemAlertOn: 'Red-dot reminder for this item', workDotsTitle: 'Work red dots', workDotsHint: 'Turn on, then choose red for overdue and yellow for coming due.', cycleSoonDays: 'Days before cycle due', taskSoonDays: 'Days before task deadline', dotOverdueRed: 'Overdue: red dot', dotSoonYellow: 'Coming due: yellow dot', confirmNextDueTitle: 'Confirm next due date', cleanupUnusedPhotos: 'Clear unused photos', cleanupUnusedPhotosDesc: 'Remove photo files no record points to.', toastCleanupDone: 'Cleared {n} unused files', photoInFullBackup: 'In full backup', toastAddPropertyFirst: 'Add a property first', routineDotPromptTitle: 'A cycle is overdue', routineDotPromptBody: 'Show a small red dot on Work when something is due?', toastImportSuccess: 'Data restored successfully!', toastImportFailed: 'Invalid backup file format.', confirmImportMsg: 'Restoring from backup will overwrite all existing local data. Continue?',
+                settingsDataBackup: 'Backup & restore', exportBackup: 'Export JSON backup', exportBackupLight: 'Light backup', exportBackupLightDesc: 'Houses, work and ledger only — no photos. Optional passphrase encrypts the file.', exportBackupFull: 'Full backup', exportBackupFullDesc: 'Includes photos and receipts. Optional passphrase recommended. File can be large.', backupPassTitle: 'Backup passphrase', backupPassHint: 'Leave blank to save a plain JSON file. A passphrase encrypts it on this phone — PocketProp cannot recover a forgotten one.', backupPassLabel: 'Passphrase (optional)', backupPassAgain: 'Type it again', backupPassSkip: 'Save without passphrase', backupPassSave: 'Save encrypted backup', backupUnlockTitle: 'Encrypted backup', backupUnlockHint: 'This file was saved with a passphrase.', backupUnlockLabel: 'Passphrase', backupUnlockBtn: 'Unlock and restore', toastBackupPassMismatch: 'The two passphrases do not match.', toastBackupBadPass: 'That passphrase does not open this file.', toastBackupTooBig: 'Backup file is too large to restore on this phone.', toastBackupUnsafeMedia: 'Ignored {n} unsafe attachments.', toastExportEncrypted: 'Encrypted backup saved', confirmImportCounts: 'This file has {p} properties, {w} work logs, {c} contacts. Restore replaces everything on this phone. Continue?', exportTaxPdf: 'Receipt binder (tax folder)', exportTaxPdfDesc: 'Tax-season checklist, operating vs capital, and compressed receipt images. Print or Save as PDF.', exportTaxPrint: 'Print / Save PDF', exportTaxLang: 'PDF language', exportTaxYear: 'Year', exportTaxTitle: 'Tax-season receipt binder', exportTaxGenerated: 'Prepared', exportTaxDisclaimer: 'Local receipt binder from PocketProp — not a CRA T776 and not tax advice. Accounting CSV remains the primary numbers path; this PDF is a secondary receipt folder for tax season. Images are compressed for mobile print. PDF receipts are noted, not rasterized. Records marked No receipt show a placeholder only (no fake image).', exportTaxEmpty: 'No repair records in this filter.', exportTaxFooter: 'CCA class is not assigned yet. Originals stay in the app / full backup. For numbers, use Accounting CSV.', exportTaxChecklistTitle: 'Tax-season checklist', exportTaxCheck1: 'Export Accounting CSV for your bookkeeper (primary numbers)', exportTaxCheck2: 'Confirm year (and optional property) matches this tax season', exportTaxCheck3: 'Review operating vs capital on each repair', exportTaxCheck4: 'Attach receipts or mark No receipt — never invent images', exportTaxCheck5: 'Print / Save this binder as your receipt folder', exportTaxCheck6: 'Keep a recent full backup with original files', exportTaxNoReceiptNote: 'No receipt on file (marked)', exportTaxPdfAttachNote: 'PDF receipt on file — open in app (not embedded as image)', exportTaxReceiptSkipped: 'Additional receipt images omitted (binder image limit)', exportTaxMarkedNoImage: 'Receipt marked on file, but no image in app', exportTaxBinderPreparing: 'Compressing receipts for print…', exportTaxMissingCount: 'Marked no receipt', exportTaxBinderHint: 'Receipt binder · tax-season folder', importBackup: 'Restore JSON Backup', toastExportLight: 'Light backup saved (no photos)', toastExportFull: 'Full backup saved', toastImportLightNoPhotos: 'Restored text. Photos live in a full backup.', settingsDaily: 'General', settingsAdvanced: 'Advanced', settingsDisplay: 'Display', settingsMap: 'Property map', settingsMapDesc: 'Show the map on the home screen. Hidden by default.', settingsExpert: 'Advanced · Expert', settingsExpertHint: 'Work catalog, cashflow lines, zones, demo and erase.', exportSecondary: 'Secondary', settingsLangHint: 'Language is switched from the button at the top of Home. Only built-in labels change. Names you added or edited stay as written.', deadline: 'Deadline', itemAlertOn: 'Red-dot reminder for this item', workDotsTitle: 'Work red dots', workDotsHint: 'Turn on, then choose red for overdue and yellow for coming due.', cycleSoonDays: 'Days before cycle due', taskSoonDays: 'Days before task deadline', dotOverdueRed: 'Overdue: red dot', dotSoonYellow: 'Coming due: yellow dot', confirmNextDueTitle: 'Confirm next due date', cleanupUnusedPhotos: 'Clear unused photos', cleanupUnusedPhotosDesc: 'Remove photo files no record points to.', toastCleanupDone: 'Cleared {n} unused files', photoInFullBackup: 'In full backup', toastAddPropertyFirst: 'Add a property first', routineDotPromptTitle: 'A cycle is overdue', routineDotPromptBody: 'Show a small red dot on Work when something is due?', toastImportSuccess: 'Data restored successfully!', toastImportFailed: 'Invalid backup file format.', confirmImportMsg: 'Restoring from backup will overwrite all existing local data. Continue?',
                 loadDemoData: 'Reset Demo Data', loadDemoDataDesc: 'Overwrites current data with multi-property sample dataset.', confirmDemoDataMsg: 'Are you sure you want to load sample data? Current data will be replaced.', toastDemoLoaded: 'Demo data loaded', wipeAllData: 'Erase all data', wipeAllDataDesc: 'Permanently remove every property, work item and photo on this phone.', wipeStep1: 'This cannot be undone. Export a backup first if you might need this data again.', wipeBackupSoon: 'No backup exported in this step yet. You can still continue.', wipeBackupDone: 'A backup file was saved from this phone.', wipeContinue: 'Continue', wipeStep2: 'Check the box and type ERASE to go to the last step.', wipeAck: 'I understand this deletes everything on this phone and cannot be undone.', wipeTypeHint: 'Type ERASE', wipeStep3: 'Last step. This removes houses, work, people and photos stored by PocketProp.', wipeConfirmFinal: 'Erase everything now', toastWiped: 'All local data removed',
                 settingsFileManager: 'Media & File Storage', fileManagerTitle: 'Repair photos & receipts', filesCount: 'Files', storageUsed: 'Used', btnManageFiles: 'Open Gallery', noMediaFiles: 'No photo or document files match.', toastMediaDeleted: 'File removed from local storage.', fileTypeAll: 'All Files', fileLibraryHint: 'Grouped by work date. Tap a file, then swipe to browse.', fileSearchPh: 'Search title or property', viewerSwipeHint: 'Swipe left / right to switch', fileLibraryUpload: 'Upload', fileLibraryTitlePh: 'Name (optional)', fileLibraryUploadHint: 'Pick a property above first, then upload. Stored on this phone.', fileCatDeal: 'Closing / title', fileCatInsurance: 'Insurance', fileCatLease: 'Lease', fileCatMaintenance: 'Repairs', fileCatOther: 'Other', toastPickPropertyFirst: 'Choose a property first', toastLibraryUploaded: 'File added',
                 roleTenant: 'Tenant', roleContractor: 'Contractor', roleRealtor: 'Realtor', roleLawyer: 'Lawyer', roleType: 'Contact Role', contactName: 'Full Name', contactTrade: 'Specialty / Trade Title', contactTradeHint: 'e.g. HVAC, Plumbing Specialist', assocProperty: 'Associated Property', assocProperties: 'Associated Properties', contractorNote: 'Contractors are linked through repair logs.', noneGeneral: 'General / Unlinked', searchContact: 'Search contacts...', noContacts: 'No contacts found.',
@@ -2619,7 +2680,7 @@
                 settingsDashboardViews: '仪表盘视图设置', minOneViewRequired: '必须至少保留一个视图模式。', settingsPropertyOrder: '房屋卡片排序',
                 settingsContactRoles: '人员类别设置', addRoleCategory: '新增类别', roleCategoryName: '类别名称', toastRoleAdded: '已新增人员类别', toastRoleDeleted: '已删除人员类别',
                 yearHealth: '本年健康', yearHealthHint: '按今天所在公历年汇总。收入=出租账本月租金×12；运营/资本支出来自本年维修记录。', yearHealthExperimental: '实验 · 本年健康', yearHealthExperimentalHint: '账本尚不完整，数字可能误导，仅供参考，不是建议。', yearIncome: '本年收入', yearOperating: '运营支出', yearCapital: '资本开支', yearMissingReceipts: '缺收据', yearIncompleteTodos: '未完成待办', yearIncomeDashHint: '收入需切换为出租账本', gapListTitle: '记录检查', gapListHint: '软检查缺修前/修后照、缺收据、缺买房入住/卖房交接前/租客入住前照、以及缺租客退租照——不是新的待办。仍可不补全就保存。', gapMissingBefore: '缺修前照', gapMissingAfter: '缺完工照', gapMissingReceipt: '缺收据', gapMissingHandoverBefore: '缺交接前照', gapMissingPurchase: '缺买房入住照片', gapMissingSold: '缺卖房交接前照片', gapMissingTenantMoveIn: '缺租客入住前照片', gapMissingMoveOut: '缺租客退租照片', gapEmpty: '当前没有缺口。', gapCountLabel: '{n} 条缺口', toastGapsNotQueue: '完善度是检查工具，点条目去补记录', backupLastFull: '上次完整备份', backupNeverFull: '从未完整备份', backupStaleHint: '完整备份已超过 14 天（或从未备份）。有空时导出一份完整备份即可，不会删除任何数据。', timelineRepairs: '维修', exportAccountingCsv: '会计 CSV', exportAccountingCsvDesc: '导出全部维修（含无收据）。给会计用——不是报税文件。', exportAccountingDisclaimer: '本 CSV 由 PocketProp 在本机导出，不是 CRA 报税表，也不是税务意见。无收据记录以 hasReceipt=false 标出。', exportCsvDownload: '下载 CSV', exportCsvTitle: '会计导出', toastCsvExported: '已导出会计 CSV',
-                settingsDataBackup: '数据备份与恢复 (离线)', exportBackup: '导出 JSON 备份文件', exportBackupLight: '轻备份', exportBackupLightDesc: '只含房屋、工作和账本，不含照片。可加口令加密。', exportBackupFull: '完整备份', exportBackupFullDesc: '含照片和收据，建议加口令。文件可能很大。', backupPassTitle: '备份口令', backupPassHint: '留空则保存普通 JSON。设置口令后文件在本机加密，口令遗忘无法找回。', backupPassLabel: '口令（可选）', backupPassAgain: '再输入一次', backupPassSkip: '不加密，直接保存', backupPassSave: '保存加密备份', backupUnlockTitle: '加密备份', backupUnlockHint: '这份文件导出时加了口令。', backupUnlockLabel: '口令', backupUnlockBtn: '解锁并恢复', toastBackupPassMismatch: '两次口令不一致。', toastBackupBadPass: '口令无法打开这份文件。', toastBackupTooBig: '备份文件过大，这台手机无法恢复。', toastBackupUnsafeMedia: '已忽略 {n} 个不安全附件。', toastExportEncrypted: '已保存加密备份', confirmImportCounts: '这份备份含 {p} 套房、{w} 条工作记录、{c} 位联系人。恢复会覆盖本机全部数据。继续？', exportTaxPdf: '税务备查 PDF', exportTaxPdfDesc: '只汇总有收据的维修保养与资产改良。用系统打印或存储为 PDF。', exportTaxPrint: '打印 / 存 PDF', exportTaxLang: 'PDF 语言', exportTaxYear: '年份', exportTaxTitle: '维修税务备查表', exportTaxGenerated: '生成日期', exportTaxDisclaimer: '本表由 PocketProp 在本机生成，不是 CRA T776，也不是税务意见。仅列入有收据的记录。', exportTaxEmpty: '当前筛选没有带收据的维修记录。', exportTaxFooter: '尚未标注 CCA 类别。收据原件仍在 App 里。', importBackup: '恢复 JSON 备份文件', toastExportLight: '已导出轻备份（不含照片）', toastExportFull: '已导出完整备份', toastImportLightNoPhotos: '文字已恢复。照片在完整备份里。', settingsDaily: '日常', settingsAdvanced: '进阶', settingsDisplay: '显示', settingsMap: '房屋地图', settingsMapDesc: '在首页显示地图。默认隐藏，可在此打开。', settingsExpert: '高级·专家', settingsExpertHint: '工作目录、现金流科目、区域管理器、示例与清空。', exportSecondary: '次要', settingsLangHint: '语言在首页右上角切换。仅更换系统预设文字。凡自行新增或编辑过的项目，系统不会主动翻译。', deadline: '截止日期', itemAlertOn: '此项显示小红点', workDotsTitle: '工作小红点', workDotsHint: '打开后，再分别选择过期红点和快到期黄点。', cycleSoonDays: '周期提前几天', taskSoonDays: '待办提前几天', dotOverdueRed: '过期：红点', dotSoonYellow: '快到期：黄点', confirmNextDueTitle: '确认下次日期', cleanupUnusedPhotos: '清理未用照片', cleanupUnusedPhotosDesc: '删掉没有记录再引用的图片文件。', toastCleanupDone: '已清理 {n} 个未用文件', photoInFullBackup: '图在完整备份', toastAddPropertyFirst: '请先添加一套房子', routineDotPromptTitle: '有周期已经过期', routineDotPromptBody: '要不要在工作页用小红点标出到期项？', toastImportSuccess: '数据恢复成功！', toastImportFailed: '恢复失败，文件格式错误。', confirmImportMsg: '导入备份将覆盖当前所有本地数据，确定继续吗？',
+                settingsDataBackup: '数据备份与恢复 (离线)', exportBackup: '导出 JSON 备份文件', exportBackupLight: '轻备份', exportBackupLightDesc: '只含房屋、工作和账本，不含照片。可加口令加密。', exportBackupFull: '完整备份', exportBackupFullDesc: '含照片和收据，建议加口令。文件可能很大。', backupPassTitle: '备份口令', backupPassHint: '留空则保存普通 JSON。设置口令后文件在本机加密，口令遗忘无法找回。', backupPassLabel: '口令（可选）', backupPassAgain: '再输入一次', backupPassSkip: '不加密，直接保存', backupPassSave: '保存加密备份', backupUnlockTitle: '加密备份', backupUnlockHint: '这份文件导出时加了口令。', backupUnlockLabel: '口令', backupUnlockBtn: '解锁并恢复', toastBackupPassMismatch: '两次口令不一致。', toastBackupBadPass: '口令无法打开这份文件。', toastBackupTooBig: '备份文件过大，这台手机无法恢复。', toastBackupUnsafeMedia: '已忽略 {n} 个不安全附件。', toastExportEncrypted: '已保存加密备份', confirmImportCounts: '这份备份含 {p} 套房、{w} 条工作记录、{c} 位联系人。恢复会覆盖本机全部数据。继续？', exportTaxPdf: '收据合订税季夹', exportTaxPdfDesc: '税季清单 + 经营/资本拆分 + 压缩嵌入收据。用系统打印或存为 PDF。', exportTaxPrint: '打印 / 存 PDF', exportTaxLang: 'PDF 语言', exportTaxYear: '年份', exportTaxTitle: '收据合订税季夹', exportTaxGenerated: '生成日期', exportTaxDisclaimer: '本夹由 PocketProp 在本机生成，不是 CRA T776，也不是税务意见。数字以会计 CSV 为主；本 PDF 为收据合订 / 税季备查夹（次要）。大图会压缩以便手机打印。PDF 收据只标注、不转图。标记「无收据」的只显示占位说明，不造假图。', exportTaxEmpty: '当前筛选没有维修记录。', exportTaxFooter: '尚未标注 CCA 类别。原件仍在 App / 完整备份。数字请用会计 CSV。', exportTaxChecklistTitle: '税季清单', exportTaxCheck1: '导出会计 CSV 给会计（主数字路径）', exportTaxCheck2: '确认年份（及可选房）与本税季一致', exportTaxCheck3: '核对每条的经营 vs 资本分类', exportTaxCheck4: '补齐收据，或标「无收据」——不造假图', exportTaxCheck5: '打印 / 存储本夹作为收据合订备查', exportTaxCheck6: '保留一份较新的完整备份（含原件）', exportTaxNoReceiptNote: '无收据（已标记）', exportTaxPdfAttachNote: '收据为 PDF，请在 App 内查看（本夹不嵌入为图片）', exportTaxReceiptSkipped: '其余收据图已省略（合订图片上限）', exportTaxMarkedNoImage: '已标有收据，但 App 内无图', exportTaxBinderPreparing: '正在压缩收据以便打印…', exportTaxMissingCount: '已标无收据', exportTaxBinderHint: '收据合订 · 税季备查夹', importBackup: '恢复 JSON 备份文件', toastExportLight: '已导出轻备份（不含照片）', toastExportFull: '已导出完整备份', toastImportLightNoPhotos: '文字已恢复。照片在完整备份里。', settingsDaily: '日常', settingsAdvanced: '进阶', settingsDisplay: '显示', settingsMap: '房屋地图', settingsMapDesc: '在首页显示地图。默认隐藏，可在此打开。', settingsExpert: '高级·专家', settingsExpertHint: '工作目录、现金流科目、区域管理器、示例与清空。', exportSecondary: '次要', settingsLangHint: '语言在首页右上角切换。仅更换系统预设文字。凡自行新增或编辑过的项目，系统不会主动翻译。', deadline: '截止日期', itemAlertOn: '此项显示小红点', workDotsTitle: '工作小红点', workDotsHint: '打开后，再分别选择过期红点和快到期黄点。', cycleSoonDays: '周期提前几天', taskSoonDays: '待办提前几天', dotOverdueRed: '过期：红点', dotSoonYellow: '快到期：黄点', confirmNextDueTitle: '确认下次日期', cleanupUnusedPhotos: '清理未用照片', cleanupUnusedPhotosDesc: '删掉没有记录再引用的图片文件。', toastCleanupDone: '已清理 {n} 个未用文件', photoInFullBackup: '图在完整备份', toastAddPropertyFirst: '请先添加一套房子', routineDotPromptTitle: '有周期已经过期', routineDotPromptBody: '要不要在工作页用小红点标出到期项？', toastImportSuccess: '数据恢复成功！', toastImportFailed: '恢复失败，文件格式错误。', confirmImportMsg: '导入备份将覆盖当前所有本地数据，确定继续吗？',
                 loadDemoData: '加载示例演示数据', loadDemoDataDesc: '重置并重新加载包含多处房屋资产的完整示例数据。', confirmDemoDataMsg: '确定要重新载入演示数据吗？当前修改将被覆盖。', toastDemoLoaded: '示例数据已加载', wipeAllData: '清空全部数据', wipeAllDataDesc: '永久删除本机全部房屋、工作和照片。', wipeStep1: '此操作无法撤销。若以后可能还要用，请先导出备份。', wipeBackupSoon: '这一步里还没有导出备份，仍可继续。', wipeBackupDone: '已从本机保存了一份备份文件。', wipeContinue: '继续', wipeStep2: '勾选确认，并输入 ERASE，才能进入最后一步。', wipeAck: '我明白这会删掉本机全部数据，而且无法恢复。', wipeTypeHint: '输入 ERASE', wipeStep3: '最后一步。将删除 PocketProp 保存在本机的房屋、工作、联系人和照片。', wipeConfirmFinal: '立即全部清空', toastWiped: '本机数据已清空',
                 settingsFileManager: '维修照片与收据', fileManagerTitle: '维修照片与收据', filesCount: '个文件', storageUsed: '已用容量', btnManageFiles: '打开', noMediaFiles: '未匹配到媒体文件。', toastMediaDeleted: '文件已彻底删除。', fileTypeAll: '全部文件', fileLibraryHint: '按工单日期排列。点开后左右滑动切换。', fileSearchPh: '搜索名称或房屋', viewerSwipeHint: '左右滑动切换文件', fileLibraryUpload: '上传', fileLibraryTitlePh: '名称（可选）', fileLibraryUploadHint: '先点选上方一套房屋，再上传。文件只存在这台手机。', fileCatDeal: '交易产权', fileCatInsurance: '保险', fileCatLease: '租约', fileCatMaintenance: '维修', fileCatOther: '其他', toastPickPropertyFirst: '请先选择一套房屋', toastLibraryUploaded: '文件已加入',
                 roleTenant: '租客', roleContractor: '师傅', roleRealtor: '经纪', roleLawyer: '律师', roleType: '联系人身份角色', contactName: '姓名/称呼', contactTrade: '工种/专长头衔', contactTradeHint: '例如: 暖通水工, 专修屋顶', assocProperty: '关联房屋', assocProperties: '关联房屋（可多选）', contractorNote: '师傅不用先绑房子，做完维修记录后会自动对上。', noneGeneral: '通用 / 未绑定具体房屋', searchContact: '搜索联系人...', noContacts: '该分类下暂无联系人。',
@@ -3421,7 +3482,7 @@
             return { properties, tasks, repairs, contacts, customRoles, userZones: zones };
         }
 
-        const APP_VERSION = '2026.09.29-b';
+        const APP_VERSION = '2026.09.30-a';
 
         const app = createApp({
             data() {
@@ -3522,6 +3583,9 @@
                     taxExportYear: 'ALL',
                     taxExportLang: 'zh',
                     taxExportPropertyId: 'ALL',
+                    taxBinderEmbeds: {},
+                    taxBinderPreparing: false,
+                    taxBinderImageLimit: 48,
                     showAccountingCsv: false,
                     accountingCsvYear: 'ALL',
                     accountingCsvPropertyId: 'ALL',
@@ -3738,12 +3802,12 @@
                     const rows = (this.repairs || []).filter(r => {
                         if (propId !== 'ALL' && r.propertyId !== propId) return false;
                         if (year !== 'ALL' && String(r.date || '').slice(0, 4) !== year) return false;
-                        if (!this.repairHasReceipt(r)) return false;
-                        if (!(Number(r.cost) > 0)) return false;
                         return true;
                     }).slice().sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
                     const byProp = {};
                     const order = [];
+                    let missingReceiptCount = 0;
+                    let withReceiptCount = 0;
                     rows.forEach(r => {
                         const id = r.propertyId || '_none';
                         if (!byProp[id]) {
@@ -3752,15 +3816,33 @@
                             order.push(id);
                         }
                         const cost = Number(r.cost) || 0;
-                        const item = { id: r.id, date: r.date || '', title: r.title || '—', category: r.category || '', cost, hasReceipt: this.repairHasReceipt(r) };
+                        const photos = this.getRepairReceiptPhotos ? this.getRepairReceiptPhotos(r) : (r.receiptPhotos || []);
+                        const photoCount = Array.isArray(photos) ? photos.length : 0;
+                        const markedNoReceipt = r.hasReceipt === false;
+                        const hasReceipt = this.repairHasReceipt(r);
+                        if (markedNoReceipt) missingReceiptCount += 1;
+                        else if (hasReceipt || photoCount > 0) withReceiptCount += 1;
+                        const item = {
+                            id: r.id,
+                            date: r.date || '',
+                            title: r.title || '—',
+                            category: r.category || '',
+                            cost,
+                            hasReceipt,
+                            markedNoReceipt,
+                            receiptPhotoCount: photoCount
+                        };
                         if (r.taxKind === 'capital') { byProp[id].capital.push(item); byProp[id].capitalTotal += cost; }
                         else { byProp[id].operating.push(item); byProp[id].operatingTotal += cost; }
                     });
-                    const groups = order.map(id => byProp[id]).filter(g => g.operatingTotal > 0 || g.capitalTotal > 0);
+                    const groups = order.map(id => byProp[id]).filter(g => g.operating.length || g.capital.length);
                     return {
                         groups,
                         operatingTotal: groups.reduce((s, g) => s + g.operatingTotal, 0),
-                        capitalTotal: groups.reduce((s, g) => s + g.capitalTotal, 0)
+                        capitalTotal: groups.reduce((s, g) => s + g.capitalTotal, 0),
+                        repairCount: rows.length,
+                        missingReceiptCount,
+                        withReceiptCount
                     };
                 },
                 propertyYearHealth() {
@@ -5804,14 +5886,95 @@
                     }
                     return false;
                 },
-                openTaxExport() {
+                binderEmbedsFor(repairId) {
+                    const map = this.taxBinderEmbeds || {};
+                    return Array.isArray(map[repairId]) ? map[repairId] : [];
+                },
+                compressUrlForBinder(url) {
+                    return new Promise((resolve) => {
+                        if (!url || typeof url !== 'string') { resolve(null); return; }
+                        if (this.isPdf(url)) { resolve(null); return; }
+                        const img = new Image();
+                        img.onload = () => {
+                            try {
+                                const canvas = document.createElement('canvas');
+                                const MAX = 960;
+                                let width = img.width;
+                                let height = img.height;
+                                if (width > height) {
+                                    if (width > MAX) { height *= MAX / width; width = MAX; }
+                                } else if (height > MAX) {
+                                    width *= MAX / height; height = MAX;
+                                }
+                                canvas.width = Math.max(1, Math.round(width));
+                                canvas.height = Math.max(1, Math.round(height));
+                                const ctx = canvas.getContext('2d');
+                                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                                resolve(canvas.toDataURL('image/jpeg', 0.72));
+                            } catch (err) {
+                                resolve(url);
+                            }
+                        };
+                        img.onerror = () => resolve(null);
+                        img.src = url;
+                    });
+                },
+                async prepareTaxBinderEmbeds() {
+                    if (!this.showTaxExport) return;
+                    this.taxBinderPreparing = true;
+                    const embeds = {};
+                    let imageCount = 0;
+                    const limit = this.taxBinderImageLimit || 48;
+                    const pack = this.taxExportPack || { groups: [] };
+                    const rows = [];
+                    (pack.groups || []).forEach(g => {
+                        (g.operating || []).forEach(r => rows.push(r));
+                        (g.capital || []).forEach(r => rows.push(r));
+                    });
+                    for (const row of rows) {
+                        if (row.markedNoReceipt) {
+                            embeds[row.id] = [];
+                            continue;
+                        }
+                        const repair = (this.repairs || []).find(r => r.id === row.id);
+                        const photos = repair ? (this.getRepairReceiptPhotos(repair) || []) : [];
+                        const list = [];
+                        for (const url of photos) {
+                            if (!url) continue;
+                            if (this.isPdf(url)) {
+                                list.push({ kind: 'pdf' });
+                                continue;
+                            }
+                            if (imageCount >= limit) {
+                                list.push({ kind: 'skipped' });
+                                break;
+                            }
+                            const compressed = await this.compressUrlForBinder(url);
+                            if (compressed) {
+                                list.push({ kind: 'image', src: compressed });
+                                imageCount += 1;
+                            }
+                        }
+                        embeds[row.id] = list;
+                    }
+                    this.taxBinderEmbeds = embeds;
+                    this.taxBinderPreparing = false;
+                },
+                async openTaxExport() {
                     this.taxExportYear = String(new Date().getFullYear());
                     this.taxExportPropertyId = this.viewingPropertyId || 'ALL';
                     this.taxExportLang = this.currentLang === 'en' ? 'en' : 'zh';
+                    this.taxBinderEmbeds = {};
                     this.showTaxExport = true;
                     this.closeModal();
+                    await nextTick();
+                    await this.prepareTaxBinderEmbeds();
                 },
-                printTaxPdf() {
+                async printTaxPdf() {
+                    if (this.taxBinderPreparing) {
+                        await this.prepareTaxBinderEmbeds();
+                    }
+                    await nextTick();
                     window.print();
                 },
                 backupMaxBytes(includeBlobs) { return includeBlobs ? 200 * 1024 * 1024 : 20 * 1024 * 1024; },
