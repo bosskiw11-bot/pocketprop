@@ -1,0 +1,56 @@
+name: patch-tax-receipt-binder-index
+on:
+  workflow_dispatch:
+  push:
+    branches: [fix/tax-receipt-binder]
+    paths:
+      - '.ci/TRIGGER_BINDER'
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/tax-receipt-binder
+          fetch-depth: 0
+      - name: Apply tax-receipt-binder index.html patch
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git show origin/main:index.html > index.html
+          python3 << 'PY'
+from pathlib import Path
+import base64, gzip, subprocess, sys
+n = 4
+parts = [Path(f'.ci/binder{i}.b64').read_text().replace('\n','') for i in range(n)]
+b64 = ''.join(parts)
+raw = base64.b64decode(b64)
+patch = gzip.decompress(raw)
+Path('/tmp/binder.patch').write_bytes(patch)
+print('patch bytes', len(patch))
+r = subprocess.run(['patch','-p1','--binary'], input=patch, capture_output=True)
+sys.stdout.write(r.stdout.decode())
+sys.stderr.write(r.stderr.decode())
+if r.returncode != 0:
+    sys.exit(r.returncode)
+t = Path('index.html').read_text(encoding='utf-8')
+assert '2026.09.30-a' in t
+assert 'prepareTaxBinderEmbeds' in t
+assert '收据合订税季夹' in t
+assert 'taxBinderEmbeds' in t
+print('OK', len(t))
+PY
+      - name: Commit and push
+        run: |
+          set -euo pipefail
+          git config user.name "bosskiw11-bot"
+          git config user.email "bosskiw11@gmail.com"
+          git add index.html
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git commit -m "feat: tax-season receipt binder 收据合订税季夹 (2026.09.30-a)"
+          git push origin HEAD:fix/tax-receipt-binder
