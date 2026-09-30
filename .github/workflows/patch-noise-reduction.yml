@@ -1,6 +1,10 @@
 name: patch-noise-reduction-index
 on:
   workflow_dispatch:
+  push:
+    branches: [fix/noise-reduction-pack]
+    paths:
+      - '.ci/TRIGGER_NOISE'
 jobs:
   patch:
     runs-on: ubuntu-latest
