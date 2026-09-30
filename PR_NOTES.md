@@ -1,26 +1,41 @@
-# Noise reduction pack (2026.09.29-b)
+# Receipt binder / 收据合订税季夹 (2026.09.30-a)
 
 ## Summary
-Reduce first-screen / settings noise without touching evidence-chain hearts (房史/租客分枝, photo/gap rules, rooms work list, cycle/todo/历史税, contacts, local backup + CSV).
+Upgrade the HTML tax-prep print/PDF into a **收据合订税季夹** (receipt binder / tax-season folder): one printable PDF that can replace scattered receipts. Accounting CSV stays the primary numbers path; this PDF remains secondary.
 
-## Changes
-1. **Map** — home property map hidden by default (`pocket_prop_map_visible`; unset → off). Toggle in Settings → 显示 / Display. Saved preference respected when present.
-2. **实验·本年健康** — removed from property main UI via `SHOW_YEAR_HEALTH_UI: false` (computed/helpers kept).
-3. **房屋账本** — bottom fold on property detail, default closed (`ledgerExpanded`); unset `cashflowMode` defaults to `hidden` (existing per-property mode still respected).
-4. **显示 group** — List/Grid, map, theme, GPS, work red dots gathered under Settings → Display. Defaults when unset: views `['list']`, map off, GPS off (`pocket_prop_gps` / legacy `my_home_os_gps` only on when explicitly `'true'`), workDots off, theme harbor.
-5. **工作目录 / 现金流科目 / 区域管理器** — under Settings → 进阶 → collapsed **高级·专家** (`expertExpanded`, default closed).
-6. **Export** — Accounting CSV primary (highlighted); tax-season PDF demoted with 次要 / Secondary label and muted row.
-7. **Demo / wipe** — empty-state 「加载示例」kept; settings load-demo + wipe moved into Expert fold, muted (not red eye-catching).
-8. **Cycle SMS/email reminder** — UI copy + logic removed (`setRoutineNotify` / draft sms/mailto / phone/email fields / persist keys). Work red dots untouched.
+## Entry point
+Settings → Backup & restore → **收据合订税季夹** / Receipt binder (tax folder) (still demoted with 次要 / Secondary). Opens the existing browser print-to-PDF sheet (`openTaxExport` → `printTaxPdf` / `window.print()`).
 
-## Untouched hearts
-房史/租客分枝, photo rules + 完善度 soft gaps, rooms/areas work list, cycle/todo/历史税 split, contacts, local backup + CSV primary export.
+## Filters
+- **Year** (default: current calendar year; ALL available)
+- **Property / 房** (optional; ALL or one house)
+- PDF language (zh/en) unchanged
 
-## localStorage keys touched (defaults only when unset)
-- `pocket_prop_map_visible` (new; default hidden)
-- `pocket_prop_enabled_views` (default `['list']` when missing)
-- `pocket_prop_gps` / `my_home_os_gps` (default off when missing)
-- Per-property `cashflowMode` unset → `hidden`
+## Binder contents
+1. **Tax-season checklist** (6 items: CSV primary, year/房 filter, Op vs Cap review, receipts or 无收据, print binder, full backup)
+2. **Operating vs capital** totals + per-property sections (existing `taxKind`)
+3. **All repairs** in filter (not receipt-only): embed compressed receipt images when present
+4. **Marked 无收据** (`hasReceipt === false`): placeholder note only — **no fake image**
+5. **PDF receipts**: note only (“open in app”); not rasterized into the binder
+6. Receipt marked but no image: short note, no fake image
+
+## Embed / compress
+- On open and on year/property change: `prepareTaxBinderEmbeds()`
+- Images: canvas resize max **960px**, JPEG quality **0.72**
+- Cap: **48** embedded images per binder (`taxBinderImageLimit`); further images noted as skipped
+- Uses existing media resolve path (`getRepairReceiptPhotos` / blob refs); no new CDN dependency
+
+## Copy
+- EN: Tax worksheet → Receipt binder (tax folder); disclaimer retargeted to secondary receipt folder
+- ZH: 税务备查 PDF → **收据合订税季夹**; 税季备查夹 wording; CSV still primary in disclaimer
+
+## Untouched
+Backup/restore, photo soft-gaps, rooms/areas, noise-pack settings IA (CSV primary highlight + demoted PDF row kept).
+
+## Limits
+- PDF attachments are notes, not embedded pages
+- Large seasons may hit the 48-image compress cap
+- Print quality depends on the device’s Print → Save as PDF
 
 ## Version
-`APP_VERSION` / SW `VERSION` → `2026.09.29-b`
+`APP_VERSION` / SW `VERSION` → `2026.09.30-a`
