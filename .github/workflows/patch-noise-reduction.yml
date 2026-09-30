@@ -18,11 +18,13 @@ jobs:
           git show origin/main:index.html > index.html
           python3 - <<'PY'
 from pathlib import Path
-parts = []
-for i in range(8):
-    hx = Path(f'.ci/np{i}a.hex').read_text().strip() + Path(f'.ci/np{i}b.hex').read_text().strip()
-    parts.append(bytes.fromhex(hx).decode())
+parts = [Path(f'.ci/np{i}.b64').read_text().replace(chr(10),'') for i in range(8)]
 b64 = ''.join(parts)
+fixes = [(7441,'U'),(7442,'s'),(10045,'U'),(10046,'s'),(15421,'6'),(16500,'U'),(16501,'s'),(17735,'q'),(17736,'d'),(19480,'U'),(19481,'s'),(20005,'U'),(20006,'s')]
+arr = list(b64)
+for pos, ch in fixes:
+    arr[pos] = ch
+b64 = ''.join(arr)
 Path('/tmp/patch.gz.b64').write_text(b64)
 print('b64 len', len(b64))
 PY
