@@ -173,8 +173,8 @@
                     </button>
                 </div>
 
-                <!-- Shared map (list, map and grid) -->
-                <div v-show="!viewingPropertyId" class="w-full aspect-[3/2] max-h-[280px] mb-3 bg-slate-800 rounded-3xl border border-slate-700/50 overflow-hidden relative shadow-lg flex-none">
+                <!-- Shared map (hidden by default; Settings → Display) -->
+                <div v-show="!viewingPropertyId && mapVisible" class="w-full aspect-[3/2] max-h-[280px] mb-3 bg-slate-800 rounded-3xl border border-slate-700/50 overflow-hidden relative shadow-lg flex-none">
                     <div class="absolute top-3 right-3 z-20 flex gap-2">
                         <button v-if="gpsEnabled" @click="locateUserOnMap" class="bg-slate-900/90 text-brand-400 text-xs font-bold px-3 py-1.5 rounded-xl border border-slate-700 shadow-md active:scale-95 transition-transform flex items-center gap-1.5">
                             <i class="fa-solid fa-crosshairs"></i> {{ t('locateMe') }}
@@ -617,11 +617,15 @@
                         </div>
                     </div>
 
-                    <div class="bg-slate-800/90 rounded-3xl p-5 border border-slate-700/50 shadow-sm">
-                        <h3 class="text-base font-bold text-white flex items-center gap-2 mb-3">
-                            <i class="fa-solid fa-scale-balanced text-emerald-400"></i>
-                            {{ t('propertyLedger') }}
-                        </h3>
+                    <div class="bg-slate-800/60 rounded-3xl p-4 border border-slate-700/40 shadow-sm">
+                        <button type="button" class="w-full flex items-center justify-between gap-3" @click="ledgerExpanded = !ledgerExpanded">
+                            <h3 class="text-sm font-bold text-slate-300 flex items-center gap-2">
+                                <i class="fa-solid fa-scale-balanced text-slate-500"></i>
+                                {{ t('propertyLedger') }}
+                            </h3>
+                            <i class="fa-solid text-slate-500 text-xs flex-shrink-0" :class="ledgerExpanded ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                        </button>
+                        <div v-if="ledgerExpanded" class="mt-3">
                         <div class="flex justify-center" :class="cashflowMode === 'hidden' ? '' : 'mb-4'">
                             <div class="flex bg-slate-900 p-1 rounded-2xl border border-slate-700/70 w-full">
                                 <button type="button" @click="setCashflowMode('owner')" class="flex-1 py-2 rounded-xl text-[11px] font-black transition-all" :class="cashflowMode === 'owner' ? 'bg-brand-500 text-white shadow' : 'text-slate-400'">{{ t('cashflowModeOwner') }}</button>
@@ -651,10 +655,11 @@
                             </div>
                         </div>
                         <button v-if="cashflowMode !== 'hidden'" @click="confirmCashflow" class="w-full mt-3 py-3 rounded-2xl bg-brand-500 hover:bg-brand-600 text-white font-bold text-sm active:scale-[0.99] transition-all">{{ t('confirmCashflow') }}</button>
+                        </div>
                     </div>
 
-                    <!-- Experimental year health (secondary, collapsed) -->
-                    <div v-if="propertyYearHealth" class="bg-slate-800/60 rounded-3xl p-4 border border-slate-700/40 shadow-sm opacity-95">
+                    <!-- Experimental year health: code kept, UI gated off (noise pack) -->
+                    <div v-if="SHOW_YEAR_HEALTH_UI && propertyYearHealth" class="bg-slate-800/60 rounded-3xl p-4 border border-slate-700/40 shadow-sm opacity-95">
                         <button type="button" class="w-full flex items-center justify-between gap-3" @click="yearHealthExpanded = !yearHealthExpanded">
                             <div class="text-left min-w-0">
                                 <h3 class="text-sm font-bold text-slate-300 flex items-center gap-2">
@@ -1775,116 +1780,31 @@
                                 </div>
                             </div>
 
-                            <!-- NEW: Section - Zone/Area Customization -->
-                            <div v-show="settingsSection === 'advanced'" class="space-y-3 pt-2 border-t border-slate-800">
-                                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider pl-1">{{ t('settingsZones') }}</h4>
-                                <p class="text-[11px] text-slate-400 pl-1 -mt-1">{{ t('settingsZonesDesc') }}</p>
-
-                                <button @click="openCatalogManager" class="w-full bg-slate-800/80 hover:bg-slate-800 p-4 rounded-2xl border border-slate-700/60 flex items-center justify-between group active:scale-[0.99] transition-all text-left shadow-sm">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-9 h-9 rounded-xl bg-violet-500/20 text-violet-300 border border-violet-500/30 flex items-center justify-center">
-                                            <i class="fa-solid fa-list-check text-base"></i>
-                                        </div>
-                                        <div>
-                                            <p class="text-sm font-bold text-white group-hover:text-violet-300 transition-colors">{{ t('manageCatalog') }}</p>
-                                            <p class="text-[11px] text-slate-400 mt-0.5">{{ t('manageCatalogDesc') }}</p>
-                                        </div>
-                                    </div>
-                                    <i class="fa-solid fa-chevron-right text-slate-600 text-xs group-hover:text-violet-300 transition-colors"></i>
-                                </button>
-                                <button @click="openCashflowCatalog" class="w-full bg-slate-800/80 hover:bg-slate-800 p-4 rounded-2xl border border-slate-700/60 flex items-center justify-between group active:scale-[0.99] transition-all text-left shadow-sm">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center justify-center">
-                                            <i class="fa-solid fa-chart-line text-base"></i>
-                                        </div>
-                                        <div>
-                                            <p class="text-sm font-bold text-white group-hover:text-emerald-300 transition-colors">{{ t('manageCashflowLines') }}</p>
-                                            <p class="text-[11px] text-slate-400 mt-0.5">{{ t('manageCashflowLinesDesc') }}</p>
-                                        </div>
-                                    </div>
-                                    <i class="fa-solid fa-chevron-right text-slate-600 text-xs group-hover:text-emerald-300 transition-colors"></i>
-                                </button>
-                                <button @click="openZoneManager" class="w-full bg-slate-800/80 hover:bg-slate-800 p-4 rounded-2xl border border-slate-700/60 flex items-center justify-between group active:scale-[0.99] transition-all text-left shadow-sm">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-9 h-9 rounded-xl bg-orange-500/20 text-orange-400 border border-orange-500/30 flex items-center justify-center">
-                                            <i class="fa-solid fa-layer-group text-base"></i>
-                                        </div>
-                                        <div>
-                                            <p class="text-sm font-bold text-white group-hover:text-orange-400 transition-colors">{{ t('manageZones') }}</p>
-                                            <p class="text-[11px] text-slate-400 mt-0.5">{{ userZones.length }} Categories, {{ userZones.reduce((acc, g) => acc + g.zones.length, 0) }} Zones</p>
-                                        </div>
-                                    </div>
-                                    <i class="fa-solid fa-chevron-right text-slate-600 text-xs group-hover:text-orange-400 transition-colors"></i>
-                                </button>
-                            </div>
-
+                            <!-- Display group: List/Grid, Map, Theme, GPS, Work dots -->
                             <div v-show="settingsSection === 'daily'" class="space-y-3 pt-2 border-t border-slate-800">
-                                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider pl-1">{{ t('settingsDashboardViews') }}</h4>
-                                <div class="grid grid-cols-3 gap-2">
-                                    <button @click="toggleDashboardView('list')" class="p-3 rounded-2xl border text-xs font-bold flex flex-col items-center justify-center gap-1.5 transition-all active:scale-95" :class="enabledViews.includes('list') ? 'bg-brand-500/20 text-brand-400 border-brand-500/50 shadow-md shadow-brand-500/10' : 'bg-slate-800 text-slate-500 border-slate-700 hover:text-slate-400'">
-                                        <i class="fa-solid fa-list-ul text-lg mb-1"></i>
-                                        <span>{{ t('viewModeList') }}</span>
-                                    </button>
-                                    <button @click="toggleDashboardView('grid')" class="p-3 rounded-2xl border text-xs font-bold flex flex-col items-center justify-center gap-1.5 transition-all active:scale-95" :class="enabledViews.includes('grid') ? 'bg-brand-500/20 text-brand-400 border-brand-500/50 shadow-md shadow-brand-500/10' : 'bg-slate-800 text-slate-500 border-slate-700 hover:text-slate-400'">
-                                        <i class="fa-solid fa-table-cells-large text-lg mb-1"></i>
-                                        <span>{{ t('viewModeGrid') }}</span>
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div class="space-y-3 pt-2 border-t border-slate-800">
-                                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider pl-1">{{ t('settingsPropertyOrder') }}</h4>
-                                <div class="space-y-2">
-                                    <div v-for="(prop, index) in properties" :key="prop.id" 
-                                         class="bg-slate-800/80 p-3 rounded-2xl border border-slate-700/60 flex items-center justify-between gap-2 shadow-sm">
-                                        <div class="flex items-center gap-2.5 min-w-0 flex-1">
-                                            <span class="w-6 h-6 rounded-lg bg-slate-900 border border-slate-700 text-slate-400 text-[11px] font-bold flex items-center justify-center flex-shrink-0">
-                                                {{ index + 1 }}
-                                            </span>
-                                            <span class="text-sm font-bold text-white truncate">{{ prop.name }}</span>
-                                        </div>
-                                        <div class="flex items-center gap-1 flex-shrink-0">
-                                            <button @click="movePropertyUp(index)" :disabled="index === 0" 
-                                                    class="w-8 h-8 rounded-xl bg-slate-700/80 hover:bg-slate-700 text-slate-200 disabled:opacity-30 flex items-center justify-center active:scale-95">
-                                                <i class="fa-solid fa-arrow-up text-xs"></i>
-                                            </button>
-                                            <button @click="movePropertyDown(index)" :disabled="index === properties.length - 1" 
-                                                    class="w-8 h-8 rounded-xl bg-slate-700/80 hover:bg-slate-700 text-slate-200 disabled:opacity-30 flex items-center justify-center active:scale-95">
-                                                <i class="fa-solid fa-arrow-down text-xs"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="space-y-3 pt-2 border-t border-slate-800">
-                                <div class="flex justify-between items-center pl-1">
-                                    <div>
-                                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">{{ t('settingsContactRoles') }}</h4>
-                                    </div>
-                                    <button @click="openAddRoleModal" class="text-[11px] font-bold text-brand-400 bg-brand-500/10 hover:bg-brand-500/20 px-2.5 py-1 rounded-lg border border-brand-500/20 active:scale-95 transition-all flex items-center gap-1 flex-shrink-0">
-                                        <i class="fa-solid fa-plus"></i> {{ t('addRoleCategory') }}
-                                    </button>
-                                </div>
-
-                                <div class="grid grid-cols-2 gap-2">
-                                    <div v-for="(cfg, key) in roleConfigMap" :key="key" class="bg-slate-800/80 p-2.5 rounded-2xl border border-slate-700/60 flex items-center justify-between gap-2 shadow-sm">
-                                        <div class="flex items-center gap-2 min-w-0">
-                                            <div class="w-7 h-7 rounded-lg flex items-center justify-center text-xs flex-shrink-0 border" :class="cfg.color">
-                                                <i class="fa-solid" :class="cfg.icon"></i>
-                                            </div>
-                                            <span class="text-xs font-bold text-white truncate">{{ cfg.label }}</span>
-                                        </div>
-                                        <button v-if="!['tenant','contractor','realtor','lawyer'].includes(key)" @click="promptDeleteCustomRole(key)" class="w-6 h-6 rounded-lg text-slate-500 hover:text-red-400 active:bg-slate-700 flex items-center justify-center text-xs flex-shrink-0">
-                                            <i class="fa-solid fa-trash-can"></i>
+                                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider pl-1">{{ t('settingsDisplay') }}</h4>
+                                <div class="bg-slate-800/80 p-4 rounded-2xl border border-slate-700/60 space-y-3">
+                                    <p class="text-[11px] font-bold text-slate-300">{{ t('settingsDashboardViews') }}</p>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <button @click="toggleDashboardView('list')" class="p-3 rounded-2xl border text-xs font-bold flex flex-col items-center justify-center gap-1.5 transition-all active:scale-95" :class="enabledViews.includes('list') ? 'bg-brand-500/20 text-brand-400 border-brand-500/50 shadow-md shadow-brand-500/10' : 'bg-slate-800 text-slate-500 border-slate-700 hover:text-slate-400'">
+                                            <i class="fa-solid fa-list-ul text-lg mb-1"></i>
+                                            <span>{{ t('viewModeList') }}</span>
+                                        </button>
+                                        <button @click="toggleDashboardView('grid')" class="p-3 rounded-2xl border text-xs font-bold flex flex-col items-center justify-center gap-1.5 transition-all active:scale-95" :class="enabledViews.includes('grid') ? 'bg-brand-500/20 text-brand-400 border-brand-500/50 shadow-md shadow-brand-500/10' : 'bg-slate-800 text-slate-500 border-slate-700 hover:text-slate-400'">
+                                            <i class="fa-solid fa-table-cells-large text-lg mb-1"></i>
+                                            <span>{{ t('viewModeGrid') }}</span>
                                         </button>
                                     </div>
                                 </div>
-                            </div>
-
-                            <div v-show="settingsSection === 'daily'" class="space-y-3 pt-2 border-t border-slate-800">
-                                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider pl-1">{{ t('settingsPreferences') }}</h4>
-                                <p class="text-[11px] text-slate-500 leading-relaxed px-1">{{ t('settingsLangHint') }}</p>
+                                <div class="bg-slate-800/80 p-4 rounded-2xl border border-slate-700/60 flex justify-between items-center">
+                                    <div class="pr-2">
+                                        <p class="text-sm font-bold text-white">{{ t('settingsMap') }}</p>
+                                        <p class="text-[10px] text-slate-500 mt-0.5">{{ t('settingsMapDesc') }}</p>
+                                    </div>
+                                    <button type="button" @click="toggleMapVisible" class="w-12 h-6 rounded-full p-1 transition-colors relative flex-shrink-0" :class="mapVisible ? 'bg-brand-500' : 'bg-slate-700'">
+                                        <div class="w-4 h-4 bg-white rounded-full transition-transform transform shadow" :class="mapVisible ? 'translate-x-6' : 'translate-x-0'"></div>
+                                    </button>
+                                </div>
                                 <div class="bg-slate-800/80 p-4 rounded-2xl border border-slate-700/60 flex justify-between items-center gap-3">
                                     <div>
                                         <p class="text-sm font-bold text-white">{{ t('settingsTheme') }}</p>
@@ -1908,19 +1828,6 @@
                                     <button @click="toggleGPS" class="w-12 h-6 rounded-full p-1 transition-colors relative flex-shrink-0" :class="gpsEnabled ? 'bg-brand-500' : 'bg-slate-700'">
                                         <div class="w-4 h-4 bg-white rounded-full transition-transform transform shadow" :class="gpsEnabled ? 'translate-x-6' : 'translate-x-0'"></div>
                                     </button>
-                                </div>
-                                <div class="bg-slate-800/80 p-4 rounded-2xl border border-slate-700/60 space-y-3">
-                                    <div class="flex justify-between items-center gap-3">
-                                        <div>
-                                            <p class="text-sm font-bold text-white">{{ t('appLockTitle') }}</p>
-                                            <p class="text-[10px] text-slate-500 mt-0.5">{{ t('appLockHint') }}</p>
-                                        </div>
-                                        <button type="button" @click="toggleAppLock" class="w-12 h-6 rounded-full p-1 transition-colors relative flex-shrink-0" :class="appLockOn ? 'bg-brand-500' : 'bg-slate-700'">
-                                            <div class="w-4 h-4 bg-white rounded-full transition-transform transform shadow" :class="appLockOn ? 'translate-x-6' : 'translate-x-0'"></div>
-                                        </button>
-                                    </div>
-                                    <p class="text-[11px] text-slate-400">{{ appLockOn ? t('appLockOn') : t('appLockOff') }}</p>
-                                    <button v-if="appLockOn" type="button" @click="openPinDlg('change')" class="text-[11px] font-bold text-brand-400">{{ t('appLockChange') }}</button>
                                 </div>
                                 <div class="bg-slate-800/80 p-4 rounded-2xl border border-slate-700/60 space-y-3">
                                     <div class="flex justify-between items-center gap-3">
@@ -1950,6 +1857,72 @@
                                             </label>
                                         </div>
                                     </div>
+                                </div>
+                                <p class="text-[11px] text-slate-500 leading-relaxed px-1">{{ t('settingsLangHint') }}</p>
+                            </div>
+
+                            <div v-show="settingsSection === 'daily'" class="space-y-3 pt-2 border-t border-slate-800">
+                                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider pl-1">{{ t('settingsPropertyOrder') }}</h4>
+                                <div class="space-y-2">
+                                    <div v-for="(prop, index) in properties" :key="prop.id"
+                                         class="bg-slate-800/80 p-3 rounded-2xl border border-slate-700/60 flex items-center justify-between gap-2 shadow-sm">
+                                        <div class="flex items-center gap-2.5 min-w-0 flex-1">
+                                            <span class="w-6 h-6 rounded-lg bg-slate-900 border border-slate-700 text-slate-400 text-[11px] font-bold flex items-center justify-center flex-shrink-0">
+                                                {{ index + 1 }}
+                                            </span>
+                                            <span class="text-sm font-bold text-white truncate">{{ prop.name }}</span>
+                                        </div>
+                                        <div class="flex items-center gap-1 flex-shrink-0">
+                                            <button @click="movePropertyUp(index)" :disabled="index === 0"
+                                                    class="w-8 h-8 rounded-xl bg-slate-700/80 hover:bg-slate-700 text-slate-200 disabled:opacity-30 flex items-center justify-center active:scale-95">
+                                                <i class="fa-solid fa-arrow-up text-xs"></i>
+                                            </button>
+                                            <button @click="movePropertyDown(index)" :disabled="index === properties.length - 1"
+                                                    class="w-8 h-8 rounded-xl bg-slate-700/80 hover:bg-slate-700 text-slate-200 disabled:opacity-30 flex items-center justify-center active:scale-95">
+                                                <i class="fa-solid fa-arrow-down text-xs"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div v-show="settingsSection === 'daily'" class="space-y-3 pt-2 border-t border-slate-800">
+                                <div class="flex justify-between items-center pl-1">
+                                    <div>
+                                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">{{ t('settingsContactRoles') }}</h4>
+                                    </div>
+                                    <button @click="openAddRoleModal" class="text-[11px] font-bold text-brand-400 bg-brand-500/10 hover:bg-brand-500/20 px-2.5 py-1 rounded-lg border border-brand-500/20 active:scale-95 transition-all flex items-center gap-1 flex-shrink-0">
+                                        <i class="fa-solid fa-plus"></i> {{ t('addRoleCategory') }}
+                                    </button>
+                                </div>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div v-for="(cfg, key) in roleConfigMap" :key="key" class="bg-slate-800/80 p-2.5 rounded-2xl border border-slate-700/60 flex items-center justify-between gap-2 shadow-sm">
+                                        <div class="flex items-center gap-2 min-w-0">
+                                            <div class="w-7 h-7 rounded-lg flex items-center justify-center text-xs flex-shrink-0 border" :class="cfg.color">
+                                                <i class="fa-solid" :class="cfg.icon"></i>
+                                            </div>
+                                            <span class="text-xs font-bold text-white truncate">{{ cfg.label }}</span>
+                                        </div>
+                                        <button v-if="!['tenant','contractor','realtor','lawyer'].includes(key)" @click="promptDeleteCustomRole(key)" class="w-6 h-6 rounded-lg text-slate-500 hover:text-red-400 active:bg-slate-700 flex items-center justify-center text-xs flex-shrink-0">
+                                            <i class="fa-solid fa-trash-can"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div v-show="settingsSection === 'daily'" class="space-y-3 pt-2 border-t border-slate-800">
+                                <div class="bg-slate-800/80 p-4 rounded-2xl border border-slate-700/60 space-y-3">
+                                    <div class="flex justify-between items-center gap-3">
+                                        <div>
+                                            <p class="text-sm font-bold text-white">{{ t('appLockTitle') }}</p>
+                                            <p class="text-[10px] text-slate-500 mt-0.5">{{ t('appLockHint') }}</p>
+                                        </div>
+                                        <button type="button" @click="toggleAppLock" class="w-12 h-6 rounded-full p-1 transition-colors relative flex-shrink-0" :class="appLockOn ? 'bg-brand-500' : 'bg-slate-700'">
+                                            <div class="w-4 h-4 bg-white rounded-full transition-transform transform shadow" :class="appLockOn ? 'translate-x-6' : 'translate-x-0'"></div>
+                                        </button>
+                                    </div>
+                                    <p class="text-[11px] text-slate-400">{{ appLockOn ? t('appLockOn') : t('appLockOff') }}</p>
+                                    <button v-if="appLockOn" type="button" @click="openPinDlg('change')" class="text-[11px] font-bold text-brand-400">{{ t('appLockChange') }}</button>
                                 </div>
                             </div>
 
@@ -1993,17 +1966,7 @@
                                     </div>
                                     <p v-if="backupIsStale" class="text-[11px] text-amber-200/90 leading-relaxed bg-amber-500/10 border border-amber-500/20 rounded-xl p-2.5">{{ t('backupStaleHint') }}</p>
                                 </div>
-                                <button @click="openTaxExport" class="w-full bg-slate-800/80 hover:bg-slate-800 p-4 rounded-2xl border border-slate-700/60 flex items-center justify-between group active:scale-[0.99] transition-all text-left">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center"><i class="fa-solid fa-file-invoice text-base"></i></div>
-                                        <div>
-                                            <p class="text-sm font-bold text-white group-hover:text-brand-400 transition-colors">{{ t('exportTaxPdf') }}</p>
-                                            <p class="text-[11px] text-slate-400 mt-0.5">{{ t('exportTaxPdfDesc') }}</p>
-                                        </div>
-                                    </div>
-                                    <i class="fa-solid fa-chevron-right text-slate-600 text-xs"></i>
-                                </button>
-                                <button @click="openAccountingCsv" class="w-full bg-slate-800/80 hover:bg-slate-800 p-4 rounded-2xl border border-slate-700/60 flex items-center justify-between group active:scale-[0.99] transition-all text-left">
+                                <button @click="openAccountingCsv" class="w-full bg-slate-800/80 hover:bg-slate-800 p-4 rounded-2xl border border-brand-500/30 flex items-center justify-between group active:scale-[0.99] transition-all text-left">
                                     <div class="flex items-center gap-3">
                                         <div class="w-9 h-9 rounded-xl bg-violet-500/20 text-violet-400 flex items-center justify-center"><i class="fa-solid fa-file-csv text-base"></i></div>
                                         <div>
@@ -2052,26 +2015,88 @@
                                     </div>
                                     <i class="fa-solid fa-chevron-right text-slate-600 text-xs"></i>
                                 </button>
-                                <button @click="loadDemoData" class="w-full bg-slate-800/80 hover:bg-slate-800 p-4 rounded-2xl border border-slate-700/60 flex items-center justify-between group active:scale-[0.99] transition-all text-left">
+                                <button @click="openTaxExport" class="w-full bg-slate-900/50 hover:bg-slate-900/80 p-3 rounded-2xl border border-slate-800 flex items-center justify-between group active:scale-[0.99] transition-all text-left opacity-80">
                                     <div class="flex items-center gap-3">
-                                        <div class="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center"><i class="fa-solid fa-flask text-base"></i></div>
+                                        <div class="w-8 h-8 rounded-xl bg-slate-800 text-slate-500 flex items-center justify-center"><i class="fa-solid fa-file-invoice text-sm"></i></div>
                                         <div>
-                                            <p class="text-sm font-bold text-white group-hover:text-amber-400 transition-colors">{{ t('loadDemoData') }}</p>
-                                            <p class="text-[11px] text-slate-400 mt-0.5">{{ t('loadDemoDataDesc') }}</p>
+                                            <p class="text-[12px] font-semibold text-slate-400 group-hover:text-slate-300 transition-colors">{{ t('exportTaxPdf') }} <span class="text-[10px] text-slate-600 font-bold">· {{ t('exportSecondary') }}</span></p>
+                                            <p class="text-[10px] text-slate-600 mt-0.5">{{ t('exportTaxPdfDesc') }}</p>
                                         </div>
                                     </div>
-                                    <i class="fa-solid fa-chevron-right text-slate-600 text-xs"></i>
+                                    <i class="fa-solid fa-chevron-right text-slate-700 text-xs"></i>
                                 </button>
-                                <button @click="openWipeWizard" class="w-full bg-slate-800/80 hover:bg-slate-800 p-4 rounded-2xl border border-red-900/40 flex items-center justify-between group active:scale-[0.99] transition-all text-left">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-9 h-9 rounded-xl bg-red-500/20 text-red-400 flex items-center justify-center"><i class="fa-solid fa-trash text-base"></i></div>
-                                        <div>
-                                            <p class="text-sm font-bold text-red-300 group-hover:text-red-200 transition-colors">{{ t('wipeAllData') }}</p>
-                                            <p class="text-[11px] text-slate-400 mt-0.5">{{ t('wipeAllDataDesc') }}</p>
+                            </div>
+
+                            <!-- Advanced: expert fold for catalog / cashflow / zones; muted wipe -->
+                            <div v-show="settingsSection === 'advanced'" class="space-y-3 pt-1">
+                                <div class="bg-slate-800/50 rounded-2xl border border-slate-700/40 overflow-hidden">
+                                    <button type="button" class="w-full flex items-center justify-between gap-3 p-4" @click="expertExpanded = !expertExpanded">
+                                        <div class="text-left min-w-0">
+                                            <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">{{ t('settingsExpert') }}</h4>
+                                            <p class="text-[11px] text-slate-500 mt-1">{{ t('settingsExpertHint') }}</p>
                                         </div>
+                                        <i class="fa-solid text-slate-500 text-xs flex-shrink-0" :class="expertExpanded ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                                    </button>
+                                    <div v-if="expertExpanded" class="space-y-3 px-4 pb-4 border-t border-slate-800 pt-3">
+                                        <p class="text-[11px] text-slate-400">{{ t('settingsZonesDesc') }}</p>
+                                        <button @click="openCatalogManager" class="w-full bg-slate-900/70 hover:bg-slate-900 p-3.5 rounded-2xl border border-slate-700/50 flex items-center justify-between group active:scale-[0.99] transition-all text-left">
+                                            <div class="flex items-center gap-3">
+                                                <div class="w-8 h-8 rounded-xl bg-violet-500/15 text-violet-300 border border-violet-500/25 flex items-center justify-center">
+                                                    <i class="fa-solid fa-list-check text-sm"></i>
+                                                </div>
+                                                <div>
+                                                    <p class="text-[13px] font-bold text-slate-200 group-hover:text-violet-300 transition-colors">{{ t('manageCatalog') }}</p>
+                                                    <p class="text-[10px] text-slate-500 mt-0.5">{{ t('manageCatalogDesc') }}</p>
+                                                </div>
+                                            </div>
+                                            <i class="fa-solid fa-chevron-right text-slate-600 text-xs"></i>
+                                        </button>
+                                        <button @click="openCashflowCatalog" class="w-full bg-slate-900/70 hover:bg-slate-900 p-3.5 rounded-2xl border border-slate-700/50 flex items-center justify-between group active:scale-[0.99] transition-all text-left">
+                                            <div class="flex items-center gap-3">
+                                                <div class="w-8 h-8 rounded-xl bg-emerald-500/15 text-emerald-300 border border-emerald-500/25 flex items-center justify-center">
+                                                    <i class="fa-solid fa-chart-line text-sm"></i>
+                                                </div>
+                                                <div>
+                                                    <p class="text-[13px] font-bold text-slate-200 group-hover:text-emerald-300 transition-colors">{{ t('manageCashflowLines') }}</p>
+                                                    <p class="text-[10px] text-slate-500 mt-0.5">{{ t('manageCashflowLinesDesc') }}</p>
+                                                </div>
+                                            </div>
+                                            <i class="fa-solid fa-chevron-right text-slate-600 text-xs"></i>
+                                        </button>
+                                        <button @click="openZoneManager" class="w-full bg-slate-900/70 hover:bg-slate-900 p-3.5 rounded-2xl border border-slate-700/50 flex items-center justify-between group active:scale-[0.99] transition-all text-left">
+                                            <div class="flex items-center gap-3">
+                                                <div class="w-8 h-8 rounded-xl bg-orange-500/15 text-orange-300 border border-orange-500/25 flex items-center justify-center">
+                                                    <i class="fa-solid fa-layer-group text-sm"></i>
+                                                </div>
+                                                <div>
+                                                    <p class="text-[13px] font-bold text-slate-200 group-hover:text-orange-300 transition-colors">{{ t('manageZones') }}</p>
+                                                    <p class="text-[10px] text-slate-500 mt-0.5">{{ userZones.length }} Categories, {{ userZones.reduce((acc, g) => acc + g.zones.length, 0) }} Zones</p>
+                                                </div>
+                                            </div>
+                                            <i class="fa-solid fa-chevron-right text-slate-600 text-xs"></i>
+                                        </button>
+                                        <button @click="loadDemoData" class="w-full bg-slate-900/40 hover:bg-slate-900/70 p-3 rounded-2xl border border-slate-800 flex items-center justify-between group active:scale-[0.99] transition-all text-left">
+                                            <div class="flex items-center gap-3">
+                                                <div class="w-8 h-8 rounded-xl bg-slate-800 text-slate-500 flex items-center justify-center"><i class="fa-solid fa-flask text-sm"></i></div>
+                                                <div>
+                                                    <p class="text-[12px] font-semibold text-slate-400">{{ t('loadDemoData') }}</p>
+                                                    <p class="text-[10px] text-slate-600 mt-0.5">{{ t('loadDemoDataDesc') }}</p>
+                                                </div>
+                                            </div>
+                                            <i class="fa-solid fa-chevron-right text-slate-700 text-xs"></i>
+                                        </button>
+                                        <button @click="openWipeWizard" class="w-full bg-slate-900/40 hover:bg-slate-900/70 p-3 rounded-2xl border border-slate-800 flex items-center justify-between group active:scale-[0.99] transition-all text-left">
+                                            <div class="flex items-center gap-3">
+                                                <div class="w-8 h-8 rounded-xl bg-slate-800 text-slate-500 flex items-center justify-center"><i class="fa-solid fa-trash text-sm"></i></div>
+                                                <div>
+                                                    <p class="text-[12px] font-semibold text-slate-500">{{ t('wipeAllData') }}</p>
+                                                    <p class="text-[10px] text-slate-600 mt-0.5">{{ t('wipeAllDataDesc') }}</p>
+                                                </div>
+                                            </div>
+                                            <i class="fa-solid fa-chevron-right text-slate-700 text-xs"></i>
+                                        </button>
                                     </div>
-                                    <i class="fa-solid fa-chevron-right text-slate-600 text-xs"></i>
-                                </button>
+                                </div>
                             </div>
                         </div>
 
@@ -2509,7 +2534,7 @@
             en: {
                 navDashboard: 'Properties', navWork: 'Work', navTasks: 'Tasks', navRepairs: 'Records', navCRM: 'People',
                 subTabTasks: 'Pending', subTabRoutines: 'Cycles', subTabLogs: 'History', subTabGaps: 'Check',
-                addRoutine: 'Add Recurring Check', editRoutine: 'Edit Recurring Check', routineCatalog: 'Standard checklist', selectRoutine: 'Pick a standard item...', interval: 'Interval', nextDue: 'Next due', overdue: 'Overdue', dueSoon: 'Due soon', noRoutines: 'No recurring checks yet.', routinesHint: 'These stay on the list. Completing one writes a History record and rolls the next due date forward.', routineNotifyTitle: 'Cycle reminders', routineNotifyOff: 'Off', routineNotifyDot: 'Red dots', routineDotHint: 'Show a badge on Work and Cycles when a check is due soon or overdue. Off by default.', routineNotifySms: 'Text', routineNotifyEmail: 'Email', routineNotifyPhone: 'Phone number for SMS', routineNotifyEmailAddr: 'Email address', routineNotifyHint: 'No server push. Text/Email opens a draft on this phone for items that are due.', routineNotifySendDue: 'Draft reminder for due items', routineNotifyOne: 'Remind', toastNotifyNeedTarget: 'Add a phone or email first', toastNotifyNoneDue: 'Nothing due right now', toastNotifyOpened: 'Draft opened', everyMonths: 'Every {n} mo', everyYear: 'Yearly', everyYears: 'Every {n} yr', toastRoutineSaved: 'Recurring check saved', toastRoutineDone: 'Logged and rolled to next due', toastRoutineDeleted: 'Recurring check removed', confirmDeleteRoutineTitle: 'Delete recurring check?', doneToday: 'Done today', toastRoutineAlreadyToday: 'Already logged for today', toastRoutineInFlight: 'Saving this check…', confirmEarlyRoutine: 'Next due is still in the future. Log another completion and roll the date again?',
+                addRoutine: 'Add Recurring Check', editRoutine: 'Edit Recurring Check', routineCatalog: 'Standard checklist', selectRoutine: 'Pick a standard item...', interval: 'Interval', nextDue: 'Next due', overdue: 'Overdue', dueSoon: 'Due soon', noRoutines: 'No recurring checks yet.', routinesHint: 'These stay on the list. Completing one writes a History record and rolls the next due date forward.', everyMonths: 'Every {n} mo', everyYear: 'Yearly', everyYears: 'Every {n} yr', toastRoutineSaved: 'Recurring check saved', toastRoutineDone: 'Logged and rolled to next due', toastRoutineDeleted: 'Recurring check removed', confirmDeleteRoutineTitle: 'Delete recurring check?', doneToday: 'Done today', toastRoutineAlreadyToday: 'Already logged for today', toastRoutineInFlight: 'Saving this check…', confirmEarlyRoutine: 'Next due is still in the future. Log another completion and roll the date again?',
                 typeDetached: 'Detached', typeSemiDetached: 'Semi-detached', typeFreeholdTownhouse: 'Freehold townhouse', typeCondoTownhouse: 'Condo townhouse', typeCondoApt: 'Condo apartment', typeLink: 'Link home', typeMultiplex: 'Multiplex',
                 dashboardTasks: 'Open tasks', dashboardLogs: 'Work history', dashboardTotalCost: 'Total spend',
                 propertyLedger: 'Property ledger', monthlyCashFlow: 'Monthly cash flow', monthlyCashFlowHint: 'Enter typical monthly amounts, then confirm to save them on this property.', monthlyExpenses: 'Monthly expenses', monthlyExpensesHint: 'Typical owner-occupied household costs. Confirm to save them on this property.', cashflowModeOwner: 'Owner-occupied', cashflowModeRental: 'Rental', cashflowModeHidden: 'Hidden', cashflowRental: 'Rental income', cashflowMortgage: 'Mortgage', cashflowInsurance: 'Insurance', cashflowTax: 'Property tax', cashflowMgmt: 'Property management', cashflowHoa: 'Condo / strata fees', cashflowHydro: 'Electricity', cashflowGas: 'Gas / heat', cashflowWater: 'Water & sewer', cashflowInternet: 'Internet / phone', cashflowGroceries: 'Groceries', cashflowTransit: 'Transit / fuel', cashflowChildcare: 'Childcare', cashflowHealth: 'Healthcare', cashflowSubs: 'Subscriptions', cashflowReserve: 'Home reserve', cashflowOthers: 'Others total', cashflowNet: 'Net income', cashflowExpenseTotal: 'Total', confirmCashflow: 'Confirm figures', toastCashflowSaved: 'Monthly figures saved',
@@ -2545,7 +2570,7 @@
                 settingsDashboardViews: 'Home views', minOneViewRequired: 'Keep at least one view turned on.', settingsPropertyOrder: 'Property order',
                 settingsContactRoles: 'Contact types', addRoleCategory: 'Add type', roleCategoryName: 'Type name', toastRoleAdded: 'Type added', toastRoleDeleted: 'Type removed',
                 yearHealth: 'Year health', yearHealthHint: 'Calendar year of today. Income = rental cashflow ×12 when mode is Rental; operating/capital from repairs this year.', yearHealthExperimental: 'Experimental · Year health', yearHealthExperimentalHint: 'Rental books are incomplete — these numbers can mislead. Not advice. Expand only for a rough calendar-year snapshot.', yearIncome: 'Income', yearOperating: 'Operating', yearCapital: 'Capital', yearMissingReceipts: 'Missing receipts', yearIncompleteTodos: 'Open todos', yearIncomeDashHint: 'Income needs rental cashflow mode', gapListTitle: 'Record check', gapListHint: 'Soft check for missing repair before/after photos, receipts, purchase move-in / sale handover / tenant move-in photos, and tenant move-out photos — not a todo queue. You can still save without filling them.', gapMissingBefore: 'Missing before photos', gapMissingAfter: 'Missing after photos', gapMissingReceipt: 'Missing receipt', gapMissingHandoverBefore: 'Missing handover before', gapMissingPurchase: 'Missing purchase move-in photos', gapMissingSold: 'Missing sale handover photos', gapMissingTenantMoveIn: 'Missing tenant move-in photos', gapMissingMoveOut: 'Missing tenant move-out photos', gapEmpty: 'No gaps right now.', gapCountLabel: '{n} gaps', toastGapsNotQueue: 'Open a row to fix a record', backupLastFull: 'Last full backup', backupNeverFull: 'Never fully backed up', backupStaleHint: 'Full backup is older than 14 days (or never). Export a full backup when you can — nothing is deleted.', timelineRepairs: 'Repairs', exportAccountingCsv: 'Accounting CSV', exportAccountingCsvDesc: 'All repairs (with or without receipt). For your accountant — not a tax filing.', exportAccountingDisclaimer: 'This CSV is a local export from PocketProp. It is not a CRA return and not tax advice. Gaps show as hasReceipt=false.', exportCsvDownload: 'Download CSV', exportCsvTitle: 'Accounting export', toastCsvExported: 'Accounting CSV saved',
-                settingsDataBackup: 'Backup & restore', exportBackup: 'Export JSON backup', exportBackupLight: 'Light backup', exportBackupLightDesc: 'Houses, work and ledger only — no photos. Optional passphrase encrypts the file.', exportBackupFull: 'Full backup', exportBackupFullDesc: 'Includes photos and receipts. Optional passphrase recommended. File can be large.', backupPassTitle: 'Backup passphrase', backupPassHint: 'Leave blank to save a plain JSON file. A passphrase encrypts it on this phone — PocketProp cannot recover a forgotten one.', backupPassLabel: 'Passphrase (optional)', backupPassAgain: 'Type it again', backupPassSkip: 'Save without passphrase', backupPassSave: 'Save encrypted backup', backupUnlockTitle: 'Encrypted backup', backupUnlockHint: 'This file was saved with a passphrase.', backupUnlockLabel: 'Passphrase', backupUnlockBtn: 'Unlock and restore', toastBackupPassMismatch: 'The two passphrases do not match.', toastBackupBadPass: 'That passphrase does not open this file.', toastBackupTooBig: 'Backup file is too large to restore on this phone.', toastBackupUnsafeMedia: 'Ignored {n} unsafe attachments.', toastExportEncrypted: 'Encrypted backup saved', confirmImportCounts: 'This file has {p} properties, {w} work logs, {c} contacts. Restore replaces everything on this phone. Continue?', exportTaxPdf: 'Tax worksheet (PDF)', exportTaxPdfDesc: 'Receipted operating vs capital repairs. Print or Save as PDF.', exportTaxPrint: 'Print / Save PDF', exportTaxLang: 'PDF language', exportTaxYear: 'Year', exportTaxTitle: 'Repair tax worksheet', exportTaxGenerated: 'Prepared', exportTaxDisclaimer: 'This is a local worksheet from PocketProp. It is not a CRA T776 and not tax advice. Only records with a receipt are listed.', exportTaxEmpty: 'No receipted repair records in this filter.', exportTaxFooter: 'Capital cost allowance class is not assigned yet. Receipt images stay in the app.', importBackup: 'Restore JSON Backup', toastExportLight: 'Light backup saved (no photos)', toastExportFull: 'Full backup saved', toastImportLightNoPhotos: 'Restored text. Photos live in a full backup.', settingsDaily: 'General', settingsAdvanced: 'Advanced', settingsLangHint: 'Language is switched from the button at the top of Home. Only built-in labels change. Names you added or edited stay as written.', deadline: 'Deadline', itemAlertOn: 'Red-dot reminder for this item', workDotsTitle: 'Work red dots', workDotsHint: 'Turn on, then choose red for overdue and yellow for coming due.', cycleSoonDays: 'Days before cycle due', taskSoonDays: 'Days before task deadline', dotOverdueRed: 'Overdue: red dot', dotSoonYellow: 'Coming due: yellow dot', confirmNextDueTitle: 'Confirm next due date', cleanupUnusedPhotos: 'Clear unused photos', cleanupUnusedPhotosDesc: 'Remove photo files no record points to.', toastCleanupDone: 'Cleared {n} unused files', photoInFullBackup: 'In full backup', toastAddPropertyFirst: 'Add a property first', routineDotPromptTitle: 'A cycle is overdue', routineDotPromptBody: 'Show a small red dot on Work when something is due?', toastImportSuccess: 'Data restored successfully!', toastImportFailed: 'Invalid backup file format.', confirmImportMsg: 'Restoring from backup will overwrite all existing local data. Continue?',
+                settingsDataBackup: 'Backup & restore', exportBackup: 'Export JSON backup', exportBackupLight: 'Light backup', exportBackupLightDesc: 'Houses, work and ledger only — no photos. Optional passphrase encrypts the file.', exportBackupFull: 'Full backup', exportBackupFullDesc: 'Includes photos and receipts. Optional passphrase recommended. File can be large.', backupPassTitle: 'Backup passphrase', backupPassHint: 'Leave blank to save a plain JSON file. A passphrase encrypts it on this phone — PocketProp cannot recover a forgotten one.', backupPassLabel: 'Passphrase (optional)', backupPassAgain: 'Type it again', backupPassSkip: 'Save without passphrase', backupPassSave: 'Save encrypted backup', backupUnlockTitle: 'Encrypted backup', backupUnlockHint: 'This file was saved with a passphrase.', backupUnlockLabel: 'Passphrase', backupUnlockBtn: 'Unlock and restore', toastBackupPassMismatch: 'The two passphrases do not match.', toastBackupBadPass: 'That passphrase does not open this file.', toastBackupTooBig: 'Backup file is too large to restore on this phone.', toastBackupUnsafeMedia: 'Ignored {n} unsafe attachments.', toastExportEncrypted: 'Encrypted backup saved', confirmImportCounts: 'This file has {p} properties, {w} work logs, {c} contacts. Restore replaces everything on this phone. Continue?', exportTaxPdf: 'Tax worksheet (PDF)', exportTaxPdfDesc: 'Receipted operating vs capital repairs. Print or Save as PDF.', exportTaxPrint: 'Print / Save PDF', exportTaxLang: 'PDF language', exportTaxYear: 'Year', exportTaxTitle: 'Repair tax worksheet', exportTaxGenerated: 'Prepared', exportTaxDisclaimer: 'This is a local worksheet from PocketProp. It is not a CRA T776 and not tax advice. Only records with a receipt are listed.', exportTaxEmpty: 'No receipted repair records in this filter.', exportTaxFooter: 'Capital cost allowance class is not assigned yet. Receipt images stay in the app.', importBackup: 'Restore JSON Backup', toastExportLight: 'Light backup saved (no photos)', toastExportFull: 'Full backup saved', toastImportLightNoPhotos: 'Restored text. Photos live in a full backup.', settingsDaily: 'General', settingsAdvanced: 'Advanced', settingsDisplay: 'Display', settingsMap: 'Property map', settingsMapDesc: 'Show the map on the home screen. Hidden by default.', settingsExpert: 'Advanced · Expert', settingsExpertHint: 'Work catalog, cashflow lines, zones, demo and erase.', exportSecondary: 'Secondary', settingsLangHint: 'Language is switched from the button at the top of Home. Only built-in labels change. Names you added or edited stay as written.', deadline: 'Deadline', itemAlertOn: 'Red-dot reminder for this item', workDotsTitle: 'Work red dots', workDotsHint: 'Turn on, then choose red for overdue and yellow for coming due.', cycleSoonDays: 'Days before cycle due', taskSoonDays: 'Days before task deadline', dotOverdueRed: 'Overdue: red dot', dotSoonYellow: 'Coming due: yellow dot', confirmNextDueTitle: 'Confirm next due date', cleanupUnusedPhotos: 'Clear unused photos', cleanupUnusedPhotosDesc: 'Remove photo files no record points to.', toastCleanupDone: 'Cleared {n} unused files', photoInFullBackup: 'In full backup', toastAddPropertyFirst: 'Add a property first', routineDotPromptTitle: 'A cycle is overdue', routineDotPromptBody: 'Show a small red dot on Work when something is due?', toastImportSuccess: 'Data restored successfully!', toastImportFailed: 'Invalid backup file format.', confirmImportMsg: 'Restoring from backup will overwrite all existing local data. Continue?',
                 loadDemoData: 'Reset Demo Data', loadDemoDataDesc: 'Overwrites current data with multi-property sample dataset.', confirmDemoDataMsg: 'Are you sure you want to load sample data? Current data will be replaced.', toastDemoLoaded: 'Demo data loaded', wipeAllData: 'Erase all data', wipeAllDataDesc: 'Permanently remove every property, work item and photo on this phone.', wipeStep1: 'This cannot be undone. Export a backup first if you might need this data again.', wipeBackupSoon: 'No backup exported in this step yet. You can still continue.', wipeBackupDone: 'A backup file was saved from this phone.', wipeContinue: 'Continue', wipeStep2: 'Check the box and type ERASE to go to the last step.', wipeAck: 'I understand this deletes everything on this phone and cannot be undone.', wipeTypeHint: 'Type ERASE', wipeStep3: 'Last step. This removes houses, work, people and photos stored by PocketProp.', wipeConfirmFinal: 'Erase everything now', toastWiped: 'All local data removed',
                 settingsFileManager: 'Media & File Storage', fileManagerTitle: 'Repair photos & receipts', filesCount: 'Files', storageUsed: 'Used', btnManageFiles: 'Open Gallery', noMediaFiles: 'No photo or document files match.', toastMediaDeleted: 'File removed from local storage.', fileTypeAll: 'All Files', fileLibraryHint: 'Grouped by work date. Tap a file, then swipe to browse.', fileSearchPh: 'Search title or property', viewerSwipeHint: 'Swipe left / right to switch', fileLibraryUpload: 'Upload', fileLibraryTitlePh: 'Name (optional)', fileLibraryUploadHint: 'Pick a property above first, then upload. Stored on this phone.', fileCatDeal: 'Closing / title', fileCatInsurance: 'Insurance', fileCatLease: 'Lease', fileCatMaintenance: 'Repairs', fileCatOther: 'Other', toastPickPropertyFirst: 'Choose a property first', toastLibraryUploaded: 'File added',
                 roleTenant: 'Tenant', roleContractor: 'Contractor', roleRealtor: 'Realtor', roleLawyer: 'Lawyer', roleType: 'Contact Role', contactName: 'Full Name', contactTrade: 'Specialty / Trade Title', contactTradeHint: 'e.g. HVAC, Plumbing Specialist', assocProperty: 'Associated Property', assocProperties: 'Associated Properties', contractorNote: 'Contractors are linked through repair logs.', noneGeneral: 'General / Unlinked', searchContact: 'Search contacts...', noContacts: 'No contacts found.',
@@ -2558,7 +2583,7 @@
             zh: {
                 navDashboard: '房子', navWork: '工作', navTasks: '待办', navRepairs: '记录', navCRM: '联系人',
                 subTabTasks: '待办', subTabRoutines: '周期', subTabLogs: '历史', subTabGaps: '完善度',
-                addRoutine: '添加周期检查', editRoutine: '编辑周期检查', routineCatalog: '常规检查清单', selectRoutine: '选择常见项目...', interval: '周期', nextDue: '下次日期', overdue: '已过期', dueSoon: '即将到期', noRoutines: '暂无周期检查。', routinesHint: '本栏事项常驻显示。点完成后写入历史记录，并把下次日期按周期后推。', routineNotifyTitle: '周期提醒', routineNotifyOff: '关闭', routineNotifyDot: '小红点', routineDotHint: '打开后，快到期或已过期的周期会在「工作」和「周期」图标上显示圆点。默认关闭。', routineNotifySms: '短信', routineNotifyEmail: '邮件', routineNotifyPhone: '接收短信的手机号', routineNotifyEmailAddr: '接收邮箱', routineNotifyHint: '没有服务器推送。选短信/邮件后，到期项会在本机打开草稿。', routineNotifySendDue: '为到期项生成草稿', routineNotifyOne: '提醒', toastNotifyNeedTarget: '请先填写手机号或邮箱', toastNotifyNoneDue: '当前没有到期项', toastNotifyOpened: '已打开草稿', everyMonths: '每{n}个月', everyYear: '每年', everyYears: '每{n}年', toastRoutineSaved: '周期检查已保存', toastRoutineDone: '已记入历史并滚动到下次', toastRoutineDeleted: '周期检查已删除', confirmDeleteRoutineTitle: '删除这项周期检查？', doneToday: '今日已完成', toastRoutineAlreadyToday: '今天已经记过一次', toastRoutineInFlight: '正在保存这次完成…', confirmEarlyRoutine: '下次日期还没到。确认再记一次并重新后推日期？',
+                addRoutine: '添加周期检查', editRoutine: '编辑周期检查', routineCatalog: '常规检查清单', selectRoutine: '选择常见项目...', interval: '周期', nextDue: '下次日期', overdue: '已过期', dueSoon: '即将到期', noRoutines: '暂无周期检查。', routinesHint: '本栏事项常驻显示。点完成后写入历史记录，并把下次日期按周期后推。', everyMonths: '每{n}个月', everyYear: '每年', everyYears: '每{n}年', toastRoutineSaved: '周期检查已保存', toastRoutineDone: '已记入历史并滚动到下次', toastRoutineDeleted: '周期检查已删除', confirmDeleteRoutineTitle: '删除这项周期检查？', doneToday: '今日已完成', toastRoutineAlreadyToday: '今天已经记过一次', toastRoutineInFlight: '正在保存这次完成…', confirmEarlyRoutine: '下次日期还没到。确认再记一次并重新后推日期？',
                 typeDetached: '独立屋', typeSemiDetached: '半独立屋', typeFreeholdTownhouse: '无物业费联排', typeCondoTownhouse: '有物业费联排', typeCondoApt: '高层公寓', typeLink: '连体住宅', typeMultiplex: '多户住宅',
                 dashboardTasks: '待处理任务', dashboardLogs: '维修与事件', dashboardTotalCost: '累计开销',
                 propertyLedger: '房屋账本', monthlyCashFlow: 'Monthly Cash Flow', monthlyCashFlowHint: '填写每月金额后点确认，保存到这套房屋。', monthlyExpenses: 'Monthly Expenses', monthlyExpensesHint: '自住房日常开销。点确认保存到这套房屋。', cashflowModeOwner: '自住房', cashflowModeRental: '出租房', cashflowModeHidden: '隐藏', cashflowRental: '租金收入', cashflowMortgage: '房贷', cashflowInsurance: '保险', cashflowTax: '地税', cashflowMgmt: '托管费', cashflowHoa: '物业费 / 管理费', cashflowHydro: '电费', cashflowGas: '燃气 / 暖气', cashflowWater: '水费 / 排污', cashflowInternet: '网络 / 电话', cashflowGroceries: '日常采购', cashflowTransit: '交通 / 油费', cashflowChildcare: '托儿', cashflowHealth: '医疗', cashflowSubs: '订阅', cashflowReserve: '房屋备用金', cashflowOthers: '其他合计', cashflowNet: '净收入', cashflowExpenseTotal: '合计', confirmCashflow: '确认数字', toastCashflowSaved: '月度数字已保存',
@@ -2594,7 +2619,7 @@
                 settingsDashboardViews: '仪表盘视图设置', minOneViewRequired: '必须至少保留一个视图模式。', settingsPropertyOrder: '房屋卡片排序',
                 settingsContactRoles: '人员类别设置', addRoleCategory: '新增类别', roleCategoryName: '类别名称', toastRoleAdded: '已新增人员类别', toastRoleDeleted: '已删除人员类别',
                 yearHealth: '本年健康', yearHealthHint: '按今天所在公历年汇总。收入=出租账本月租金×12；运营/资本支出来自本年维修记录。', yearHealthExperimental: '实验 · 本年健康', yearHealthExperimentalHint: '账本尚不完整，数字可能误导，仅供参考，不是建议。', yearIncome: '本年收入', yearOperating: '运营支出', yearCapital: '资本开支', yearMissingReceipts: '缺收据', yearIncompleteTodos: '未完成待办', yearIncomeDashHint: '收入需切换为出租账本', gapListTitle: '记录检查', gapListHint: '软检查缺修前/修后照、缺收据、缺买房入住/卖房交接前/租客入住前照、以及缺租客退租照——不是新的待办。仍可不补全就保存。', gapMissingBefore: '缺修前照', gapMissingAfter: '缺完工照', gapMissingReceipt: '缺收据', gapMissingHandoverBefore: '缺交接前照', gapMissingPurchase: '缺买房入住照片', gapMissingSold: '缺卖房交接前照片', gapMissingTenantMoveIn: '缺租客入住前照片', gapMissingMoveOut: '缺租客退租照片', gapEmpty: '当前没有缺口。', gapCountLabel: '{n} 条缺口', toastGapsNotQueue: '完善度是检查工具，点条目去补记录', backupLastFull: '上次完整备份', backupNeverFull: '从未完整备份', backupStaleHint: '完整备份已超过 14 天（或从未备份）。有空时导出一份完整备份即可，不会删除任何数据。', timelineRepairs: '维修', exportAccountingCsv: '会计 CSV', exportAccountingCsvDesc: '导出全部维修（含无收据）。给会计用——不是报税文件。', exportAccountingDisclaimer: '本 CSV 由 PocketProp 在本机导出，不是 CRA 报税表，也不是税务意见。无收据记录以 hasReceipt=false 标出。', exportCsvDownload: '下载 CSV', exportCsvTitle: '会计导出', toastCsvExported: '已导出会计 CSV',
-                settingsDataBackup: '数据备份与恢复 (离线)', exportBackup: '导出 JSON 备份文件', exportBackupLight: '轻备份', exportBackupLightDesc: '只含房屋、工作和账本，不含照片。可加口令加密。', exportBackupFull: '完整备份', exportBackupFullDesc: '含照片和收据，建议加口令。文件可能很大。', backupPassTitle: '备份口令', backupPassHint: '留空则保存普通 JSON。设置口令后文件在本机加密，口令遗忘无法找回。', backupPassLabel: '口令（可选）', backupPassAgain: '再输入一次', backupPassSkip: '不加密，直接保存', backupPassSave: '保存加密备份', backupUnlockTitle: '加密备份', backupUnlockHint: '这份文件导出时加了口令。', backupUnlockLabel: '口令', backupUnlockBtn: '解锁并恢复', toastBackupPassMismatch: '两次口令不一致。', toastBackupBadPass: '口令无法打开这份文件。', toastBackupTooBig: '备份文件过大，这台手机无法恢复。', toastBackupUnsafeMedia: '已忽略 {n} 个不安全附件。', toastExportEncrypted: '已保存加密备份', confirmImportCounts: '这份备份含 {p} 套房、{w} 条工作记录、{c} 位联系人。恢复会覆盖本机全部数据。继续？', exportTaxPdf: '税务备查 PDF', exportTaxPdfDesc: '只汇总有收据的维修保养与资产改良。用系统打印或存储为 PDF。', exportTaxPrint: '打印 / 存 PDF', exportTaxLang: 'PDF 语言', exportTaxYear: '年份', exportTaxTitle: '维修税务备查表', exportTaxGenerated: '生成日期', exportTaxDisclaimer: '本表由 PocketProp 在本机生成，不是 CRA T776，也不是税务意见。仅列入有收据的记录。', exportTaxEmpty: '当前筛选没有带收据的维修记录。', exportTaxFooter: '尚未标注 CCA 类别。收据原件仍在 App 里。', importBackup: '恢复 JSON 备份文件', toastExportLight: '已导出轻备份（不含照片）', toastExportFull: '已导出完整备份', toastImportLightNoPhotos: '文字已恢复。照片在完整备份里。', settingsDaily: '日常', settingsAdvanced: '进阶', settingsLangHint: '语言在首页右上角切换。仅更换系统预设文字。凡自行新增或编辑过的项目，系统不会主动翻译。', deadline: '截止日期', itemAlertOn: '此项显示小红点', workDotsTitle: '工作小红点', workDotsHint: '打开后，再分别选择过期红点和快到期黄点。', cycleSoonDays: '周期提前几天', taskSoonDays: '待办提前几天', dotOverdueRed: '过期：红点', dotSoonYellow: '快到期：黄点', confirmNextDueTitle: '确认下次日期', cleanupUnusedPhotos: '清理未用照片', cleanupUnusedPhotosDesc: '删掉没有记录再引用的图片文件。', toastCleanupDone: '已清理 {n} 个未用文件', photoInFullBackup: '图在完整备份', toastAddPropertyFirst: '请先添加一套房子', routineDotPromptTitle: '有周期已经过期', routineDotPromptBody: '要不要在工作页用小红点标出到期项？', toastImportSuccess: '数据恢复成功！', toastImportFailed: '恢复失败，文件格式错误。', confirmImportMsg: '导入备份将覆盖当前所有本地数据，确定继续吗？',
+                settingsDataBackup: '数据备份与恢复 (离线)', exportBackup: '导出 JSON 备份文件', exportBackupLight: '轻备份', exportBackupLightDesc: '只含房屋、工作和账本，不含照片。可加口令加密。', exportBackupFull: '完整备份', exportBackupFullDesc: '含照片和收据，建议加口令。文件可能很大。', backupPassTitle: '备份口令', backupPassHint: '留空则保存普通 JSON。设置口令后文件在本机加密，口令遗忘无法找回。', backupPassLabel: '口令（可选）', backupPassAgain: '再输入一次', backupPassSkip: '不加密，直接保存', backupPassSave: '保存加密备份', backupUnlockTitle: '加密备份', backupUnlockHint: '这份文件导出时加了口令。', backupUnlockLabel: '口令', backupUnlockBtn: '解锁并恢复', toastBackupPassMismatch: '两次口令不一致。', toastBackupBadPass: '口令无法打开这份文件。', toastBackupTooBig: '备份文件过大，这台手机无法恢复。', toastBackupUnsafeMedia: '已忽略 {n} 个不安全附件。', toastExportEncrypted: '已保存加密备份', confirmImportCounts: '这份备份含 {p} 套房、{w} 条工作记录、{c} 位联系人。恢复会覆盖本机全部数据。继续？', exportTaxPdf: '税务备查 PDF', exportTaxPdfDesc: '只汇总有收据的维修保养与资产改良。用系统打印或存储为 PDF。', exportTaxPrint: '打印 / 存 PDF', exportTaxLang: 'PDF 语言', exportTaxYear: '年份', exportTaxTitle: '维修税务备查表', exportTaxGenerated: '生成日期', exportTaxDisclaimer: '本表由 PocketProp 在本机生成，不是 CRA T776，也不是税务意见。仅列入有收据的记录。', exportTaxEmpty: '当前筛选没有带收据的维修记录。', exportTaxFooter: '尚未标注 CCA 类别。收据原件仍在 App 里。', importBackup: '恢复 JSON 备份文件', toastExportLight: '已导出轻备份（不含照片）', toastExportFull: '已导出完整备份', toastImportLightNoPhotos: '文字已恢复。照片在完整备份里。', settingsDaily: '日常', settingsAdvanced: '进阶', settingsDisplay: '显示', settingsMap: '房屋地图', settingsMapDesc: '在首页显示地图。默认隐藏，可在此打开。', settingsExpert: '高级·专家', settingsExpertHint: '工作目录、现金流科目、区域管理器、示例与清空。', exportSecondary: '次要', settingsLangHint: '语言在首页右上角切换。仅更换系统预设文字。凡自行新增或编辑过的项目，系统不会主动翻译。', deadline: '截止日期', itemAlertOn: '此项显示小红点', workDotsTitle: '工作小红点', workDotsHint: '打开后，再分别选择过期红点和快到期黄点。', cycleSoonDays: '周期提前几天', taskSoonDays: '待办提前几天', dotOverdueRed: '过期：红点', dotSoonYellow: '快到期：黄点', confirmNextDueTitle: '确认下次日期', cleanupUnusedPhotos: '清理未用照片', cleanupUnusedPhotosDesc: '删掉没有记录再引用的图片文件。', toastCleanupDone: '已清理 {n} 个未用文件', photoInFullBackup: '图在完整备份', toastAddPropertyFirst: '请先添加一套房子', routineDotPromptTitle: '有周期已经过期', routineDotPromptBody: '要不要在工作页用小红点标出到期项？', toastImportSuccess: '数据恢复成功！', toastImportFailed: '恢复失败，文件格式错误。', confirmImportMsg: '导入备份将覆盖当前所有本地数据，确定继续吗？',
                 loadDemoData: '加载示例演示数据', loadDemoDataDesc: '重置并重新加载包含多处房屋资产的完整示例数据。', confirmDemoDataMsg: '确定要重新载入演示数据吗？当前修改将被覆盖。', toastDemoLoaded: '示例数据已加载', wipeAllData: '清空全部数据', wipeAllDataDesc: '永久删除本机全部房屋、工作和照片。', wipeStep1: '此操作无法撤销。若以后可能还要用，请先导出备份。', wipeBackupSoon: '这一步里还没有导出备份，仍可继续。', wipeBackupDone: '已从本机保存了一份备份文件。', wipeContinue: '继续', wipeStep2: '勾选确认，并输入 ERASE，才能进入最后一步。', wipeAck: '我明白这会删掉本机全部数据，而且无法恢复。', wipeTypeHint: '输入 ERASE', wipeStep3: '最后一步。将删除 PocketProp 保存在本机的房屋、工作、联系人和照片。', wipeConfirmFinal: '立即全部清空', toastWiped: '本机数据已清空',
                 settingsFileManager: '维修照片与收据', fileManagerTitle: '维修照片与收据', filesCount: '个文件', storageUsed: '已用容量', btnManageFiles: '打开', noMediaFiles: '未匹配到媒体文件。', toastMediaDeleted: '文件已彻底删除。', fileTypeAll: '全部文件', fileLibraryHint: '按工单日期排列。点开后左右滑动切换。', fileSearchPh: '搜索名称或房屋', viewerSwipeHint: '左右滑动切换文件', fileLibraryUpload: '上传', fileLibraryTitlePh: '名称（可选）', fileLibraryUploadHint: '先点选上方一套房屋，再上传。文件只存在这台手机。', fileCatDeal: '交易产权', fileCatInsurance: '保险', fileCatLease: '租约', fileCatMaintenance: '维修', fileCatOther: '其他', toastPickPropertyFirst: '请先选择一套房屋', toastLibraryUploaded: '文件已加入',
                 roleTenant: '租客', roleContractor: '师傅', roleRealtor: '经纪', roleLawyer: '律师', roleType: '联系人身份角色', contactName: '姓名/称呼', contactTrade: '工种/专长头衔', contactTradeHint: '例如: 暖通水工, 专修屋顶', assocProperty: '关联房屋', assocProperties: '关联房屋（可多选）', contractorNote: '师傅不用先绑房子，做完维修记录后会自动对上。', noneGeneral: '通用 / 未绑定具体房屋', searchContact: '搜索联系人...', noContacts: '该分类下暂无联系人。',
@@ -3396,13 +3421,14 @@
             return { properties, tasks, repairs, contacts, customRoles, userZones: zones };
         }
 
-        const APP_VERSION = '2026.09.29-a';
+        const APP_VERSION = '2026.09.29-b';
 
         const app = createApp({
             data() {
-                let savedViews = JSON.parse(localStorage.getItem('pocket_prop_enabled_views')) || ['list', 'grid'];
+                let savedViewsRaw = localStorage.getItem('pocket_prop_enabled_views');
+                let savedViews = savedViewsRaw ? JSON.parse(savedViewsRaw) : ['list'];
                 savedViews = savedViews.map(v => v === '3d' ? 'grid' : v).filter(v => v === 'list' || v === 'grid');
-                if (!savedViews.length) savedViews = ['list', 'grid'];
+                if (!savedViews.length) savedViews = ['list'];
 
                 return {
                     currentLang: localStorage.getItem('pocket_prop_lang') || localStorage.getItem('my_home_os_lang') || 'en',
@@ -3417,7 +3443,8 @@
                     mapMarkers: [],
                     markerClusterGroup: null,
                     isGeocoding: false,
-                    gpsEnabled: (localStorage.getItem('pocket_prop_gps') || localStorage.getItem('my_home_os_gps')) !== 'false',
+                    mapVisible: localStorage.getItem('pocket_prop_map_visible') === 'true',
+                    gpsEnabled: (localStorage.getItem('pocket_prop_gps') || localStorage.getItem('my_home_os_gps')) === 'true',
                     userLocationMarker: null,
                     selectedPropertyId: 'ALL', 
                     activeModal: null, 
@@ -3444,7 +3471,8 @@
                     fileFilterProperty: 'ALL',
                     fileSearch: '',
                     settingsSection: 'daily',
-                    routineNotifyAsked: false,
+                    expertExpanded: false,
+                    ledgerExpanded: false,
                     viewingAlbum: [],
                     viewerTouchX: null,
                     fileUploadCategory: 'deal',
@@ -3482,13 +3510,9 @@
                     appLocked: !!localStorage.getItem('pocket_prop_pin'),
                     lockPinInput: '',
                     pinDlg: { open: false, mode: 'set', current: '', next: '', again: '' },
-                    routineNotify: 'off',
-                    routineNotifyPhone: '',
-                    routineNotifyEmail: '',
-                    showRoutineNotifyPanel: false,
                     mediaBlobs: {},
                     
-                    cashflowMode: 'rental',
+                    cashflowMode: 'hidden',
                     cashflowDraft: { rentalIncome: '', mortgage: '', insurance: '', propertyTax: '', propertyManagement: '', hoa: '', hydro: '', gas: '', water: '', internet: '', groceries: '', transit: '', childcare: '', health: '', subscriptions: '', reserve: '', others: '' },
                     formProperty: { name: '', buildingType: 'detached', address: '', intro: '', lat: null, lng: null },
                     formUsage: { id: null, usageType: 'primary', startDate: '', endDate: '', notes: '', realtorId: '', lawyerId: '', managerId: '', hasBeforePhotos: true, beforePhotos: [], afterPhotos: [] },
@@ -3503,6 +3527,7 @@
                     accountingCsvPropertyId: 'ALL',
                     lastFullBackupAt: null,
                     yearHealthExpanded: false,
+                    SHOW_YEAR_HEALTH_UI: false,
                     formRepair: { propertyId: '', titleSelect: '', title: '', zone: '', category: '', cost: '', date: '', warrantyEndDate: '', contractorId: '', taxKind: 'operating', hasReceipt: true, hasBeforePhotos: true, hasAfterPhotos: true, receiptPhotos: [], beforePhotos: [], afterPhotos: [] },
                     formContact: { id: null, role: 'tenant', name: '', trade: '', propertyId: '', propertyIds: [], phone: '', wechat: '', email: '', notes: '' },
                     formNewRole: { name: '' },
@@ -4251,13 +4276,13 @@
                     this.cashflowDraft = { ...this.emptyCashflow(), ...src };
                     if (prop && prop.cashflowMode) this.cashflowMode = prop.cashflowMode;
                     else {
-                        const usage = this.getCurrentUsageType ? this.getCurrentUsageType(prop) : '';
-                        this.cashflowMode = usage === 'rental' ? 'rental' : 'owner';
+                        this.cashflowMode = 'hidden';
                     }
                 },
                 viewProperty(id) {
                     this.viewingPropertyId = id;
                     this.viewingZone = null;
+                    this.ledgerExpanded = false;
                     this.selectedExpenseYear = new Date().getFullYear().toString();
                     this.loadCashflowDraft(id);
                 },
@@ -4353,6 +4378,11 @@
                     prop.usages = newUsages;
                 },
                 switchDashboardView(mode) { if (mode === 'map' || !this.enabledViews.includes(mode)) return; this.dashboardViewMode = mode; localStorage.setItem('pocket_prop_dash_view', mode); nextTick(() => this.initOrRefreshMap()); },
+                toggleMapVisible() {
+                    this.mapVisible = !this.mapVisible;
+                    localStorage.setItem('pocket_prop_map_visible', this.mapVisible ? 'true' : 'false');
+                    if (this.mapVisible) nextTick(() => this.initOrRefreshMap());
+                },
                 toggleGPS() {
                     this.gpsEnabled = !this.gpsEnabled; localStorage.setItem('pocket_prop_gps', this.gpsEnabled);
                     if (!this.gpsEnabled && this.userLocationMarker && this.mapInstance) { this.mapInstance.removeLayer(this.userLocationMarker); this.userLocationMarker = null; }
@@ -4537,44 +4567,6 @@
                     await this.saveToStorage();
                     this.closeModal();
                     this.showToast(this.t('toastRoutineSaved'));
-                },
-                async setRoutineNotify(mode) {
-                    this.routineNotify = mode;
-                    this.routineNotifyAsked = true;
-                    await this.saveToStorage();
-                },
-                async saveRoutineNotifyTarget() {
-                    await this.saveToStorage();
-                },
-                routineReminderText(list) {
-                    const lines = list.map(r => `${r.title || ''} · ${this.t('nextDue')} ${r.nextDueDate || '—'}${this.getPropertyName(r.propertyId) ? ' · ' + this.getPropertyName(r.propertyId) : ''}`);
-                    return (this.currentLang === 'zh' ? 'PocketProp cycles due:\n' : 'PocketProp cycles due:\n') + lines.join('\n');
-                },
-                openRoutineNotifyDraft(body) {
-                    if (this.routineNotify === 'sms') {
-                        const phone = (this.routineNotifyPhone || '').trim();
-                        if (!phone) { this.showToast(this.t('toastNotifyNeedTarget')); return false; }
-                        window.location.href = `sms:${encodeURIComponent(phone)}?&body=${encodeURIComponent(body)}`;
-                        return true;
-                    }
-                    if (this.routineNotify === 'email') {
-                        const email = (this.routineNotifyEmail || '').trim();
-                        if (!email) { this.showToast(this.t('toastNotifyNeedTarget')); return false; }
-                        const subject = 'PocketProp cycle reminder';
-                        window.location.href = `mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-                        return true;
-                    }
-                    return false;
-                },
-                sendRoutineReminder(routine) {
-                    if (!routine || this.routineNotify === 'off') return;
-                    if (this.openRoutineNotifyDraft(this.routineReminderText([routine]))) this.showToast(this.t('toastNotifyOpened'));
-                },
-                sendDueRoutineReminders() {
-                    if (this.routineNotify === 'off') return;
-                    const due = (this.filteredRoutines || []).filter(r => this.isRoutineOverdue(r) || this.isRoutineDueSoon(r));
-                    if (!due.length) { this.showToast(this.t('toastNotifyNoneDue')); return; }
-                    if (this.openRoutineNotifyDraft(this.routineReminderText(due))) this.showToast(this.t('toastNotifyOpened'));
                 },
                 isTaskOverdue(task) {
                     if (!task || !task.deadline) return false;
@@ -5764,7 +5756,6 @@
                             userZones: this.userZones,
                             userCatalog: this.userCatalog,
                             propertyDocs: this.propertyDocs,
-                            routineNotify: this.routineNotify,
                             workDotsOn: this.workDotsOn,
                             dotCycleOverdue: this.dotCycleOverdue,
                             dotCycleSoon: this.dotCycleSoon,
@@ -5772,9 +5763,6 @@
                             dotTaskSoon: this.dotTaskSoon,
                             cycleSoonDays: this.cycleSoonDays,
                             taskSoonDays: this.taskSoonDays,
-                            routineNotifyAsked: this.routineNotifyAsked,
-                            routineNotifyPhone: this.routineNotifyPhone,
-                            routineNotifyEmail: this.routineNotifyEmail,
                             lastFullBackupAt: this.lastFullBackupAt || null
                         }));
                         await localforage.setItem('pocket_prop_data', data);
@@ -5794,7 +5782,6 @@
                             if (data.userCatalog && data.userCatalog.categories) this.userCatalog = data.userCatalog;
                             else this.userCatalog = cloneDefaultCatalog();
                             if (!this.userCatalog.cashflow || !this.userCatalog.cashflow.rental) this.userCatalog.cashflow = JSON.parse(JSON.stringify(defaultCashflowCatalog));
-                            if (data.routineNotify) this.routineNotify = data.routineNotify;
                             if (data.workDotsOn != null) this.workDotsOn = !!data.workDotsOn;
                             if (data.dotCycleOverdue != null) this.dotCycleOverdue = !!data.dotCycleOverdue;
                             if (data.dotCycleSoon != null) this.dotCycleSoon = !!data.dotCycleSoon;
@@ -5802,9 +5789,6 @@
                             if (data.dotTaskSoon != null) this.dotTaskSoon = !!data.dotTaskSoon;
                             if (data.cycleSoonDays != null) this.cycleSoonDays = Number(data.cycleSoonDays) || 14;
                             if (data.taskSoonDays != null) this.taskSoonDays = Number(data.taskSoonDays) || 3;
-                            if (data.routineNotifyAsked != null) this.routineNotifyAsked = !!data.routineNotifyAsked;
-                            if (data.routineNotifyPhone != null) this.routineNotifyPhone = data.routineNotifyPhone;
-                            if (data.routineNotifyEmail != null) this.routineNotifyEmail = data.routineNotifyEmail;
                             if (data.lastFullBackupAt) this.lastFullBackupAt = data.lastFullBackupAt;
                             if (data.userZones && data.userZones.length > 0) {
                                 this.userZones = data.userZones;
@@ -5895,10 +5879,6 @@
                         userZones: this.userZones,
                         userCatalog: this.userCatalog,
                         propertyDocs: this.propertyDocs,
-                        routineNotify: this.routineNotify,
-                        routineNotifyAsked: this.routineNotifyAsked,
-                        routineNotifyPhone: this.routineNotifyPhone,
-                        routineNotifyEmail: this.routineNotifyEmail,
                         lastFullBackupAt: this.lastFullBackupAt || null
                     };
                     if (includeBlobs) data.blobs = { ...this.mediaBlobs };
@@ -5999,10 +5979,6 @@
                     this.customRoles = data.customRoles || [];
                     this.propertyDocs = data.propertyDocs || [];
                     this.userZones = data.userZones || getDefaultZones(this.currentLang);
-                    if (data.routineNotify) this.routineNotify = data.routineNotify;
-                    if (data.routineNotifyAsked != null) this.routineNotifyAsked = !!data.routineNotifyAsked;
-                    if (data.routineNotifyPhone != null) this.routineNotifyPhone = data.routineNotifyPhone;
-                    if (data.routineNotifyEmail != null) this.routineNotifyEmail = data.routineNotifyEmail;
                     if (data.lastFullBackupAt) this.lastFullBackupAt = data.lastFullBackupAt;
                     this.normalizePhotoFields();
                     if (data.blobs) await this.importMediaBlobs(data.blobs);
