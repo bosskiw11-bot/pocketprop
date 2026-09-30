@@ -1,0 +1,29 @@
+name: cleanup-noise-ci
+on:
+  push:
+    branches: [fix/noise-reduction-pack]
+    paths:
+      - '.ci/CLEANUP'
+jobs:
+  clean:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/noise-reduction-pack
+          fetch-depth: 0
+      - name: Remove temporary CI artifacts
+        run: |
+          set -euo pipefail
+          git config user.name "bosskiw11-bot"
+          git config user.email "bosskiw11@gmail.com"
+          git rm -rf .ci || true
+          git rm -f .github/workflows/cleanup-noise-ci.yml || true
+          if git diff --cached --quiet; then
+            echo "Nothing to clean"
+            exit 0
+          fi
+          git commit -m "ci: remove noise pack temporary artifacts"
+          git push origin HEAD:fix/noise-reduction-pack
