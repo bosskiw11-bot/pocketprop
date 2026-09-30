@@ -20,28 +20,8 @@ jobs:
           set -euo pipefail
           git fetch origin main
           git show origin/main:index.html > index.html
-          python3 << 'PY'
-from pathlib import Path
-import base64, gzip, subprocess, sys
-n = 4
-parts = [Path(f'.ci/binder{i}.b64').read_text().replace('\n','') for i in range(n)]
-b64 = ''.join(parts)
-raw = base64.b64decode(b64)
-patch = gzip.decompress(raw)
-Path('/tmp/binder.patch').write_bytes(patch)
-print('patch bytes', len(patch))
-r = subprocess.run(['patch','-p1','--binary'], input=patch, capture_output=True)
-sys.stdout.write(r.stdout.decode())
-sys.stderr.write(r.stderr.decode())
-if r.returncode != 0:
-    sys.exit(r.returncode)
-t = Path('index.html').read_text(encoding='utf-8')
-assert '2026.09.30-a' in t
-assert 'prepareTaxBinderEmbeds' in t
-assert '收据合订税季夹' in t
-assert 'taxBinderEmbeds' in t
-print('OK', len(t))
-PY
+          echo 'CmZyb20gcGF0aGxpYiBpbXBvcnQgUGF0aAppbXBvcnQgYmFzZTY0LCBnemlwLCBzdWJwcm9jZXNzLCBzeXMKbiA9IDQKcGFydHMgPSBbUGF0aChmJy5jaS9iaW5kZXJ7aX0uYjY0JykucmVhZF90ZXh0KCkucmVwbGFjZSgnXG4nLCcnKSBmb3IgaSBpbiByYW5nZShuKV0KYjY0ID0gJycuam9pbihwYXJ0cykKcmF3ID0gYmFzZTY0LmI2NGRlY29kZShiNjQpCnBhdGNoID0gZ3ppcC5kZWNvbXByZXNzKHJhdykKUGF0aCgnL3RtcC9iaW5kZXIucGF0Y2gnKS53cml0ZV9ieXRlcyhwYXRjaCkKcHJpbnQoJ3BhdGNoIGJ5dGVzJywgbGVuKHBhdGNoKSkKciA9IHN1YnByb2Nlc3MucnVuKFsncGF0Y2gnLCctcDEnLCctLWJpbmFyeSddLCBpbnB1dD1wYXRjaCwgY2FwdHVyZV9vdXRwdXQ9VHJ1ZSkKc3lzLnN0ZG91dC53cml0ZShyLnN0ZG91dC5kZWNvZGUoKSkKc3lzLnN0ZGVyci53cml0ZShyLnN0ZGVyci5kZWNvZGUoKSkKaWYgci5yZXR1cm5jb2RlICE9IDA6CiAgICBzeXMuZXhpdChyLnJldHVybmNvZGUpCnQgPSBQYXRoKCdpbmRleC5odG1sJykucmVhZF90ZXh0KGVuY29kaW5nPSd1dGYtOCcpCmFzc2VydCAnMjAyNi4wOS4zMC1hJyBpbiB0CmFzc2VydCAncHJlcGFyZVRheEJpbmRlckVtYmVkcycgaW4gdAphc3NlcnQgJ1x1NjUzNlx1NjM2ZVx1NTQwOFx1OGJhMlx1N2EwZVx1NWI2M1x1NTkzOScgaW4gdAphc3NlcnQgJ3RheEJpbmRlckVtYmVkcycgaW4gdApwcmludCgnT0snLCBsZW4odCkpCg==' | base64 -d > /tmp/binder_apply.py
+          python3 /tmp/binder_apply.py
       - name: Commit and push
         run: |
           set -euo pipefail
@@ -52,5 +32,5 @@ PY
             echo "No changes to commit"
             exit 0
           fi
-          git commit -m "feat: tax-season receipt binder 收据合订税季夹 (2026.09.30-a)"
+          git commit -m "feat: tax-season receipt binder (2026.09.30-a)"
           git push origin HEAD:fix/tax-receipt-binder
